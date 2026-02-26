@@ -734,27 +734,31 @@ def generate_build_ninja(
 
     # MWCC
     mwcc = compiler_path / "mwcceppc.exe"
-    mwcc_cmd = f"{wrapper_cmd}{mwcc} $cflags -MMD -c $in -o $basedir"
+    mwcc_cmd = f"{CHAIN}{wrapper_cmd}{mwcc} $cflags -MMD -c $in -o $basedir"
     mwcc_implicit: List[Optional[Path]] = [compilers_implicit or mwcc, wrapper_implicit]
 
     # MWCC with UTF-8 to Shift JIS wrapper
-    mwcc_sjis_cmd = f"{wrapper_cmd}{sjiswrap} {mwcc} $cflags -MMD -c $in -o $basedir"
+    mwcc_sjis_cmd = (
+        f"{CHAIN}{wrapper_cmd}{sjiswrap} {mwcc} $cflags -MMD -c $in -o $basedir"
+    )
     mwcc_sjis_implicit: List[Optional[Path]] = [*mwcc_implicit, sjiswrap]
 
     # MWCC for precompiled headers
-    mwcc_pch_cmd = f"{wrapper_cmd}{mwcc} $cflags -MMD -c $in -o $basedir -precompile $basefilestem.mch"
+    mwcc_pch_cmd = (
+        f"{CHAIN}{wrapper_cmd}{mwcc} $cflags -MMD -c $in -o $basedir -precompile $basefilestem.mch"
+    )
     mwcc_pch_implicit: List[Optional[Path]] = [*mwcc_implicit]
 
     # MWCC for precompiled headers with UTF-8 to Shift JIS wrapper
-    mwcc_pch_sjis_cmd = f"{wrapper_cmd}{sjiswrap} {mwcc} $cflags -MMD -c $in -o $basedir -precompile $basefilestem.mch"
+    mwcc_pch_sjis_cmd = (
+        f"{CHAIN}{wrapper_cmd}{sjiswrap} {mwcc} $cflags -MMD -c $in -o $basedir -precompile $basefilestem.mch"
+    )
     mwcc_pch_sjis_implicit: List[Optional[Path]] = [*mwcc_implicit, sjiswrap]
 
     # MWCC with extab post-processing
-    mwcc_extab_cmd = (
-        f'{CHAIN}{mwcc_cmd} && {dtk} extab clean --padding "$extab_padding" $out $out'
-    )
+    mwcc_extab_cmd = f'{mwcc_cmd} && {dtk} extab clean --padding "$extab_padding" $out $out'
     mwcc_extab_implicit: List[Optional[Path]] = [*mwcc_implicit, dtk]
-    mwcc_sjis_extab_cmd = f'{CHAIN}{mwcc_sjis_cmd} && {dtk} extab clean --padding "$extab_padding" $out $out'
+    mwcc_sjis_extab_cmd = f'{mwcc_sjis_cmd} && {dtk} extab clean --padding "$extab_padding" $out $out'
     mwcc_sjis_extab_implicit: List[Optional[Path]] = [*mwcc_sjis_implicit, dtk]
 
     # MWLD
@@ -1175,7 +1179,9 @@ def generate_build_ninja(
             if compiler_family_name == "prodg":
                 build_rule = "prodg_cc"
                 build_implcit = prodg_cc_implicit
-                variables["sn_ngc_path"] = compilers / compiler_version / "sn.ini"
+                # ProDG expects SN_NGC_PATH to point at the compiler directory.
+                # ngccc then loads "sn.ini" from that directory.
+                variables["sn_ngc_path"] = compilers / compiler_version
             else:
                 if obj.options["shift_jis"] and obj.options["extab_padding"] is not None:
                     build_rule = "mwcc_sjis_extab"

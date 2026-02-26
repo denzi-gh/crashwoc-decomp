@@ -87,6 +87,11 @@ struct _sceDmaTag
 // Size: 0x10
 struct giftag
 {
+#ifdef __MWERKS__
+    // MWCC can't compile 64-bit bitfields in this form.
+    // For now we keep only the 16-byte layout needed by pointers to giftag.
+    unsigned int raw[4];
+#else
     long long NLOOP : 15; // Offset: 0x0, Bit Offset: 0, Bit Size: 15
     long long EOP : 1; // Offset: 0x0, Bit Offset: 15, Bit Size: 1
     long long pad16 : 16; // Offset: 0x0, Bit Offset: 16, Bit Size: 16
@@ -111,6 +116,7 @@ struct giftag
     long long REGS13 : 4; // Offset: 0x8, Bit Offset: 52, Bit Size: 4
     long long REGS14 : 4; // Offset: 0x8, Bit Offset: 56, Bit Size: 4
     long long REGS15 : 4; // Offset: 0x8, Bit Offset: 60, Bit Size: 4
+#endif
 };
 
 // Size: 0x4

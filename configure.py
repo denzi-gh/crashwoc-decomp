@@ -200,6 +200,26 @@ config.reconfig_deps = []
 # Can be overridden in libraries or objects
 config.scratch_preset_id = None
 
+project_root = Path(__file__).resolve().parent
+
+# Project include roots needed by the recovered source tree.
+project_include_dirs = [
+    project_root / "src",
+    project_root / "src" / "gamecode",
+    project_root / "src" / "gamelib",
+    project_root / "src" / "nu3dx",
+    project_root / "src" / "nucore",
+    project_root / "src" / "numath",
+    project_root / "src" / "nuraster",
+    project_root / "src" / "nusound",
+    project_root / "src" / "system",
+    project_root / "src" / "system" / "gc",
+    project_root / "src" / "system" / "gs",
+    project_root / "src" / "system" / "ss",
+]
+project_include_dir = project_root / "include"
+project_build_include_dir = project_root / "build" / config.version / "include"
+
 # Base flags, common to most GC/Wii games.
 # Generally leave untouched, with overrides added below.
 if args.toolchain == "prodg35":
@@ -208,8 +228,9 @@ if args.toolchain == "prodg35":
         "-O2",
         "-mps-float",
         "-g2",
-        "-I include",
-        f"-I build/{config.version}/include",
+        *[f"-I {d.as_posix()}" for d in project_include_dirs],
+        f"-I {project_include_dir.as_posix()}",
+        f"-I {project_build_include_dir.as_posix()}",
         f"-DBUILD_VERSION={version_num}",
         f"-DVERSION_{config.version}",
     ]
@@ -227,13 +248,13 @@ else:
         '-pragma "cats off"',
         '-pragma "warn_notinlined off"',
         "-maxerrors 1",
-        "-nosyspath",
         "-RTTI off",
         "-fp_contract on",
         "-str reuse",
         "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
-        "-i include",
-        f"-i build/{config.version}/include",
+        *[f"-i {d.as_posix()}" for d in project_include_dirs],
+        f"-i {project_include_dir.as_posix()}",
+        f"-i {project_build_include_dir.as_posix()}",
         f"-DBUILD_VERSION={version_num}",
         f"-DVERSION_{config.version}",
     ]
@@ -317,9 +338,24 @@ def MatchingFor(*versions):
     return config.version in versions
 
 
-config.warn_missing_config = True
+# Seed object list derived from existing map-style annotations in source headers.
+# Keep these as NonMatching until each unit is verified as fully matching.
+SEED_GAME_OBJECTS = [
+    "nusound/nusound.c",
+    "system/ss/ss.c",
+]
+
+
+config.warn_missing_config = False
 config.warn_missing_source = False
 config.libs = [
+    {
+        "lib": "OpenCrashWOC",
+        "mw_version": config.linker_version,
+        "cflags": cflags_base,
+        "progress_category": "game",
+        "objects": [Object(NonMatching, obj) for obj in SEED_GAME_OBJECTS],
+    },
     {
         "lib": "Runtime.PPCEABI.H",
         "mw_version": config.linker_version,

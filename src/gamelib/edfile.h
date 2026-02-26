@@ -2,7 +2,7 @@
 #define EDFILE_H
 
 #include "../types.h"
-#include <stdlib.h>
+#include "stdlib.h"
 
 // Current ed file handle.
 fileHandle edfile_handle;
