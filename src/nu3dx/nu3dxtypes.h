@@ -2,7 +2,7 @@
 #define NU3DXTYPES_H
 
 #include "types.h"
-#include<string.h>
+#include "string.h"
 #include"system/gxtype.h"
 #include"system/gs.h"
 #include "gamecode/camera.h"

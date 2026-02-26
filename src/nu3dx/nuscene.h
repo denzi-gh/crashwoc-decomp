@@ -4,7 +4,7 @@
 #include "../types.h"
 #include<nucore/nufile.h>
 #include "nu3dx/nugobj.h"
-#include <stdlib.h>
+#include "stdlib.h"
 #include "nu3dxtypes.h"
 #include "nu3dx/nutxanm.h"
 

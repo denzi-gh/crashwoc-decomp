@@ -1,62 +1,35 @@
-# Prerequisites
-*.d
+# IDE folders
+.idea/
+.vs/
 
-# Compiled Object files
-*.slo
-*.lo
+# Caches
+__pycache__
+.mypy_cache
+.cache/
+
+# Original files
+orig/*/*
+!orig/*/.gitkeep
+*.dol
+*.rel
+*.elf
 *.o
-*.obj
+*.map
+*.MAP
 
-# Precompiled Headers
-*.gch
-*.pch
+# Build files
+build/
+.ninja_*
+build.ninja
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# decompctx output
+ctx.*
+*.ctx
 
-# Fortran module files
-*.mod
-*.smod
+# Generated configs
+objdiff.json
+compile_commands.json
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
+# Miscellaneous
+/*.txt
 *.exe
-*.out
-*.app
-
-# CrashWOC Files
-ats
-carddemo
-chars
-Debug
-bin
-Gfx
-levels
-sfx
-stuff
-apploader.img
-banner.tpl
-boot.dol
-client_pad.bin
-crashoot.bin
-crashwoc.elf
-icon.tpl
-joytest_050702.bin
-opening.bnr
-
-# CMake
-CMakeFiles
-CMakeCache.txt
-Makefile
-
-OpenCrashWOC.code-workspace
-
-cmake_install.cmake
-.vscode/

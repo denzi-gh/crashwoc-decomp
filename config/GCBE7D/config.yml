@@ -1,0 +1,10 @@
+# See config.example.yml for documentation.
+object_base: orig/GCBE7D
+object: sys/main.dol
+hash: c9cbd49a9eb0006f55533eb7d0fb5ebe2a73b72f
+symbols: config/GCBE7D/symbols.txt
+splits: config/GCBE7D/splits.txt
+# Change this to match the linker version.
+# See config.example.yml for a list.
+mw_comment_version: 11
+quick_analysis: true
