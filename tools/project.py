@@ -1491,11 +1491,13 @@ def generate_build_ninja(
         n.build(
             outputs="progress",
             rule="progress",
-            inputs=report_path,
             implicit=[
+                ok_path,
                 configure_script,
                 python_lib,
+                report_path,
             ],
+            order_only="post-build",
         )
 
         ###
