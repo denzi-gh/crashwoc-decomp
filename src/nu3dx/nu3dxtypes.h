@@ -676,17 +676,6 @@ struct scene_inst_s {
     struct nugscn_s * scene;
 };
 
-typedef struct SplTab SplTab, *PSplTab;
-
-struct SplTab {
-    struct nugspline_s * spl;
-    char * name;
-    short min;
-    short max;
-    char unk[4];
-    unsigned long long levbits; /* unk_type */
-};
-
 typedef struct visidata_s visidata_s, *Pvisidata_s;
 
 struct visidata_s {

@@ -69,6 +69,32 @@ float WeatherBossSkeletonTimer; //vehicle.c
 s32 WeatherBossDead; //vehicle.c
 s32 GAMEOBJECTCOUNT; //game_obj.c
 char* tLOADING[6]; //text.c
+char PadRecordPath[256];
+struct visidata_s* world_vd;
+struct nuscene_s* wumpa_scene2;
+struct nuscene_s* crate_scene2;
+struct nuscene_s* pause_scene2;
+struct nugscn_s* wumpa_scene;
+struct nugscn_s* crate_scene;
+struct nugscn_s* pause_scene;
+struct numtl_s* ShadowMat;
+s32 ShadowMatBodge;
+float YTOL;
+static volatile struct nuanimdata_s* load_anim_data;
+static s32 loadcount;
+s32 pause_rndr_on;
+s32 Demo;
+s32 level_part_2;
+float AIVISRANGE;
+s32 WUMPACOUNT;
+s32 i_cratetypedata;
+struct numtl_s* CrateMat;
+struct numtl_s* CrateMat2;
+extern struct ldata_s LData[];
+extern char SfxTabGLOBAL[];
+extern s32 SFXCOUNT_ALL;
+extern struct numtl_s* DebMat[8];
+extern volatile s32 crash_loaded;
 
 
 //NGC MATCH
@@ -1116,60 +1142,6 @@ void firstscreens() {
         NuMtlDestroy(firstscreen1_mtl);
     }
 }
-
-
-/*
-
-s32 main(int argc /* r3 */, char * * argv /* r4 */) {
-    // Local variables
-    int room_ambience_update_count; // r18
-    float f; // f0
-    struct creature_s * plr; // r30
-    int i; // r29
-    int temp; // r9
-    int temp_paused; // r31
-    int ok; // r26
-    int retro; // r23
-    int old_paused;
-    int gametimer;
-    int y0; // r11
-    int y1; // r6
-    struct nuvec_s pos; // r1+0x8
-    int just_been_paused; // r22
-    int reset; // r1+0xA0
-
-    // Labels
-    NewMode: // 0x80051330
-
-    // Blocks
-    /* anonymous block */ {
-        // Range: 0x800510B4 -> 0x80052A40
-        /* anonymous block */ {
-            // Range: 0x80051494 -> 0x800526D8
-            /* anonymous block */ {
-                // Range: 0x80051560 -> 0x80051794
-            }
-            /* anonymous block */ {
-                // Range: 0x800519B4 -> 0x800519C8
-            }
-            /* anonymous block */ {
-                // Range: 0x80051D30 -> 0x80051D90
-                struct nuvec_s * flamepos[32]; // r1+0x20
-                int cnt; // r3
-                int offset; // r29
-                int debristypeid; // r28
-            }
-            /* anonymous block */ {
-                // Range: 0x80051F80 -> 0x80052610
-            }
-            /* anonymous block */ {
-                // Range: 0x80052610 -> 0x800526B0
-                int curfps; // r9
-            }
-        }
-    }
-}
-*/
 
 
 //92.85% NGC (86% PS2)

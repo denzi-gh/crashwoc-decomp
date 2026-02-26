@@ -324,7 +324,7 @@ def Rel(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
         "lib": lib_name,
         "mw_version": "GC/1.3.2",
         "cflags": cflags_rel,
-        "progress_category": "game",
+        "progress_category": "gameplay",
         "objects": objects,
     }
 
@@ -343,15 +343,52 @@ config.warn_missing_config = True
 config.warn_missing_source = False
 config.libs = [
     {
-        "lib": "OpenCrashWOC",
+        "lib": "CrashWOC_Gameplay",
         "mw_version": config.linker_version,
         "cflags": cflags_base,
-        "progress_category": "game",
+        "progress_category": "gameplay",
         "objects": [
-            Object(NonMatching, "nusound/nusound.c"),
-            Object(NonMatching, "nu3dx/nuglass.c"),
-            Object(NonMatching, "gamecode/main.c"),
+          Object(NonMatching, "ai.c" , source="gamecode/ai.c"),
         ],
+    },
+    {
+        "lib": "CrashWOC_Engine3D",
+        "mw_version": config.linker_version,
+        "cflags": cflags_base,
+        "progress_category": "engine_3d",
+        "objects": [],
+    },
+    {
+        "lib": "CrashWOC_EngineCore",
+        "mw_version": config.linker_version,
+        "cflags": cflags_base,
+        "progress_category": "engine_core",
+        "objects": [
+            Object(NonMatching, "NuSound.c", source="nusound/nusound.c"),
+        ],
+    },
+    {
+        "lib": "CrashWOC_PlatformGC",
+        "mw_version": config.linker_version,
+        "cflags": cflags_base,
+        "progress_category": "platform_gc",
+        "objects": [
+            Object(NonMatching, "OSFont.c", source="system/gc/OsFont.c"),
+        ],
+    },
+    {
+        "lib": "CrashWOC_PlatformRuntime",
+        "mw_version": config.linker_version,
+        "cflags": cflags_base,
+        "progress_category": "platform_runtime",
+        "objects": [],
+    },
+    {
+        "lib": "CrashWOC_LegacyPort",
+        "mw_version": config.linker_version,
+        "cflags": cflags_base,
+        "progress_category": "legacy_port",
+        "objects": [],
     },
     {
         "lib": "Runtime.PPCEABI.H",
@@ -387,7 +424,12 @@ def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
 # Optional extra categories for progress tracking
 # Adjust as desired for your project
 config.progress_categories = [
-    ProgressCategory("game", "Game Code"),
+    ProgressCategory("gameplay", "Gameplay"),
+    ProgressCategory("engine_3d", "Engine 3D"),
+    ProgressCategory("engine_core", "Engine Core"),
+    ProgressCategory("platform_gc", "Platform GC"),
+    ProgressCategory("platform_runtime", "Platform Runtime"),
+    ProgressCategory("legacy_port", "Legacy Port"),
     ProgressCategory("sdk", "SDK Code"),
 ]
 config.progress_each_module = args.verbose
