@@ -350,6 +350,7 @@ config.libs = [
         "objects": [
             Object(NonMatching, "nusound/nusound.c"),
             Object(NonMatching, "nu3dx/nuglass.c"),
+            Object(NonMatching, "gamecode/main.c"),
         ],
     },
     {
