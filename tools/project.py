@@ -172,6 +172,9 @@ class ProjectConfig:
             None  # List of precompiled headers
         )
         self.linker_version: Optional[str] = None  # mwld version
+        self.prodg_ldscript: Optional[Path] = (
+            None  # Optional checked-in GNU ld script for ProDG linking
+        )
         self.version: Optional[str] = None  # Version name
         self.warn_missing_config: bool = False  # Warn on missing unit configuration
         self.warn_missing_source: bool = False  # Warn on missing source file
@@ -995,22 +998,26 @@ def generate_build_ninja(
             if linker_family == "prodg":
                 if self.module_id != 0:
                     sys.exit("ProDG linker mode currently supports only the main DOL module")
-                sda_base = getattr(config, "prodg_sda_base", None)
-                sda2_base = getattr(config, "prodg_sda2_base", None)
-                stack_end = getattr(config, "prodg_stack_end", None)
-                if sda_base is None or sda2_base is None or stack_end is None:
-                    sys.exit(
-                        "Missing ProDG linker constants on ProjectConfig."
-                        " Set prodg_sda_base, prodg_sda2_base, and prodg_stack_end in configure.py."
+                configured_ldscript = cast(Optional[Path], getattr(config, "prodg_ldscript", None))
+                if configured_ldscript is not None and configured_ldscript.is_file():
+                    self.prodg_ldscript = configured_ldscript
+                else:
+                    sda_base = getattr(config, "prodg_sda_base", None)
+                    sda2_base = getattr(config, "prodg_sda2_base", None)
+                    stack_end = getattr(config, "prodg_stack_end", None)
+                    if sda_base is None or sda2_base is None or stack_end is None:
+                        sys.exit(
+                            "Missing ProDG linker constants on ProjectConfig."
+                            " Set prodg_sda_base, prodg_sda2_base, and prodg_stack_end in configure.py."
+                        )
+                    self.prodg_ldscript = build_path / f"{self.name}.prodg.ld"
+                    write_prodg_linker_script(
+                        self.prodg_ldscript,
+                        self.units,
+                        int(sda_base),
+                        int(sda2_base),
+                        int(stack_end),
                     )
-                self.prodg_ldscript = build_path / f"{self.name}.prodg.ld"
-                write_prodg_linker_script(
-                    self.prodg_ldscript,
-                    self.units,
-                    int(sda_base),
-                    int(sda2_base),
-                    int(stack_end),
-                )
 
         def add(self, obj: Path) -> None:
             self.inputs.append(serialize_path(obj))

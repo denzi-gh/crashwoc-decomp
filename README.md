@@ -6,6 +6,7 @@ it uses:
 - `decomp-toolkit`
 - dtk-template style workflow
 - prodg 3.5 profile (`ngccc` / `ngcld`)
+- checked-in prodg linker script at `config/GCBE7D/ldscript.ld`
 
 important: no game assets are included here. you need your own dumped files.
 

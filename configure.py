@@ -297,6 +297,7 @@ else:
 
 if args.toolchain == "prodg35":
     config.linker_version = "ProDG/3.5"
+    config.prodg_ldscript = Path("config") / config.version / "ldscript.ld"
     # Used by the ProDG linker-script adapter in tools/project.py.
     # Values can be overridden later once better symbols/map data is available.
     config.prodg_sda_base = 0x803DA260
@@ -338,18 +339,7 @@ def MatchingFor(*versions):
     return config.version in versions
 
 
-# Buildable seed object list.
-# Expand this list incrementally as compile issues are fixed.
-SEED_GAME_OBJECTS = [
-    "nusound/nusound.c",
-]
-
-# Objects considered "complete" for objdiff progress.
-# Keep this conservative; only include units you want counted as linked/matched.
-MATCHED_GAME_OBJECTS = set()
-
-
-config.warn_missing_config = False
+config.warn_missing_config = True
 config.warn_missing_source = False
 config.libs = [
     {
@@ -357,7 +347,10 @@ config.libs = [
         "mw_version": config.linker_version,
         "cflags": cflags_base,
         "progress_category": "game",
-        "objects": [Object(Matching if obj in MATCHED_GAME_OBJECTS else NonMatching, obj) for obj in SEED_GAME_OBJECTS],
+        "objects": [
+            Object(NonMatching, "nusound/nusound.c"),
+            Object(NonMatching, "nu3dx/nuglass.c"),
+        ],
     },
     {
         "lib": "Runtime.PPCEABI.H",
