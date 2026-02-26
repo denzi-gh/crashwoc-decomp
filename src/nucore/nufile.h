@@ -6,8 +6,8 @@
 #include "numem.h"
 #include "system/gc/fs.h"
 //#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "stdio.h"
+#include "stdlib.h"
 //#include <memory.h>
 
 #define MAX_FILES 10

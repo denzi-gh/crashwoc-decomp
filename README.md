@@ -1,59 +1,88 @@
-# OpenCrashWOC
-An open source, reverse engineered of Crash Bandicoot: Wrath Of Cortex.
+# opencrashwoc (dtk migration)
 
-## Notice
-We love Crash Bandicoot! If you plan to play this, you must legally dump assets from your GameCube disk, and please buy one of the latest Crash games to show your support! 
-OpenCrashWOC is a fan reverse-engineered version of CrashWOC without having any access or knowledge of the original game code. Via assembly matching, the game's code is reconstructed in a way that compiles to the same thing than the one that the original programmers wrote, producing the same results during gameplay.
+this repo is for decomp work on **crash bandicoot: the wrath of cortex** (gamecube, ntsc-u `GCBE7D`).
 
-## Other Notice
-This README will be more complete and detailed with instructions to contribute, build, and play once they exist!
+it uses:
+- `decomp-toolkit`
+- dtk-template style workflow
+- prodg 3.5 profile (`ngccc` / `ngcld`)
 
-## todo list
+important: no game assets are included here. you need your own dumped files.
 
-### initialisation project
-- [x] SDL link
-- [x] OpenGL link
-- [ ] SDL Mixer li,k
-- [ ] OpenGL ES 3 or OpenGL 3 link
+## current status
 
-### nulib compile
-- [ ] nu3dx function (98%)
-- [x] nucore function (99%)
-- [x] numath function (100%)
-- [x] nusound function (dummy)
-- [x] nuraster function (100%)
-- [ ] system function (95%) 
-- [ ] gamelib function (90%)
+- `ninja` runs progress by default
+- `ninja progress` and `ninja report` work
+- full matching / full rebuild is still wip
 
-### nulib test
-- [ ] nu3dx validation test
-- [ ] nucore validation test 
-- [ ] numath validation test 
-- [ ] nusound validation test 
-- [ ] nuraster validation test 
-- [ ] system validation test 
-- [ ] gamelib validation test 
+## what you need (windows)
 
-### game
-- [ ] gamecode (70%)
+- python 3.11+ in `PATH`
+- ninja in `PATH`
+- git
 
-## Building
+most tools (`dtk`, `objdiff`, compilers package) get downloaded automatically on first run.
 
-WIP..
+## quick setup
 
-## Contributing
-Check the function list on the `issue section` of this repository, those that have the percentage next to them have already started and are available on the `decomp.me` website, 
-just search for the name in the search bar and then fork and you will have your scratch to work on.
+1. clone:
+```powershell
+git clone https://github.com/denzi-gh/crashwoc-decomp.git
+cd crashwoc-decomp
+```
 
-You can check for any `DWARF info` (variables name,types,global variables,etc..) by searching for the name of the function you want to work on in this repository's file
-`code/src/dump_alphaNGCport_DWARF.txt`
+2. put your original dol here:
+`orig/GCBE7D/sys/main.dol`
 
-Which will provide the local variables types and names of the function and other information used in the alpha version, it should match in most cases with the retail version (some variables may be missing or totally different sometimes).
-Once matched you can make a pull request or send a message on discord
+expected sha1:
+`c9cbd49a9eb0006f55533eb7d0fb5ebe2a73b72f`
 
-If want to help the project or have any troubles, reach out on the Discord server: https://discord.gg/kmCPpW4KvJ
+3. configure:
+```powershell
+py -3 configure.py --version GCBE7D --toolchain prodg35
+```
 
-## Warning
-Currently there are problems with the compiler flags for branch prediction (+\-) , so some functions will not fully match. 
-If that's the only difference, you can still share the completed function.
+4. run progress:
+```powershell
+ninja progress
+```
+
+you can also just run `ninja` (same default target right now).
+
+## common commands
+
+reconfigure:
+```powershell
+py -3 configure.py --version GCBE7D --toolchain prodg35
+```
+
+generate progress report json:
+```powershell
+ninja report
+```
+
+build all currently configured source units:
+```powershell
+ninja all_source
+```
+
+## symbols + splits workflow
+
+- `config/GCBE7D/splits.txt` = which address range belongs to which source unit/section
+- `config/GCBE7D/symbols.txt` = validated symbol names at concrete addresses
+- `src/dump_alphaNGCport_DWARF.txt` = strong hint source, but still validate against the retail dol layout
+
+draft helper:
+```powershell
+py -3 tools/extract_symbol_drafts.py --version GCBE7D
+```
+
+## ci note
+
+`.github.example/` is not enabled by default.
+the sample workflow expects a private container with licensed toolchain/orig data.
+
+## community
+
+discord: https://discord.gg/kmCPpW4KvJ
 

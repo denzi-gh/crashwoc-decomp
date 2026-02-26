@@ -2,7 +2,7 @@
 #define TYPES_H
 
 #include "elf_systypes.h"
-#include<stdbool.h>
+#include "stdbool.h"
 
 #define NuError(msg) \
     error_func e = NuErrorProlog(__FILE__, __LINE__); \

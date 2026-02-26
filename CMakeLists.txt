@@ -1,15 +1,9 @@
 cmake_minimum_required(VERSION 3.11)
-project(OpenCrashWOC)
+project(OpenCrashWOC LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED true)
-
-set(BINARY_OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIR})
-
-include_directories("code")
-file(GLOB_RECURSE SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "code/*.c")
-
-add_executable(${PROJECT_NAME} ${SOURCES})
+message(FATAL_ERROR
+  "this repo uses decomp-toolkit + ninja, not cmake.\n"
+  "use:\n"
+  "  py -3 configure.py --version GCBE7D --toolchain prodg35\n"
+  "  ninja progress\n"
+)

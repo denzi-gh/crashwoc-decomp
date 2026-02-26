@@ -1,7 +1,11 @@
 #ifndef GXTYPES_H
 #define GXTYPES_H
 
+#ifdef __MWERKS__
+#define AT_ADDRESS(xyz)
+#else
 #define AT_ADDRESS(xyz) __attribute__((address((xyz))))
+#endif
 
 #include "types.h"
 
@@ -19,12 +23,12 @@ static inline u32 rotl32(u32 x, u32 amount)
    return (x << amount) | (x >> ((32 - amount) & 31));
 }
 
-static inline u32 __rlwinm(u32 rs, u32 sh, u32 mb, u32 me)
+static inline u32 gx_rlwinm_local(u32 rs, u32 sh, u32 mb, u32 me)
 {
    return rotl32(rs, sh) & ppcmask(mb, me);
 }
 
-static inline u32 __rlwimi(u32 ra, u32 rs, u32 sh, u32 mb, u32 me)
+static inline u32 gx_rlwimi_local(u32 ra, u32 rs, u32 sh, u32 mb, u32 me)
 {
    u32 mask = ppcmask(mb, me);
    return (ra & ~mask) | (rotl32(rs, sh) & mask);
@@ -36,7 +40,7 @@ static inline u32 __rlwimi(u32 ra, u32 rs, u32 sh, u32 mb, u32 me)
 	GXFIFO.s32 = (data);
 #define GX_GET_REG(reg, st, end)      GX_BITGET((reg), (st), ((end) - (st) + 1))
 #define GX_SET_REG(reg, x, st, end)   GX_BITFIELD_SET((reg), (st), ((end) - (st) + 1), (x))
-#define GX_BITFIELD(field, pos, size, value)       (__rlwimi((field), (value), 31 - (pos) - (size) + 1, (pos), (pos) + (size)-1))
+#define GX_BITFIELD(field, pos, size, value)       (gx_rlwimi_local((field), (value), 31 - (pos) - (size) + 1, (pos), (pos) + (size)-1))
 #define GX_BITFIELD_SET(field, pos, size, value)   ((field) = GX_BITFIELD(field, pos, size, value))
 
 #define GX_FIFO_OBJ_SIZE (128)

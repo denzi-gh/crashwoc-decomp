@@ -1,0 +1,84 @@
+Sections:
+	.init       type:code align:4
+	.text       type:code align:4
+	.rodata     type:rodata align:4
+	.data       type:data align:4
+	.bss        type:bss align:4
+	.sdata      type:data align:8
+	.sbss       type:bss align:4
+	.data5      type:data align:16
+
+gamecode/main.c:
+	.text       start:0x8004F584 end:0x800534CC
+
+gamelib/edbits.c:
+	.text       start:0x80084750 end:0x800849E8
+
+gamelib/glutils.c:
+	.text       start:0x8008C560 end:0x8008C8BC
+
+nu3dx/nuanim.c:
+	.text       start:0x800A970C end:0x800AC708
+
+nu3dx/nucamera.c:
+	.text       start:0x800AC788 end:0x800AD8E8
+
+nu3dx/nucvtskin.c:
+	.text       start:0x800AD8E8 end:0x800AED6C
+
+nu3dx/nuglass.c:
+	.text       start:0x800AED6C end:0x800AF700
+
+nu3dx/nuhgobj.c:
+	.text       start:0x800B06F8 end:0x800B14DC
+
+nu3dx/nulight.c:
+	.text       start:0x800B14DC end:0x800B2AAC
+
+nu3dx/numtl.c:
+	.text       start:0x800B2AAC end:0x800B4484
+
+nu3dx/nurndr.c:
+	.text       start:0x800B4484 end:0x800B7F00
+
+nu3dx/nutex.c:
+	.text       start:0x800B97E8 end:0x800BA0C0
+
+nu3dx/nutxanm.c:
+	.text       start:0x800BA124 end:0x800BB8E8
+
+nu3dx/nuvport.c:
+	.text       start:0x800BB8E8 end:0x800BBD60
+
+nu3dx/nuwater.c:
+	.text       start:0x800BBD60 end:0x800BD358
+
+nucore/nufpar.c:
+	.text       start:0x800BE18C end:0x800BE488
+
+numath/numtx.c:
+	.text       start:0x800BFE58 end:0x800C050C
+
+nuraster/dxframe.c:
+	.text       start:0x800C1C64 end:0x800C20D0
+
+nusound/nusound.c:
+	.text       start:0x800C20D0 end:0x800C28C0
+
+system/gs/gs.c:
+	.text       start:0x800C8B14 end:0x800C9AFC
+
+system/gs/gslight.c:
+	.text       start:0x800C9C24 end:0x800CA60C
+
+system/gs/gsprim.c:
+	.text       start:0x800CA60C end:0x800CB6D8
+
+system/gs/gstex.c:
+	.text       start:0x800CB6D8 end:0x800CC0F4
+
+system/ss/ss.c:
+	.text       start:0x800CC180 end:0x800CC328
+
+system/ss/ssmix.c:
+	.text       start:0x800CD2BC end:0x800CD988
