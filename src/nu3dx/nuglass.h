@@ -73,5 +73,7 @@ float glass_strength;
 
 float plr_invisibility_time;
 
+void ProcessGlass(s32 paused);
+void DrawGlassCreatures(s32 solid);
 
 #endif // !NUGLASS_H

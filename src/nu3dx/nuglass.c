@@ -1,7 +1,13 @@
 #include "nuglass.h"
+#include "../nucore/nuerror.h"
+#include "numtl.h"
+#include "nugobj.h"
+#include "nurndr.h"
+#include "../gamecode/creature.h"
 #include "../system.h"
 
 static s32 spectid;
+extern s32 Level;
 
 //MATCH NGC
 void InitSpecular() {

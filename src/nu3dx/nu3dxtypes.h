@@ -5,7 +5,6 @@
 #include "string.h"
 #include"system/gxtype.h"
 #include"system/gs.h"
-#include "gamecode/camera.h"
 
 s32 initialised;
 s32 force_decal;

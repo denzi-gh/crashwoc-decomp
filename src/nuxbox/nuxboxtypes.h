@@ -2,8 +2,6 @@
 #define NUXBOXTYPES_H
 
 #include"types.h"
-#include "../nu.h"
-#include "nu3dx/nu3dxtypes.h"
 
 const struct numtx_s numtx_identity;
 s32 CausticTextures[32];
@@ -75,6 +73,7 @@ struct mask_s {
     signed char hold; // Offset: 0x18F, DWARF: 0x268ECA
 };
 
+#ifndef WOC_XINPUT_TYPES_DEFINED
 // Size: 0x12
 struct _XINPUT_GAMEPAD
 {
@@ -171,5 +170,6 @@ struct nupad_s
     unsigned char l2_alg; // Offset: 0xF2, DWARF: 0x2016A
     unsigned char r2_alg; // Offset: 0xF3, DWARF: 0x20193
 };
+#endif
 
 #endif // !NUXBOXTYPES_H

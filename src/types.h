@@ -76,6 +76,9 @@ struct nucolour3_s
 	f32 b;
 };
 
+#ifndef WOC_XINPUT_TYPES_DEFINED
+#define WOC_XINPUT_TYPES_DEFINED
+
 // Size: 0x18
 struct _XINPUT_STATE
 {
@@ -152,6 +155,7 @@ struct nupad_s
     unsigned char l2_alg; // Offset: 0xF2
     unsigned char r2_alg; // Offset: 0xF3
 };
+#endif
 
 struct nupad_s* Pad[2];
 s32 nuvideo_global_vbcnt;

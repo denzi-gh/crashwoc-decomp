@@ -3,7 +3,6 @@
 
 #include "../types.h"
 #include "../nu.h"
-#include "gamecode/main.h"
 
 
 s32 font3d_initialised;
