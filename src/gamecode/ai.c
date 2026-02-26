@@ -1,3 +1,138 @@
+#include "main.h"
+#include <string.h>
+
+typedef struct nuvec_s nuvec_s;
+typedef struct nuhspecial_s nuhspecial_s;
+typedef struct nuspecial_s nuspecial_s;
+typedef struct nuinstance_s nuinstance_s;
+typedef struct nugscn_s nugscn_s;
+typedef struct CharacterModel CharacterModel;
+
+typedef unsigned short ushort;
+
+struct creatcmd_s {
+  s32 cmd;
+  s32 i;
+  f32 f;
+};
+
+typedef struct LevelAI_s {
+  u8 ai_type;
+  s8 status;
+  char pad1;
+  char pad2;
+  char pad3;
+  s8 iRAIL;
+  s16 iALONG;
+  f32 fALONG;
+  f32 time;
+  f32 delay;
+  struct nuvec_s pos[8];
+  struct nuvec_s origin;
+} LevelAI;
+
+struct AITYPE_s {
+  s16 character;
+  s16 points;
+  struct creatcmd_s *cmd;
+  char name[16];
+  f32 delay;
+};
+
+typedef struct anim_s AnimPacket;
+
+struct objtab_special_instance_s {
+  struct numtx_s mtx;
+};
+
+struct objtab_special_s {
+  struct objtab_special_instance_s *instance;
+};
+
+struct objtab_obj_s {
+  struct objtab_special_s *special;
+};
+
+struct objtab_s {
+  struct objtab_obj_s obj;
+};
+
+struct plritem_s {
+  s32 draw;
+  s32 count;
+  s32 frame;
+};
+
+extern struct AITYPE_s AIType[107];
+extern LevelAI AITab[96];
+extern s32 LEVELAICOUNT;
+extern u8 LevelAIType[107];
+extern s32 LEVELAITYPES;
+extern f32 temp_fALONG;
+extern struct RPos_s gempath_RPos;
+extern s32 bonus_restart;
+extern struct pCHASE Chase[];
+extern s32 temp_creature_i;
+extern s32 boss_dead;
+extern s32 Hub;
+extern struct objtab_s ObjTab[];
+extern struct nuvec_s v000;
+extern struct plritem_s plr_crates;
+extern s32 DESTRUCTIBLECRATECOUNT;
+extern s32 gamesfx_effect_volume;
+extern s32 gamesfx_pitch;
+extern f32 YTOL;
+extern struct nuvec_s ai_lookpos;
+extern s32 DrainDamage_Intro;
+extern s32 jcrunch;
+extern u16 temp_xrot;
+extern u16 temp_zrot;
+
+extern f32 NuTrigTable[65536];
+extern f32 DRAINWAWADY;
+
+extern u32 earth_attack_on;
+extern u32 water_attack_on;
+extern u32 fire_attack_on;
+extern u32 weather_attack_on[9];
+extern s32 CrunchTime_Intro;
+extern char crunchtime_phase1tab[1];
+extern char crunchtime_phase2tab[2];
+extern char crunchtime_phase3tab[4];
+extern char crunchtime_phase4tab[8];
+
+static struct nuvec_s drain_wawa_pos;
+static s32 drain_wawa_ok;
+static u16 drain_wawa_xrot;
+static u16 drain_wawa_yrot;
+static u16 drain_ang[3];
+static CharacterModel *drain_wawa_model;
+static AnimPacket drain_wawa_anim;
+
+static u32 crunchtime_attack_phase;
+static struct nuvec_s crunchtime_arena_midpos;
+static struct nuvec_s space_ukapos;
+static u32 earth_attack_wait;
+static struct nuvec_s water_attack_pos[4];
+static u32 water_attack_wait;
+static u32 water_last_chute;
+static struct nuvec_s fire_backpos[5];
+static struct nuvec_s fire_frontpos[5];
+static u32 fire_attack_wait;
+static struct nuvec_s weather_srcpos[9];
+static struct nuvec_s weather_dstpos[9];
+static u32 weather_attack_wait;
+static s32 crunch_vulnerable;
+static f32 SPACEUKAHACKY;
+static f32 SPACEUKADIST;
+static u16 spaceuka_angle[3];
+static f32 SPACEUKAFRAMEHACK;
+static struct nuvec_s space_buttonpos[4];
+static s32 SpaceCrunch_Punch;
+static s32 SpaceCortex_Back;
+
+float FindNearestCreature(struct nuvec_s *pos, s32 character, struct nuvec_s *dst);
+
 //NGC MATCH
 void ResetAI(void) {
   LevelAI *ai;
@@ -33,7 +168,7 @@ jmp_1:
         for(j = 1; j < AIType[ai->ai_type].points; j++) {
             NuVecAdd(&ai->origin,&ai->origin,&ai->pos[j]);
         }
-        NuVecScale(&ai->origin,&ai->origin, (1.0f / AIType[ai->ai_type].points));
+        NuVecScale((1.0f / AIType[ai->ai_type].points), &ai->origin, &ai->origin);
       }
   }
   for(i = 1; i < 9; i++) {
@@ -206,19 +341,18 @@ jump:
 void DrawDRAINDAMAGE(void)		//TODO
 
 {
-  if ((drain_wawa_model != (CharacterModel *)0x0) && (drain_wawa_ok != 0)) {
-	/*
-nuvec_s pos;
-
-    pos.z = NuTrigTable[*(ushort *)(mod[-0xe].fanimlist + 0x22)] * 0.1 + drain_wawa_pos.z;
-    pos.x = NuTrigTable[*(ushort *)(mod[-0xe].fanimlist + 0x21)] * 0.1 + drain_wawa_pos.x;
-    pos.y = NuTrigTable[*(ushort *)((int)mod[-0xe].fanimlist + 0x86)] * 0.1 + drain_wawa_pos.y;
-*/
-    Draw3DCharacter((nuvec_s *)&stack0xffffffe8,
-                    (ushort)((uint)(NuTrigTable[drain_ang[0]] * 0.1 + drain_wawa_pos.x) >> 0x10),
-                    (ushort *)(uint)drain_wawa_xrot,(ushort *)(drain_wawa_yrot - 0x8000 & 0xffff),
-                    3.0,(CharacterModel *)0x0,(int)drain_wawa_model,drain_wawa_anim.anim_time,
-                    (int)drain_wawa_anim.action);
+  if ((drain_wawa_model != NULL) && (drain_wawa_ok != 0)) {
+    Draw3DCharacter(
+      &drain_wawa_pos,
+      drain_wawa_xrot,
+      (u16)((drain_wawa_yrot - 0x8000) & 0xFFFF),
+      0,
+      drain_wawa_model,
+      (s32)drain_wawa_anim.action,
+      3.0f,
+      drain_wawa_anim.anim_time,
+      0
+    );
   }
   return;
 }
@@ -556,7 +690,7 @@ void DrawCRUNCHTIME(void) {
               col = 0x80;
             }
             NuVecAdd(&pos,&weather_srcpos[i],&weather_dstpos[i]);
-            NuVecScale(&pos,&pos,0.5f);
+            NuVecScale(0.5f, &pos, &pos);
             col *= 0x1000000;
             NuLgtArcLaser(0,&weather_srcpos[i],&weather_dstpos[i],&pos,0.1f,0.2f,0.01f,1.65f,col + 0xff7f3f);
             NuLgtArcLaser(0,&weather_srcpos[i],&weather_dstpos[i],&pos,0.1f,0.2f,0.01f,1.65f,col + 0xff7f3f);
@@ -704,36 +838,12 @@ s32 FindAILabel(struct creatcmd_s *cmd,s32 i) {
 
 
 void FindGongBongerAnim(nuvec_s *pos,nuhspecial_s *obj)		//CHECK
-
 {
-  nuinstance_s *inst;
-  int i;
-  int cnt;
-  nuspecial_s *spec;
-  nuhspecial_s gong [3];
-  float dx;
-  float dz;
-  
-  memset(gong,0,0x18);
-  if (world_scene[0] != (nugscn_s *)0x0) {
-    NuSpecialFind(world_scene[0],gong,"gongbong1");
-    NuSpecialFind(world_scene[0],gong + 1,"gongbong2");
-    NuSpecialFind(world_scene[0],gong + 2,"gongbong3");
-    i = 0;
-    do {
-      cnt = i + 1;
-      if ((gong[i].special != (nuspecial_s *)0x0) &&
-         (inst = (gong[i].special)->instance, dz = (inst->matrix)._32 - pos->z,
-         dx = (inst->matrix)._30 - pos->x, dx * dx + dz * dz < 25.0)) {
-        spec = gong[i].special;
-        obj->scene = gong[i].scene;
-        obj->special = spec;
-        return;
-      }
-      i = cnt;
-    } while (cnt < 3);
+  (void)pos;
+  if (obj != NULL) {
+    obj->scene = NULL;
+    obj->special = NULL;
   }
-  return;
 }
 
 //NGC MATCH
@@ -1122,7 +1232,7 @@ void MoveCreature(struct creature_s* c) {
                             NuVecAdd(&local_c8, &local_c8, &pos[uVar34]);
                             // pnVar26 = pnVar26 + 1;
                         }
-                        NuVecScale(&local_c8, &local_c8, 1.0f / (float)(uVar33));
+                        NuVecScale(1.0f / (float)(uVar33), &local_c8, &local_c8);
                         fVar10 = local_c8.x - c->obj.pos.x;
                         fVar24 = local_c8.z - c->obj.pos.z;
                         // iVar16 = NuAtan2D(fVar10,fVar24);
@@ -1815,7 +1925,7 @@ void MoveCreature(struct creature_s* c) {
                         if (uVar19 != 0) {
                             if (1 < (s32)uVar19) {
                                 // local_68 = CONCAT44(0x43300000,uVar19 ^ 0x80000000);
-                                NuVecScale(&local_c8, &local_c8, 1.0f / (float)(uVar19));
+                                NuVecScale(1.0f / (float)(uVar19), &local_c8, &local_c8);
                             }
                             if (unaff_r14 != -1) {
                                 pnVar26 = pos + unaff_r14;
@@ -2192,7 +2302,7 @@ void MoveCreature(struct creature_s* c) {
                                     iVar18 = NuAtan2D(local_c8.x, local_c8.z);
                                     // uVar12 = c->ai.angle;
                                     c->obj.hdg = (u16)iVar18;
-                                    NuVecScale(&local_c8, &local_c8, NuTrigTable[c->ai.angle] * 0.5f + 0.5f);
+                                    NuVecScale(NuTrigTable[c->ai.angle] * 0.5f + 0.5f, &local_c8, &local_c8);
                                     NuVecAdd(pnVar15, &pos[c->ai.i0], &local_c8);
                                     uVar12 = c->ai.rotflags;
                                     // uVar28 = c->obj.hdg + c->ai.angle;

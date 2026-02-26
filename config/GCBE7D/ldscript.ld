@@ -13,5 +13,8 @@ SECTIONS
 
   _SDA_BASE_ = 0x803DA260;
   _SDA2_BASE_ = 0x803EA260;
-  _stack_end = 0x803D4BD4;
+  _stack_end = 0x803D5DA0;
+  _stack_addr = 0x803E5DA0;
+  __ArenaLo = 0x803E5DC0;
+  __ArenaHi = 0x81780000;
 }

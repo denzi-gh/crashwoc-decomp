@@ -101,7 +101,7 @@ struct game_s Game;
 
 // Size: 0x58
 struct ldata_s {
-    char * filepath;
+    char * path;
     u8 * clist; /* modelList */
     struct pCHASE * pChase;
     u32 time[3];

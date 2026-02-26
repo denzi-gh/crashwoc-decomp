@@ -25,6 +25,7 @@ typedef signed short s16;
 
 // Unsigned word.
 typedef unsigned int u32;
+typedef unsigned int uint;
 
 // Signed word.
 typedef signed int s32;
