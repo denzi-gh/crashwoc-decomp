@@ -51,8 +51,8 @@ parser.add_argument(
 parser.add_argument(
     "--toolchain",
     choices=["mw", "prodg35"],
-    default="mw",
-    help="compiler/linker profile (default: mw)",
+    default="prodg35",
+    help="compiler/linker profile (default: prodg35)",
 )
 parser.add_argument(
     "--build-dir",
@@ -338,12 +338,15 @@ def MatchingFor(*versions):
     return config.version in versions
 
 
-# Seed object list derived from existing map-style annotations in source headers.
-# Keep these as NonMatching until each unit is verified as fully matching.
+# Buildable seed object list.
+# Expand this list incrementally as compile issues are fixed.
 SEED_GAME_OBJECTS = [
     "nusound/nusound.c",
-    "system/ss/ss.c",
 ]
+
+# Objects considered "complete" for objdiff progress.
+# Keep this conservative; only include units you want counted as linked/matched.
+MATCHED_GAME_OBJECTS = set()
 
 
 config.warn_missing_config = False
@@ -354,7 +357,7 @@ config.libs = [
         "mw_version": config.linker_version,
         "cflags": cflags_base,
         "progress_category": "game",
-        "objects": [Object(NonMatching, obj) for obj in SEED_GAME_OBJECTS],
+        "objects": [Object(Matching if obj in MATCHED_GAME_OBJECTS else NonMatching, obj) for obj in SEED_GAME_OBJECTS],
     },
     {
         "lib": "Runtime.PPCEABI.H",
