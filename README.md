@@ -1,4 +1,4 @@
-# opencrashwoc (dtk migration)
+# opencrashwoc
 
 this repo is for decomp work on **crash bandicoot: the wrath of cortex** (gamecube, ntsc-u `GCBE7D`).
 
