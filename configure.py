@@ -49,6 +49,12 @@ parser.add_argument(
     help="version to build",
 )
 parser.add_argument(
+    "--toolchain",
+    choices=["mw", "prodg35"],
+    default="mw",
+    help="compiler/linker profile (default: mw)",
+)
+parser.add_argument(
     "--build-dir",
     metavar="DIR",
     type=Path,
@@ -173,10 +179,14 @@ config.asflags = [
     f"-I build/{config.version}/include",
     f"--defsym BUILD_VERSION={version_num}",
 ]
-config.ldflags = [
-    "-fp hardware",
-    "-nodefaults",
-]
+if args.toolchain == "prodg35":
+    # ProDG ngcld does not accept Metrowerks linker flags like -fp/-nodefaults.
+    config.ldflags = []
+else:
+    config.ldflags = [
+        "-fp hardware",
+        "-nodefaults",
+    ]
 if args.debug:
     config.ldflags.append("-g")  # Or -gdwarf-2 for Wii linkers
 if args.map:
@@ -192,29 +202,41 @@ config.scratch_preset_id = None
 
 # Base flags, common to most GC/Wii games.
 # Generally leave untouched, with overrides added below.
-cflags_base = [
-    "-nodefaults",
-    "-proc gekko",
-    "-align powerpc",
-    "-enum int",
-    "-fp hardware",
-    "-Cpp_exceptions off",
-    # "-W all",
-    "-O4,p",
-    "-inline auto",
-    '-pragma "cats off"',
-    '-pragma "warn_notinlined off"',
-    "-maxerrors 1",
-    "-nosyspath",
-    "-RTTI off",
-    "-fp_contract on",
-    "-str reuse",
-    "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
-    "-i include",
-    f"-i build/{config.version}/include",
-    f"-DBUILD_VERSION={version_num}",
-    f"-DVERSION_{config.version}",
-]
+if args.toolchain == "prodg35":
+    # From AutoDecomp_WOC/flags.json: "-O2 -mps-float -g2"
+    cflags_base = [
+        "-O2",
+        "-mps-float",
+        "-g2",
+        "-I include",
+        f"-I build/{config.version}/include",
+        f"-DBUILD_VERSION={version_num}",
+        f"-DVERSION_{config.version}",
+    ]
+else:
+    cflags_base = [
+        "-nodefaults",
+        "-proc gekko",
+        "-align powerpc",
+        "-enum int",
+        "-fp hardware",
+        "-Cpp_exceptions off",
+        # "-W all",
+        "-O4,p",
+        "-inline auto",
+        '-pragma "cats off"',
+        '-pragma "warn_notinlined off"',
+        "-maxerrors 1",
+        "-nosyspath",
+        "-RTTI off",
+        "-fp_contract on",
+        "-str reuse",
+        "-multibyte",  # For Wii compilers, replace with `-enc SJIS`
+        "-i include",
+        f"-i build/{config.version}/include",
+        f"-DBUILD_VERSION={version_num}",
+        f"-DVERSION_{config.version}",
+    ]
 
 # Debug flags
 if args.debug:
@@ -231,24 +253,36 @@ elif args.warn == "off":
 elif args.warn == "error":
     cflags_base.append("-W error")
 
-# Metrowerks library flags
-cflags_runtime = [
-    *cflags_base,
-    "-use_lmw_stmw on",
-    "-str reuse,pool,readonly",
-    "-gccinc",
-    "-common off",
-    "-inline auto",
-]
+if args.toolchain == "prodg35":
+    cflags_runtime = [*cflags_base]
+    cflags_rel = [*cflags_base]
+else:
+    # Metrowerks library flags
+    cflags_runtime = [
+        *cflags_base,
+        "-use_lmw_stmw on",
+        "-str reuse,pool,readonly",
+        "-gccinc",
+        "-common off",
+        "-inline auto",
+    ]
 
-# REL flags
-cflags_rel = [
-    *cflags_base,
-    "-sdata 0",
-    "-sdata2 0",
-]
+    # REL flags
+    cflags_rel = [
+        *cflags_base,
+        "-sdata 0",
+        "-sdata2 0",
+    ]
 
-config.linker_version = "GC/1.3.2"
+if args.toolchain == "prodg35":
+    config.linker_version = "ProDG/3.5"
+    # Used by the ProDG linker-script adapter in tools/project.py.
+    # Values can be overridden later once better symbols/map data is available.
+    config.prodg_sda_base = 0x803DA260
+    config.prodg_sda2_base = 0x803EA260
+    config.prodg_stack_end = 0x803D4BD4
+else:
+    config.linker_version = "GC/1.3.2"
 
 
 # Helper function for Dolphin libraries

@@ -15,6 +15,7 @@ import json
 import math
 import os
 import platform
+import re
 import sys
 from pathlib import Path
 from typing import (
@@ -356,6 +357,72 @@ def make_flags_str(flags: Optional[List[str]]) -> str:
     return " ".join(flags)
 
 
+def compiler_family(version: str) -> str:
+    if version.startswith(("GC/", "Wii/")):
+        return "mw"
+    if version.startswith("ProDG/"):
+        return "prodg"
+    sys.exit(f"Unsupported compiler family in version '{version}'")
+
+
+_AUTO_UNIT_RE = re.compile(r"(?:^|_)([0-9A-Fa-f]{8})_([A-Za-z0-9]+)$")
+
+
+def infer_section_starts(units: List["BuildConfigUnit"]) -> Dict[str, int]:
+    starts: Dict[str, int] = {}
+    for unit in units:
+        candidates = [unit["name"]]
+        if unit.get("object"):
+            candidates.append(Path(cast(str, unit["object"])).stem)
+        for candidate in candidates:
+            m = _AUTO_UNIT_RE.search(candidate)
+            if not m:
+                continue
+            addr = int(m.group(1), 16)
+            section = f".{m.group(2)}"
+            prev = starts.get(section)
+            if prev is None or addr < prev:
+                starts[section] = addr
+            break
+    return starts
+
+
+def write_prodg_linker_script(
+    path: Path,
+    units: List["BuildConfigUnit"],
+    sda_base: int,
+    sda2_base: int,
+    stack_end: int,
+) -> None:
+    starts = infer_section_starts(units)
+    if not starts:
+        sys.exit(
+            "Failed to infer section starts for ProDG linker script."
+            " Expected auto_XXXXXXXX_section unit naming."
+        )
+
+    section_lines = []
+    for section, addr in sorted(starts.items(), key=lambda item: item[1]):
+        body = f"*({section}) *({section}.*)"
+        if section == ".bss":
+            body += " *(COMMON)"
+        section_lines.append(f"  {section} 0x{addr:08X} : {{ {body} }}")
+
+    lines = [
+        "SECTIONS",
+        "{",
+        *section_lines,
+        f"  _SDA_BASE_ = 0x{sda_base:08X};",
+        f"  _SDA2_BASE_ = 0x{sda2_base:08X};",
+        f"  _stack_end = 0x{stack_end:08X};",
+        "}",
+        "",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines))
+
+
 def get_pch_out_name(config: ProjectConfig, pch: PrecompiledHeader) -> str:
     pch_rel_path = Path(pch["source"])
     pch_out_name = pch_rel_path.with_suffix(".mch")
@@ -662,6 +729,7 @@ def generate_build_ninja(
     ###
     # Build rules
     ###
+    linker_family = compiler_family(str(config.linker_version))
     compiler_path = compilers / "$mw_version"
 
     # MWCC
@@ -690,9 +758,29 @@ def generate_build_ninja(
     mwcc_sjis_extab_implicit: List[Optional[Path]] = [*mwcc_sjis_implicit, dtk]
 
     # MWLD
-    mwld = compiler_path / "mwldeppc.exe"
-    mwld_cmd = f"{wrapper_cmd}{mwld} $ldflags -o $out @$out.rsp"
-    mwld_implicit: List[Optional[Path]] = [compilers_implicit or mwld, wrapper_implicit]
+    linker_exe = "mwldeppc.exe" if linker_family == "mw" else "ngcld.exe"
+    linker = compiler_path / linker_exe
+    if linker_family == "mw":
+        linker_cmd = f"{wrapper_cmd}{linker} $ldflags -o $out @$out.rsp"
+    else:
+        # ngcld does not support MW-style rsp usage; pass object inputs directly.
+        linker_cmd = f"{wrapper_cmd}{linker} $ldflags -o $out $in"
+    linker_implicit: List[Optional[Path]] = [compilers_implicit or linker, wrapper_implicit]
+
+    # ProDG GCC
+    prodg_cc = compiler_path / "ngccc.exe"
+    if is_windows():
+        # ngccc requires SN_NGC_PATH (pointing to sn.ini) on Windows.
+        prodg_cc_cmd = (
+            f'{CHAIN}set "SN_NGC_PATH=$sn_ngc_path" && '
+            f"{wrapper_cmd}{prodg_cc} -c $in -o $out $cflags"
+        )
+    else:
+        prodg_cc_cmd = (
+            f'SN_NGC_PATH="$sn_ngc_path" '
+            f"{wrapper_cmd}{prodg_cc} -c $in -o $out $cflags"
+        )
+    prodg_cc_implicit: List[Optional[Path]] = [compilers_implicit or prodg_cc, wrapper_implicit]
 
     # GNU as
     gnu_as = binutils / f"powerpc-eabi-as{EXE}"
@@ -720,13 +808,20 @@ def generate_build_ninja(
         mwcc_sjis_extab_implicit.append(transform_dep)
 
     n.comment("Link ELF file")
-    n.rule(
-        name="link",
-        command=mwld_cmd,
-        description="LINK $out",
-        rspfile="$out.rsp",
-        rspfile_content="$in_newline",
-    )
+    if linker_family == "mw":
+        n.rule(
+            name="link",
+            command=linker_cmd,
+            description="LINK $out",
+            rspfile="$out.rsp",
+            rspfile_content="$in_newline",
+        )
+    else:
+        n.rule(
+            name="link",
+            command=linker_cmd,
+            description="LINK $out",
+        )
     n.newline()
 
     n.comment("Generate DOL")
@@ -774,6 +869,14 @@ def generate_build_ninja(
         description="MWCC $out",
         depfile="$basefile.d",
         deps="gcc",
+    )
+    n.newline()
+
+    n.comment("ProDG GCC build")
+    n.rule(
+        name="prodg_cc",
+        command=prodg_cc_cmd,
+        description="NGCCC $out",
     )
 
     n.comment("Assemble asm")
@@ -876,12 +979,34 @@ def generate_build_ninja(
         return path.parent / (path.name + ".MAP")
 
     class LinkStep:
-        def __init__(self, config: BuildConfigModule) -> None:
-            self.name = config["name"]
-            self.module_id = config["module_id"]
-            self.ldscript: Optional[Path] = Path(config["ldscript"])
-            self.entry = config["entry"]
+        def __init__(self, module_config: BuildConfigModule) -> None:
+            self.name = module_config["name"]
+            self.module_id = module_config["module_id"]
+            self.ldscript: Optional[Path] = Path(module_config["ldscript"])
+            self.entry = module_config["entry"]
+            self.units = module_config["units"]
             self.inputs: List[str] = []
+            self.prodg_ldscript: Optional[Path] = None
+
+            if linker_family == "prodg":
+                if self.module_id != 0:
+                    sys.exit("ProDG linker mode currently supports only the main DOL module")
+                sda_base = getattr(config, "prodg_sda_base", None)
+                sda2_base = getattr(config, "prodg_sda2_base", None)
+                stack_end = getattr(config, "prodg_stack_end", None)
+                if sda_base is None or sda2_base is None or stack_end is None:
+                    sys.exit(
+                        "Missing ProDG linker constants on ProjectConfig."
+                        " Set prodg_sda_base, prodg_sda2_base, and prodg_stack_end in configure.py."
+                    )
+                self.prodg_ldscript = build_path / f"{self.name}.prodg.ld"
+                write_prodg_linker_script(
+                    self.prodg_ldscript,
+                    self.units,
+                    int(sda_base),
+                    int(sda2_base),
+                    int(stack_end),
+                )
 
         def add(self, obj: Path) -> None:
             self.inputs.append(serialize_path(obj))
@@ -902,20 +1027,27 @@ def generate_build_ninja(
             n.comment(f"Link {self.name}")
             if self.module_id == 0:
                 elf_path = build_path / f"{self.name}.elf"
-                elf_ldflags = f"$ldflags -lcf {serialize_path(self.ldscript)}"
-                if config.generate_map:
-                    elf_map = map_path(elf_path)
-                    elf_ldflags += f" -map {serialize_path(elf_map)}"
-                else:
+                if linker_family == "prodg":
+                    if self.prodg_ldscript is None:
+                        sys.exit("ProDG linker script not generated")
+                    elf_ldflags = f"$ldflags -T {serialize_path(self.prodg_ldscript)}"
+                    if self.entry:
+                        elf_ldflags += f" -e {self.entry}"
                     elf_map = None
+                    link_implicit: List[Optional[Path]] = [self.prodg_ldscript, *linker_implicit]
+                else:
+                    elf_ldflags = f"$ldflags -lcf {serialize_path(self.ldscript)}"
+                    if config.generate_map:
+                        elf_map = map_path(elf_path)
+                        elf_ldflags += f" -map {serialize_path(elf_map)}"
+                    else:
+                        elf_map = None
+                    link_implicit = [self.ldscript, *linker_implicit]
                 n.build(
                     outputs=elf_path,
                     rule="link",
                     inputs=self.inputs,
-                    implicit=[
-                        self.ldscript,
-                        *mwld_implicit,
-                    ],
+                    implicit=link_implicit,
                     implicit_outputs=elf_map,
                     variables={"ldflags": elf_ldflags},
                     order_only="post-compile",
@@ -942,7 +1074,7 @@ def generate_build_ninja(
                     outputs=preplf_path,
                     rule="link",
                     inputs=self.inputs,
-                    implicit=mwld_implicit,
+                    implicit=linker_implicit,
                     implicit_outputs=preplf_map,
                     variables={"ldflags": preplf_ldflags},
                     order_only="post-compile",
@@ -951,7 +1083,7 @@ def generate_build_ninja(
                     outputs=plf_path,
                     rule="link",
                     inputs=self.inputs,
-                    implicit=[self.ldscript, preplf_path, *mwld_implicit],
+                    implicit=[self.ldscript, preplf_path, *linker_implicit],
                     implicit_outputs=plf_map,
                     variables={"ldflags": plf_ldflags},
                     order_only="post-compile",
@@ -981,6 +1113,9 @@ def generate_build_ninja(
 
                 cflags_str = make_flags_str(cflags)
                 shift_jis = pch.get("shift_jis", config.shift_jis)
+                pch_family = compiler_family(str(pch["mw_version"]))
+                if pch_family != "mw":
+                    sys.exit("Precompiled headers are currently only supported for Metrowerks toolchains")
 
                 n.comment(f"Precompiled header {pch_out_name}")
                 n.build(
@@ -1022,34 +1157,41 @@ def generate_build_ninja(
 
             all_cflags = cflags + extra_cflags
             cflags_str = make_flags_str(all_cflags)
-            used_compiler_versions.add(obj.options["mw_version"])
+            compiler_version = cast(str, obj.options["mw_version"])
+            compiler_family_name = compiler_family(compiler_version)
+            used_compiler_versions.add(compiler_version)
 
-            # Add MWCC build rule
+            # Add compiler build rule
             lib_name = obj.options["lib"]
             build_rule = "mwcc"
             build_implcit = mwcc_implicit
             variables = {
-                "mw_version": Path(obj.options["mw_version"]),
+                "mw_version": Path(compiler_version),
                 "cflags": cflags_str,
                 "basedir": os.path.dirname(obj.src_obj_path),
                 "basefile": obj.src_obj_path.with_suffix(""),
             }
 
-            if obj.options["shift_jis"] and obj.options["extab_padding"] is not None:
-                build_rule = "mwcc_sjis_extab"
-                build_implcit = mwcc_sjis_extab_implicit
-                variables["extab_padding"] = "".join(
-                    f"{i:02x}" for i in obj.options["extab_padding"]
-                )
-            elif obj.options["shift_jis"]:
-                build_rule = "mwcc_sjis"
-                build_implcit = mwcc_sjis_implicit
-            elif obj.options["extab_padding"] is not None:
-                build_rule = "mwcc_extab"
-                build_implcit = mwcc_extab_implicit
-                variables["extab_padding"] = "".join(
-                    f"{i:02x}" for i in obj.options["extab_padding"]
-                )
+            if compiler_family_name == "prodg":
+                build_rule = "prodg_cc"
+                build_implcit = prodg_cc_implicit
+                variables["sn_ngc_path"] = compilers / compiler_version / "sn.ini"
+            else:
+                if obj.options["shift_jis"] and obj.options["extab_padding"] is not None:
+                    build_rule = "mwcc_sjis_extab"
+                    build_implcit = mwcc_sjis_extab_implicit
+                    variables["extab_padding"] = "".join(
+                        f"{i:02x}" for i in obj.options["extab_padding"]
+                    )
+                elif obj.options["shift_jis"]:
+                    build_rule = "mwcc_sjis"
+                    build_implcit = mwcc_sjis_implicit
+                elif obj.options["extab_padding"] is not None:
+                    build_rule = "mwcc_extab"
+                    build_implcit = mwcc_extab_implicit
+                    variables["extab_padding"] = "".join(
+                        f"{i:02x}" for i in obj.options["extab_padding"]
+                    )
             n.comment(f"{obj.name}: {lib_name} (linked {obj.completed})")
             n.build(
                 outputs=obj.src_obj_path,
@@ -1198,14 +1340,16 @@ def generate_build_ninja(
 
         # Check if all compiler versions exist
         for mw_version in used_compiler_versions:
-            mw_path = compilers / mw_version / "mwcceppc.exe"
-            if config.compilers_path and not os.path.exists(mw_path):
-                sys.exit(f"Compiler {mw_path} does not exist")
+            family = compiler_family(mw_version)
+            compiler_exe = "mwcceppc.exe" if family == "mw" else "ngccc.exe"
+            compiler_path = compilers / mw_version / compiler_exe
+            if config.compilers_path and not os.path.exists(compiler_path):
+                sys.exit(f"Compiler {compiler_path} does not exist")
 
         # Check if linker exists
-        mw_path = compilers / str(config.linker_version) / "mwldeppc.exe"
-        if config.compilers_path and not os.path.exists(mw_path):
-            sys.exit(f"Linker {mw_path} does not exist")
+        linker_path = compilers / str(config.linker_version) / linker_exe
+        if config.compilers_path and not os.path.exists(linker_path):
+            sys.exit(f"Linker {linker_path} does not exist")
 
         # Add all build steps needed before we link and after compiling objects
         write_custom_step("post-compile", "pre-compile")
@@ -1600,6 +1744,7 @@ def generate_objdiff_config(
 
     # decomp.me compiler name mapping
     COMPILER_MAP = {
+        "ProDG/3.5": "prodg_35",
         "GC/1.0": "mwcc_233_144",
         "GC/1.1": "mwcc_233_159",
         "GC/1.1p1": "mwcc_233_159p1",
