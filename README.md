@@ -63,7 +63,7 @@ ninja report
 
 build all currently configured source units:
 ```powershell
-ninja all_source
+ninja
 ```
 
 ## symbols + splits workflow
@@ -75,12 +75,7 @@ ninja all_source
 draft helper:
 ```powershell
 py -3 tools/extract_symbol_drafts.py --version GCBE7D
-```
-
-## ci note
-
-`.github.example/` is not enabled by default.
-the sample workflow expects a private container with licensed toolchain/orig data.
+``
 
 ## community
 
