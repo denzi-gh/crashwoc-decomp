@@ -15,8 +15,8 @@ hash: 0123456789abcdef0123456789abcdef01234567
 # decomp-toolkit will search the root of this directory for any disc images. (ISO, RVZ, WBFS, etc.)
 # If a disc image is found, decomp-toolkit will fetch all objects from the disc image instead of the filesystem.
 # For example, if `game.iso` exists in the `object_base`, the object path would become the VFS path
-# `orig/GAMEID/game.iso:sys/main.dol`. See information on the VFS above.
-object_base: orig/GAMEID
+# `orig/GCBE7D/game.iso:sys/main.dol`. See information on the VFS above.
+object_base: orig/GCBE7D
 # (optional) If true, objects will be extracted from a disc image into `object_base`.
 # This allows users to delete the disc image after the initial build to save space.
 # Enabled by default if `object_base` is set.
@@ -25,17 +25,17 @@ extract_objects: true
 # (optional) Path to the symbols.txt file.
 # This file will be created if it does not exist.
 # See docs/symbols.md for more information.
-symbols: config/GAMEID/symbols.txt
+symbols: config/GCBE7D/symbols.txt
 # (optional) Path to the splits.txt file.
 # This file will be created if it does not exist.
 # See docs/splits.md for more information.
-splits: config/GAMEID/splits.txt
+splits: config/GCBE7D/splits.txt
 
 # (optional) Path to the DOL's .map file.
 # This path is relative to the root of the project, and is _not_ affected by `object_base`.
 # This should only used for initial analysis, and generating the symbols and splits files.
 # Once those files are generated, remove this to avoid conflicts.
-map: orig/GAMEID/files/main.MAP
+map: orig/GCBE7D/files/main.MAP
 # (optional) Start address of common BSS symbols, if any.
 # Useful along with `map`, but not required otherwise, since common BSS
 # is marked in the splits file.
@@ -94,7 +94,7 @@ export_all: true
 
 # (optional) Custom template for `ldscript.lcf`. Avoid unless necessary.
 # See https://github.com/encounter/decomp-toolkit/blob/main/assets/ldscript.lcf
-ldscript_template: config/GAMEID/module/ldscript.tpl
+ldscript_template: config/GCBE7D/module/ldscript.tpl
 
 # (optional) Scrub uninitialized data from the extab section.
 # Certain extab acctions contain uninitialized data from the compiler.
@@ -123,22 +123,22 @@ modules:
   # (optional) Path to the module's symbols.txt file.
   # This file will be created if it does not exist.
   # See docs/symbols.md for more information.
-  symbols: config/GAMEID/module/symbols.txt
+  symbols: config/GCBE7D/module/symbols.txt
   # (optional) Path to the module's splits.txt file.
   # This file will be created if it does not exist.
   # See docs/splits.md for more information.
-  splits: config/GAMEID/module/splits.txt
+  splits: config/GCBE7D/module/splits.txt
 
   # (optional) Path to the module's .map file.
   # See `map` above for more information.
-  map: orig/GAMEID/files/module.MAP
+  map: orig/GCBE7D/files/module.MAP
 
   # (optional) Mark symbols as "force active" / "exported".
   force_active: []
 
   # (optional) Custom template for `ldscript.lcf`, if needed.
   # See https://github.com/encounter/decomp-toolkit/blob/main/assets/ldscript_partial.lcf
-  ldscript_template: config/GAMEID/module/ldscript.tpl
+  ldscript_template: config/GCBE7D/module/ldscript.tpl
 
   # (optional) By default, every REL is linked with every other REL.
   # Some games link RELs individually, so the module IDs are not unique.
@@ -156,12 +156,12 @@ extract:
   symbol: SomeSymbol
 
   # (optional) The path to extract raw binary data to.
-  # Path is relative to `build/GAMEID/bin`.
+  # Path is relative to `build/GCBE7D/bin`.
   binary: Lib/SomeSymbol.bin
 
   # (optional) The path to extract a C array representation to.
   # In a C/C++ file, the symbol can be included with `#include "Lib/SomeSymbol.inc"`.
-  # Path is relative to `build/GAMEID/include`.
+  # Path is relative to `build/GCBE7D/include`.
   header: Lib/SomeSymbol.inc
 
 # (optional) Block relocations from or to specific addresses.
@@ -186,3 +186,4 @@ add_relocations:
   type: sda21
   target: mesWInsert # Supports `symbol` or `symbol!.section:0x80001234`
   addend: -1
+
