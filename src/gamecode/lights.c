@@ -1,9 +1,34 @@
-extern char* LevelFileName;
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
 extern void* Chase[3]; //struct chase_s
+extern s32 GameMode;
+extern s32 gamecut;
+extern s32 cutmovie;
+extern s32 LIGHTCREATURES;
+extern struct nuvec_s v001;
 s32 POINTCOUNT;
 s32 AMBIENTCOUNT;
 s32 LIGHTCOUNT;
 s32 DIRECTCOUNT;
+f32 sf;
+f32 sf2;
+struct nuvec_s lcutdir[3];
+struct nucolour3_s lcutdircol[3];
+struct nuvec_s lcutambcol;
+struct nuvec_s titledir[3];
+struct nucolour3_s titlergb;
+struct nucolour3_s titlergb2;
+struct nuvec_s creditsdir[3];
+struct nucolour3_s creditsdircol[3];
+struct nuvec_s creditsrgb;
+struct nuvec_s ZVec;
+f32 intensity;
+s32 creditsang[3];
+struct nucolour3_s lcol[3];
+struct nuvec_s ldir[3];
+struct nuvec_s acol;
 
 struct glowlight_s
 {
@@ -441,7 +466,8 @@ void CalculateSingleLightProportion(struct nuvec_s *vec,struct pdir_s *light,s32
                     glob_vec.y *= glb_proportion;
                     glob_vec.z *= glb_proportion;
                     NuVecAdd(&blend_vec,&loc_vec,&glob_vec);
-                    if (NuVecNorm(&blend_vec,&blend_vec) > 0.0f) {
+                    if ((blend_vec.x != 0.0f) || (blend_vec.y != 0.0f) || (blend_vec.z != 0.0f)) {
+                      NuVecNorm(&blend_vec,&blend_vec);
                       (light->Direction) = blend_vec;
                     }
               }

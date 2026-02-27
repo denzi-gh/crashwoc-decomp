@@ -1,3 +1,186 @@
+#include "main.h"
+#include <stddef.h>
+
+typedef struct crate_s CRATE;
+
+struct crate_s {
+  s32 id;
+  char type[4];
+  struct nuvec_s pos;
+  struct crate_s* linked;
+  struct crate_s* trigger;
+  u16 orientation;
+  s16 offx;
+  s16 offy;
+  s16 offz;
+  s16 ccindex;
+  s8 draw;
+  s8 cpad1;
+};
+
+struct crate_type_s {
+  struct nuhspecial_s obj;
+  s32 id;
+  char* name;
+  s32 character;
+};
+
+typedef struct {
+  CRATE* model;
+  struct nuvec_s pos0;
+  struct nuvec_s pos;
+  f32 oldy;
+  f32 shadow;
+  f32 mom;
+  f32 timer;
+  f32 duration;
+  s8 on;
+  s8 iRAIL;
+  s16 iALONG;
+  f32 fALONG;
+  u16 flags;
+  s8 type1;
+  s8 type2;
+  s8 type3;
+  s8 type4;
+  s8 newtype;
+  s8 subtype;
+  s8 i;
+  s8 metal_count;
+  s8 appeared;
+  s8 in_range;
+  s16 dx;
+  s16 dy;
+  s16 dz;
+  s16 iU;
+  s16 iD;
+  s16 iN;
+  s16 iS;
+  s16 iE;
+  s16 iW;
+  s16 trigger;
+  s8 counter;
+  s8 anim_cycle;
+  s16 index;
+  f32 anim_time;
+  f32 anim_duration;
+  f32 anim_speed;
+  u16 xrot0;
+  u16 zrot0;
+  u16 xrot;
+  u16 zrot;
+  u16 surface_xrot;
+  u16 surface_zrot;
+  s16 character;
+  s16 action;
+  struct nuvec_s colbox[2];
+} CrateCube;
+
+typedef struct {
+  struct nuvec_s origin;
+  f32 radius;
+  s16 iCrate;
+  s16 nCrates;
+  u16 angle;
+  s8 pad1;
+  s8 pad2;
+  struct nuvec_s minclip;
+  struct nuvec_s maxclip;
+} CrateCubeGroup;
+
+typedef struct {
+  CrateCube* crate;
+  s8 type1;
+  s8 type2;
+  s8 type3;
+  s8 type4;
+} CRATETYPEDATA;
+
+typedef struct {
+  struct nuangvec_s ang;
+  struct nuangvec_s angmom;
+  struct nuvec_s pos;
+  struct nuvec_s mom;
+  s32 rndfade;
+} BoxPolType;
+
+typedef struct {
+  s16 time;
+  s16 type;
+  struct nuvec_s colbox[2];
+  BoxPolType BoxPol[36];
+} BoxExpType;
+
+struct objtab_s {
+  struct nuhspecial_s obj;
+  struct nugscn_s** scene;
+  char visible;
+  char font3d_letter;
+  char pad1;
+  char pad2;
+  char* name;
+  char unk[4];
+  u64 levbits;
+};
+
+static struct nulsthdr_s* crates;
+
+extern struct nugscn_s* crate_scene;
+extern volatile struct crate_type_s crate_list[29];
+extern s32 CRATECOUNT;
+extern CrateCube Crate[];
+extern s32 CRATEGROUPCOUNT;
+extern CrateCubeGroup CrateGroup[];
+extern CRATE* marker_crate;
+extern CRATE* flash_crate;
+extern CRATE* lock_crate;
+extern CRATE* locked_crate;
+extern CRATE* triggerorigin_crate;
+extern CRATE* triggerdest_crate;
+extern CRATE* highlight_crate;
+extern CRATE* highlighted_crate;
+extern CRATE MarkerCrate;
+extern CRATE FlashCrate;
+extern CRATE LockCrate;
+extern CRATE HighlightCrate;
+extern s32 current_selected_crate;
+extern char Chase[];
+extern CrateCubeGroup* temp_pGroup;
+extern CrateCube* temp_pCrate;
+extern CRATETYPEDATA CrateTypeData[32];
+extern s32 i_cratetypedata;
+extern s32 TimeTrial;
+extern s32 mask_crates;
+extern struct nuvec_s vNEWMASK;
+extern s32 newmask_advise;
+extern f32 TimeTrialWait;
+extern f32 plr_invisibility_time;
+extern s32 last_questionmark_extralife;
+extern s32 VEHICLECONTROL;
+extern f32 glass_mix;
+extern f32 glass_col_mix;
+extern s32 glass_col_enabled;
+extern s32 glass_enabled;
+extern f32 WATERBOSSGLASSMIX;
+extern BoxExpType BoxExpList[16];
+extern s32 iBOXEXP;
+extern f32 CRATEHOPSPEED;
+extern s32 level_part_2;
+extern s32 temp_crate_type;
+extern f32 CRATEBALLOONRADIUS;
+extern f32 CRATEBALLOONOFFSET;
+extern f32 temp_ratio;
+extern s32 temp_face;
+extern struct nuvec_s vTEMP;
+extern s32 cp_goto;
+extern struct nuvec_s cpGOTO;
+extern struct RPos_s* best_cRPos;
+extern s32 temp_crate_bounce;
+extern s32 Bonus;
+extern s32 DRAWCRATESHADOWS;
+extern struct cammtx_s* pCam;
+extern struct objtab_s ObjTab[201];
+
 //NGC MATCH
 void ResetCrateType2(CrateCube *crt) {
   crt->type2 = crt->type1;

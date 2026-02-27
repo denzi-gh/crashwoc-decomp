@@ -13,6 +13,144 @@ OSFont.c:
 	.rodata     start:0x80104920 end:0x80104940
 	.rodata     start:0x80104940 end:0x80104960
 
+ai.c:
+	.text       start:0x800032A0 end:0x80008F3C
+	.rodata     start:0x80104960 end:0x80104CD0
+	.data       start:0x80123BA0 end:0x8012C420
+	.sdata      start:0x803D2260 end:0x803D2288
+	.sbss       start:0x803D3BE0 end:0x803D3C38
+
+bug.c:
+	.text       start:0x80008F3C end:0x80009AB0
+	.rodata     start:0x80104CD0 end:0x80104F58
+	.bss        start:0x8016BB60 end:0x8016BCEC
+	.sdata      start:0x803D2288 end:0x803D22F8
+	.sbss       start:0x803D3C38 end:0x803D3C3C
+
+camera.c:
+	.text       start:0x80009AB0 end:0x8000E3B8
+	.rodata     start:0x80104F58 end:0x80105328
+	.sdata      start:0x803D22F8 end:0x803D2314
+	.sbss       start:0x803D3C3C end:0x803D3C40
+
+chase.c:
+	.text       start:0x8000E3B8 end:0x800106D4
+	.rodata     start:0x80105328 end:0x801056B8
+
+cloudfx.c:
+	.text       start:0x800106D4 end:0x80010EC8
+	.rodata     start:0x801056B8 end:0x80105978
+	.sdata      start:0x803D2314 end:0x803D2318
+
+crate.c:
+	.text       start:0x80010EC8 end:0x800170F8
+	.rodata     start:0x80105978 end:0x80105F40
+	.data       start:0x8012C420 end:0x8012C450
+	.sdata      start:0x803D2318 end:0x803D2404
+
+creature.c:
+	.text       start:0x800170F8 end:0x8001FEA4
+	.rodata     start:0x80105F40 end:0x80108520
+	.data       start:0x8012C450 end:0x801330E4
+
+credits.c:
+	.text       start:0x8001FEA4 end:0x800200F0
+	.rodata     start:0x80108520 end:0x80109668
+
+cut.c:
+	.text       start:0x800200F0 end:0x80022DAC
+	.rodata     start:0x80109668 end:0x8010A5C0
+	.data       start:0x801330E4 end:0x80136BA0
+	.bss        start:0x8016BCEC end:0x8016BEEC
+	.sdata      start:0x803D2404 end:0x803D243C
+	.sbss       start:0x803D3C40 end:0x803D3C7C
+
+deb3.c:
+	.text       start:0x80022DAC end:0x8002759C
+	.rodata     start:0x8010A5C0 end:0x8010AAD0
+	.sdata      start:0x803D243C end:0x803D2458
+
+font3d.c:
+	.text       start:0x8002759C end:0x80028EBC
+	.rodata     start:0x8010AAD0 end:0x8010AF08
+	.data       start:0x80136BA0 end:0x8013C734
+	.sdata      start:0x803D2458 end:0x803D2564
+
+game.c:
+	.text       start:0x80028EBC end:0x8003CF70
+	.rodata     start:0x8010AF08 end:0x8010CB58
+	.bss        start:0x8016BEEC end:0x8016C72C
+	.sdata      start:0x803D2564 end:0x803D2664
+
+game_deb.c:
+	.text       start:0x8003CF70 end:0x8003DF18
+	.rodata     start:0x8010CB58 end:0x8010D498
+
+game_obj.c:
+	.text       start:0x8003DF18 end:0x80045108
+	.rodata     start:0x8010D498 end:0x8010D908
+
+inst.c:
+	.text       start:0x80045108 end:0x8004535C
+	.rodata     start:0x8010D908 end:0x8010DB48
+	.sdata      start:0x803D2664 end:0x803D26E0
+
+jeep.c:
+	.text       start:0x8004535C end:0x8004C534
+	.rodata     start:0x8010DB48 end:0x8010E230
+	.data       start:0x8013C734 end:0x8013CA88
+	.bss        start:0x8016C72C end:0x8016C850
+	.sdata      start:0x803D26E0 end:0x803D276C
+	.sbss       start:0x803D3C7C end:0x803D3C80
+
+lights.c:
+	.text       start:0x8004C534 end:0x8004E904
+	.rodata     start:0x8010E230 end:0x8010E4E0
+
+listman.c:
+	.text       start:0x8004E904 end:0x8004EAC8
+	.rodata     start:0x8010E4E0 end:0x8010E720
+
+loadsave.c:
+	.text       start:0x8004EAC8 end:0x8004F584
+	.rodata     start:0x8010E720 end:0x8010EA08
+	.sdata      start:0x803D276C end:0x803D2794
+
+main.c:
+	.text       start:0x8004F584 end:0x800534CC
+	.rodata     start:0x8010EA08 end:0x8010F2F8
+	.data       start:0x8013CA88 end:0x8013F420
+	.sdata      start:0x803D2794 end:0x803D2D90
+	.sbss       start:0x803D3C80 end:0x803D3C90
+
+move.c:
+	.text       start:0x800534CC end:0x8005B57C
+	.rodata     start:0x8010F2F8 end:0x8010F780
+	.bss        start:0x8016C850 end:0x8016C970
+	.sbss       start:0x803D3C90 end:0x803D3C94
+
+panel.c:
+	.text       start:0x8005B57C end:0x80060D54
+	.rodata     start:0x8010F780 end:0x8010FC38
+
+sfx.c:
+	.text       start:0x80060D54 end:0x80061C64
+	.rodata     start:0x8010FC38 end:0x80111D1C
+	.data       start:0x8013F420 end:0x80144A78
+
+text.c:
+	.text       start:0x80061C64 end:0x8006210C
+	.rodata     start:0x80111D1C end:0x80117EC8
+	.bss        start:0x8016C970 end:0x8016CA88
+
+vehicle.c:
+	.text       start:0x8006210C end:0x8007A7C4
+	.rodata     start:0x80117EC8 end:0x80119058
+	.data       start:0x80144A78 end:0x80144D94
+	.bss        start:0x8016CA88 end:0x8016CAA0
+	.sdata      start:0x803D2D90 end:0x803D2F90
+	.sbss       start:0x803D3C94 end:0x803D3CD0
+
 NuSound.c:
 	.text       start:0x800C20D0 end:0x800C292C
 	.rodata     start:0x80120F58 end:0x801211B8
@@ -20,11 +158,3 @@ NuSound.c:
 GameCube_sn_libSN_crt0.s:
 	.init       start:0x8000319C end:0x800032A0
 	.data       start:0x801655D0 end:0x80165610
-
-
-ai.c:
-	.text       start:0x800032A0 end:0x80008F3C
-	.rodata     start:0x80104960 end:0x80104CD0
-	.data       start:0x80123BA0 end:0x8012C420
-	.sdata      start:0x803D2260 end:0x803D2288
-	.sbss       start:0x803D3BE0 end:0x803D3C38

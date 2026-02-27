@@ -10,6 +10,73 @@
   MemCardDelete
 */
 
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+struct _ULARGE_INTEGER {
+  unsigned long long QuadPart;
+};
+
+struct _FILETIME {
+  u32 dwLowDateTime;
+  u32 dwHighDateTime;
+};
+
+struct _SYSTEMTIME {
+  u16 wYear;
+  u16 wMonth;
+  u16 wDayOfWeek;
+  u16 wDay;
+  u16 wHour;
+  u16 wMinute;
+  u16 wSecond;
+  u16 wMilliseconds;
+};
+
+struct objtab_s {
+  struct nuhspecial_s obj;
+  struct nugscn_s **scene;
+  char visible;
+  char font3d_letter;
+  char pad1;
+  char pad2;
+  char *name;
+  char unk[4];
+  u64 levbits;
+};
+
+extern char *tTCR_SAVEBANK[6];
+extern char *tEMPTY[6];
+extern struct game_s SaveSlot[4];
+extern struct objtab_s ObjTab[201];
+extern struct GTimer GlobalTimer;
+extern struct numtl_s *numtl_white;
+
+extern s32 memcard_gamesavailable;
+extern s32 memcard_saveneeded;
+extern s32 memcard_savestarted;
+extern s32 memcard_savemessage_delay;
+extern s32 memcard_formatme;
+extern s32 memcard_formatting;
+extern s32 memcard_formatmessage_delay;
+extern s32 saveload_error;
+
+s32 saveload_status;
+s32 saveload_cardtype;
+s32 memcard_loadattempted;
+s32 memcard_loadmessage_delay;
+s32 memcard_saveresult_delay;
+s32 memcard_loadresult_delay;
+s32 memcard_loadcompleted;
+s32 memcard_deleteneeded;
+s32 memcard_deletestarted;
+f32 SLOTPANELSX;
+f32 SLOTPANELSZ;
+f32 SLOTPANELDX;
+f32 SLOTPANELDY;
+f32 menu_pulsate;
+
 //NGC MATCH
 void loadsaveCallEachFrame(void) {
   saveloadASCallEachFrame();

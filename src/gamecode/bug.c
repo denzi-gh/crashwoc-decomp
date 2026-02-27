@@ -1,3 +1,46 @@
+#include "main.h"
+#include <stddef.h>
+
+typedef unsigned short ushort;
+typedef struct anim_s AnimPacket;
+typedef struct CharacterModel CharacterModel;
+
+typedef struct {
+  char in_pad;
+  s8 in_iRAIL;
+  s16 in_iALONG;
+  f32 in_fALONG;
+  char out_pad;
+  s8 out_iRAIL;
+  s16 out_iALONG;
+  f32 out_fALONG;
+} BUGAREA;
+
+extern f32 temp_fALONG;
+extern struct RPos_s *best_cRPos;
+extern s32 GemPath;
+extern s32 VEHICLECONTROL;
+extern s32 FRAME;
+extern s32 FRAMES;
+
+BUGAREA BugArea[4];
+static f32 BUGFADETIME = 2.0f;
+static f32 mechlight_distance = 2.0f;
+static f32 mechlight_radius = 5.0f;
+static f32 mechlight_fade;
+static f32 buglight_distance_ = 2.0f;
+static f32 buglight_fade;
+static ushort buglight_ang[4];
+static struct nuvec_s bug_pos;
+static struct nuvec_s bug_splpos;
+static f32 bug_scale;
+static f32 bug_fade;
+s32 buglight_enable;
+AnimPacket BugAnim;
+static ushort bug_xrot;
+static ushort bug_yrot;
+static f32 bug_splratio;
+
 //NGC MATCH
 void InitBugAreas(void) {
   s32 index;
@@ -134,9 +177,9 @@ void UpdateBugLight(struct creature_s *c) {
   if (SplTab[70].spl != NULL) {
       pos = (player->obj).pos;
       if (best_cRPos != NULL) {
-        r = buglight_distance;
+        r = buglight_distance_;
         if ((best_cRPos->mode & 0xc) != 0) {
-          r = buglight_distance * 0.333f;
+          r = buglight_distance_ * 0.333f;
         }
         pos.x = NuTrigTable[best_cRPos->angle] * r + pos.x;
         pos.z = NuTrigTable[(best_cRPos->angle + 0x4000) & 0x2ffff] * r + pos.z;
@@ -189,8 +232,8 @@ void UpdateBugLight(struct creature_s *c) {
     bug_pos.y = (player->obj).top * (player->obj).SCALE + (player->obj).pos.y;
     bug_pos.z = (player->obj).pos.z;
     a = NuAtan2D(bug_pos.x - GameCam[0].pos.x,bug_pos.z - GameCam[0].pos.z);
-    bug_pos.x = NuTrigTable[a & 0xffff] * buglight_distance + bug_pos.x;
-    bug_pos.z = NuTrigTable[((a & 0xffff) + 0x4000) & 0x2ffff] * buglight_distance + bug_pos.z;
+    bug_pos.x = NuTrigTable[a & 0xffff] * buglight_distance_ + bug_pos.x;
+    bug_pos.z = NuTrigTable[((a & 0xffff) + 0x4000) & 0x2ffff] * buglight_distance_ + bug_pos.z;
   }
   buglight_ang[0] = (buglight_ang[0] + 0x20d);
   buglight_ang[1] = (buglight_ang[1] + 0x127);

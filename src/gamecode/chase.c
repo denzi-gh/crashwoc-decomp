@@ -1,3 +1,69 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+typedef struct anim_s AnimPacket;
+
+struct chaseevent_s {
+    struct nugspline_s* spl;
+    struct nuhspecial_s obj[24];
+};
+
+struct chase_s {
+    struct nugspline_s* spl_START;
+    float time;
+    float duration;
+    struct nugspline_s* spl_CHASER[6];
+    struct nuvec_s pos[6];
+    struct RPos_s RPos[6];
+    struct anim_s anim[6];
+    struct nuhspecial_s obj[6];
+    short character[6];
+    short action[6];
+    u16 xrot[6];
+    u16 yrot[6];
+    u16 zrot[6];
+    struct chaseevent_s event[24][6];
+    struct nugspline_s* spl_MISC[4][6];
+    struct Nearest_Light_s lights[6];
+    float scale[6];
+    u8 misc_phase[6];
+    char ok[6];
+    u8 cuboid;
+    char i;
+    char i_last;
+    char i_next;
+    char status;
+    char iRAIL;
+    short iALONG;
+    float fALONG;
+};
+
+typedef struct chase_s CHASE;
+
+struct objtab_s {
+    struct nuhspecial_s obj;
+    struct nugscn_s** scene;
+    char visible;
+    char font3d_letter;
+    char pad1;
+    char pad2;
+    char* name;
+    char unk[4];
+    u64 levbits;
+};
+
+CHASE Chase[3];
+s32 LIGHTCHASECHARACTERS;
+
+extern struct RPos_s* best_cRPos;
+extern struct objtab_s ObjTab[201];
+void InitChase(struct chase_s* chase);
+void UpdateChase(struct chase_s* chase, struct obj_s* obj);
+void SetLights(struct nucolour3_s *vCOL0,struct nuvec_s *vDIR0,struct nucolour3_s *vCOL1,struct nuvec_s *vDIR1, struct nucolour3_s *vCOL2,struct nuvec_s *vDIR2,struct nuvec_s *vAMB);
+void SetLevelLights(void);
+void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtx,s32 action,float time,struct numtx_s *rotmtx);
+
 //NGC MATCH
 struct nugspline_s * NuSplineFindPartial(struct nugscn_s *scene,char *name,char *txt) {
   struct nugspline_s *spl;

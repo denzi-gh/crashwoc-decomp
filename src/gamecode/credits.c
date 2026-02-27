@@ -1,3 +1,6 @@
+#include "main.h"
+#include <string.h>
+
 s32 CREDITCOUNT;
 struct CREDIT_s Credit [323];
 f32 credit_speed;

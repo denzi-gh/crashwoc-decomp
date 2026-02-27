@@ -1,4 +1,222 @@
-#include "gamecode/creature.h"
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+typedef struct aitab_s {
+  u8 ai_type;
+  s8 status;
+  char pad1;
+  char pad2;
+  char pad3;
+  s8 iRAIL;
+  s16 iALONG;
+  f32 fALONG;
+  f32 time;
+  f32 delay;
+  struct nuvec_s pos[8];
+  struct nuvec_s origin;
+} LevelAI;
+
+struct creatcmd_s {
+  s32 cmd;
+  s32 i;
+  f32 f;
+};
+
+struct AITYPE_s {
+  s16 character;
+  s16 points;
+  struct creatcmd_s *cmd;
+  char name[16];
+  f32 delay;
+};
+
+struct objtab_s {
+  struct nuhspecial_s obj;
+  struct nugscn_s **scene;
+  char visible;
+  char font3d_letter;
+  char pad1;
+  char pad2;
+  char *name;
+  char unk[4];
+  u64 levbits;
+};
+
+struct plritem_s {
+  s32 draw;
+  s32 count;
+  s32 frame;
+};
+
+struct gdeb_s {
+  s32 i;
+};
+
+struct tersurface_s {
+  f32 friction;
+  u32 flags;
+};
+
+extern struct AITYPE_s AIType[107];
+extern LevelAI AITab[96];
+extern s32 LEVELAICOUNT;
+extern struct objtab_s ObjTab[201];
+extern struct plritem_s plr_bonus_wumpas;
+extern struct plritem_s plr_lives;
+extern struct plritem_s plr_crates;
+extern struct plritem_s plr_wumpas;
+extern struct MoveInfo DefaultMoveInfo;
+extern struct nuvec_s cpPOS;
+extern s32 bonusgem_ok;
+extern s32 clock_ok;
+extern s32 c_slot;
+extern s32 LivesLost;
+extern s32 plr_died;
+extern s32 Hub;
+extern struct ldata_s LData[];
+extern f32 AIVISRANGE;
+extern s32 new_mode;
+extern s32 new_level;
+extern s32 Demo;
+extern s32 Bonus;
+extern s32 bonus_wumpa_delay;
+extern f32 bonus_wumpa_wait;
+extern s32 bonus_finish_frame;
+extern s32 save_bonus_crates_destroyed;
+extern f32 bonus_crates_wait;
+extern s32 bonus_lives;
+extern s32 bonus_life_delay;
+extern f32 bonus_lives_wait;
+extern s32 bonus_restart;
+extern s32 GameMode;
+extern s32 TimeTrial;
+extern s32 Adventure;
+extern s32 level_part_2;
+extern u32 plr_items;
+extern s32 boss_dead;
+extern s32 cp_iALONG;
+extern s32 cp_goto;
+extern struct nuvec_s cpGOTO;
+extern s32 cp_iRAIL;
+extern struct nuvec_s v000;
+extern s32 VEHICLECONTROL;
+extern struct RPos_s *best_cRPos;
+extern s32 plr_rebound;
+extern f32 ATLASCAMHEIGHT;
+extern s32 force_panel_wumpa_update;
+extern s32 force_panel_crate_update;
+extern s32 force_panel_lives_update;
+extern s32 force_panel_items_update;
+extern f32 check_duration;
+extern f32 check_time;
+extern f32 point_duration;
+extern f32 point_time;
+extern f32 IDLEWAIT;
+extern s32 gamecut_hack;
+extern s32 last_hub;
+extern s32 last_level;
+extern struct nuvec_s cutpos_CRASH;
+extern u16 cutang_CRASH;
+extern s32 tumble_action;
+extern f32 tumble_duration;
+extern f32 tumble_time;
+extern struct nuvec_s *pos_START;
+extern struct mask *Mask;
+extern f32 SAFEY;
+extern s32 GemPath;
+extern s32 Death;
+extern s32 FRAME;
+extern s32 app_tbset;
+extern s32 LIGHTCREATURES;
+extern s32 cRPosCOUNT;
+extern s32 i_ring;
+extern s32 jeep_draw;
+extern s32 jointnum;
+extern s32 plr_render;
+extern s32 ChrisJointOveride;
+extern struct NUJOINTANIM_s *ChrisJointList;
+extern s32 ChrisNumJoints;
+extern s32 glass_draw;
+extern s32 DRAWCREATURESHADOWS;
+extern s32 in_finish_range;
+extern s32 warp_level;
+extern s32 glass_phase;
+extern struct cammtx_s *pCam;
+extern s32 ForceShader;
+extern struct numtx_s mTEMP;
+extern f32 ATLASPLAYERLIFT;
+extern f32 glass_mix;
+extern struct tersurface_s TerSurface[];
+extern s32 SKELETALCRASH;
+extern f32 HUBREFLECTY;
+extern struct MoveInfo GyroMoveInfo;
+extern u16 temp_surface_xrot;
+extern u16 temp_surface_yrot;
+extern u16 temp_surface_zrot;
+extern f32 vtog_time;
+extern f32 vtog_duration;
+extern u16 lbl_801083ec[9];
+extern struct nupad_s demopad;
+extern f32 plr_vehicle_time;
+extern f32 plr_vehicle_speedmul;
+extern struct MoveInfo ScooterMoveInfo;
+extern struct MoveInfo SnowBoardMoveInfo;
+extern struct MoveInfo MechMoveInfo;
+extern struct MoveInfo FireEngineMoveInfo;
+extern struct MoveInfo SubmarineMoveInfo;
+extern struct MoveInfo MineTubMoveInfo;
+extern struct MoveInfo OffRoaderMoveInfo;
+extern struct MoveInfo SwimmingMoveInfo;
+extern f32 VEHICLETIME;
+extern s32 gamesfx_effect_volume;
+extern u16 vtog_angle;
+extern s32 vtog_blend;
+extern struct nuvec_s vtog_newpos;
+extern struct nuvec_s vtog_oldpos;
+extern u16 tumble_item_starttime;
+extern u16 new_lev_flags;
+extern u16 temp_lev_flags;
+extern f32 tumble_cycleduration;
+extern f32 tumble_moveduration;
+extern struct nuvec_s tumble_newpos;
+extern struct nuvec_s tumble_oldpos;
+extern u16 tumble_hdg;
+extern f32 GRAVITY;
+extern s32 FireBossHoldPlayer;
+extern s32 fadeval;
+extern s32 SmokeyCountDownValue;
+extern f32 SMOKEYBOOSTSPEED;
+extern f32 SMOKEYSPEED;
+extern f32 offroader_speedtime;
+extern f32 OFFROADERSEEK;
+extern f32 TERMINALVELOCITY;
+extern u16 best_railangle;
+extern s32 plr_target_found;
+extern struct nuvec_s plr_target_firepos;
+extern struct nuvec_s plr_target_pos[2];
+extern struct nuvec_s plr_target_dir;
+extern struct nuvec_s v001;
+extern f32 MECHTARGETHACK;
+extern f32 BAZOOKATARGETHACK;
+extern struct nuvec_s plr_target_sightpos;
+extern struct numtx_s plr_target_mtx;
+extern s32 plr_target_frame;
+extern s32 ExtraMoves;
+extern f32 in_speed;
+extern f32 in_s_friction;
+extern f32 in_f_friction;
+extern s32 LIFTPLAYER;
+extern s32 temp_crate_y_ceiling_adjust;
+extern s32 temp_crate_y_floor_adjust;
+extern s32 temp_crate_xz_adjust;
+extern s32 plr_terrain_ok;
+extern s32 NOTERRAINSTOP;
+extern s32 jonframe1;
+extern struct gdeb_s GDeb[170];
+extern s32 plr_allow_jump;
+extern s32 InvincibilityCHEAT;
+extern s32 loadsave_frame;
 
 s32 gamecut; //cut.c
 
@@ -25,7 +243,7 @@ void ManageCreatures(void) {
   s32 iVar8;
   s32 iVar10;
   s32 index;
-  struct aitab_s *pAI;
+  LevelAI *pAI;
   
   //pcVar6 = player;
   if ((Level == 0x25) || (LDATA->flags & 0x202) != 0) {
@@ -567,13 +785,13 @@ s32 LoadCharacterModel(s32 character, s32 level, s32* cmodel_index, s32 clist_en
     char path[64];
     struct CharacterModel* model;
     CharacterData* cdata;
-    struct AnimList* anim;
+    struct animlist* anim;
     s32 k;
-    SPACEANIM* space;
+    struct space_s* space;
 
     model = &CModel[*cmodel_index];
     if (level == 0x28) {
-        space = (SPACEANIM*)SpaceGameCutTab[0][gamecut * 2];
+        space = (struct space_s*)SpaceGameCutTab[0][gamecut * 2];
     } else {
         space = NULL;
     }
@@ -1176,8 +1394,8 @@ void ProcessCreatures(void) {
     if ((((level_part_2 == 0) &&
          (ComplexRailPosition(&c->obj.pos,(int)c->obj.RPos.iRAIL,
                               (int)c->obj.RPos.iALONG,&c->obj.RPos,1),
-         cRPosCOUNT != i)) && (GameCam.mode != -1)) && (c->obj.transporting == '\0')) {
-      BlendGameCamera(&GameCam,0.5f);
+         cRPosCOUNT != i)) && (GameCam[0].mode != -1)) && (c->obj.transporting == '\0')) {
+      BlendGameCamera(&GameCam[0],0.5f);
     }
     if (((c->obj.mask != NULL) && ((c->obj.mask)->active != 0)) &&
        ((LDATA->flags & 0xe00) == 0)) {

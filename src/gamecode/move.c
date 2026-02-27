@@ -1,11 +1,152 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+#define opptub_s tubinfo_s
+
+struct objtab_s {
+  struct nuhspecial_s obj;
+  struct nugscn_s **scene;
+  char visible;
+  char font3d_letter;
+  char pad1;
+  char pad2;
+  char *name;
+  char unk[4];
+  u64 levbits;
+};
+
+struct chaseevent_s {
+  struct nugspline_s *spl;
+  struct nuhspecial_s obj[24];
+};
+
+struct chase_s {
+  struct nugspline_s *spl_START;
+  float time;
+  float duration;
+  struct nugspline_s *spl_CHASER[6];
+  struct nuvec_s pos[6];
+  struct RPos_s RPos[6];
+  struct anim_s anim[6];
+  struct nuhspecial_s obj[6];
+  short character[6];
+  short action[6];
+  u16 xrot[6];
+  u16 yrot[6];
+  u16 zrot[6];
+  struct chaseevent_s event[24][6];
+  struct nugspline_s *spl_MISC[4][6];
+  struct Nearest_Light_s lights[6];
+  float scale[6];
+  u8 misc_phase[6];
+  char ok[6];
+  u8 cuboid;
+  char i;
+  char i_last;
+  char i_next;
+  char status;
+  char iRAIL;
+  short iALONG;
+  float fALONG;
+};
+
+struct gdeb_s {
+  s32 i;
+};
+
+struct tersurface_s {
+  f32 friction;
+  u32 flags;
+};
+
+struct tubinfo_s {
+  struct creature_s *c;
+  s8 track;
+  s8 count;
+  u8 wait;
+  s8 laps;
+  f32 time;
+  f32 duration;
+  f32 lap_position;
+  s8 place;
+  u8 finished;
+  u8 finishframes;
+  u8 stall;
+  u16 old_xrot;
+  u16 old_yrot;
+  u16 old_zrot;
+  u8 boost;
+  s8 spark;
+};
+
+extern struct chase_s Chase[3];
+extern struct objtab_s ObjTab[201];
+extern struct gdeb_s GDeb[170];
+extern struct tersurface_s TerSurface[];
+extern struct RPos_s *best_cRPos;
+extern float temp_fALONG;
+extern s32 gamesfx_pitch;
+extern s32 plr_tumblehack;
+extern s32 plr_rebound;
+extern s32 last_hub;
+extern f32 tumble_time;
+extern f32 tumble_duration;
+extern s32 tumble_action;
+extern s32 ExtraMoves;
+extern s32 FireBossHoldPlayer;
+extern s32 SmokeyCountDownValue;
+extern s32 bonusgem_ok;
+extern s32 GameMode;
+extern s32 TimeTrial;
+extern s32 i_ring;
+extern struct MoveInfo SwimmingMoveInfo;
+extern struct MoveInfo MechMoveInfo;
+extern f32 FALLONCRATEBREAKSPEED;
+extern f32 SCOOTERJUMPPAUSEFRAME;
+extern f32 FIREENGINESTANDINGJUMPPAUSEFRAME;
+extern f32 FIREENGINERUNNINGJUMPPAUSEFRAME;
+extern f32 MECHSTANDINGJUMPPAUSEFRAME;
+extern f32 MECHRUNNINGJUMPPAUSEFRAME;
+extern f32 SNOWBOARDJUMPPAUSEFRAME;
+
+struct tubinfo_s PlrTub;
+struct tubinfo_s OppTub;
+struct creature_s OppTubCreature;
+struct PlrEvent move_PlrEvent[8] __asm__("PlrEvent");
+unsigned long long gate_bits;
+s32 plr_gates;
+s32 GATECOUNT;
+s32 RINGCOUNT;
+struct nuvec_s ring_pos;
+s32 FlyingLevelVictoryDance;
+s32 plr_tocam_wait;
+s32 plr_tocam_turn;
+struct nuvec_s carpet_pos;
+u16 carpet_yrot;
+u16 carpet_xrot;
+struct anim_s carpet_anim;
+s32 carpet_character[2];
+struct CharacterModel *carpet_model[2];
+struct Nearest_Light_s carpet_lights;
+s32 race_finished;
+s32 opptub_action;
+s32 opptub_wait;
+s32 plr_tub_tilt;
+u16 arrow_xrot;
+u16 arrow_yrot;
+u16 ring_xrot[48];
+u16 ring_yrot[48];
+f32 RINGPULL;
+
 //NGC MATCH
 void ResetPlayerEvents(void) {
-  struct plrevent_s *event;
+  struct PlrEvent *event;
   s32 i;
   s32 j;
   
   if (world_scene[0] != NULL) {
-    event = PlrEvent;
+    event = move_PlrEvent;
     for(i = 0; i < 8; i++,event++) {
       if (event->spl != NULL) {
         if (AheadOfCheckpoint((s32)event->iRAIL,(s32)event->iALONG,event->fALONG) != 0) {
@@ -30,7 +171,7 @@ void ResetPlayerEvents(void) {
 
 //NGC MATCH
 void InitPlayerEvents(void) {
-  struct plrevent_s *event;
+  struct PlrEvent *event;
   static char name_153[256];
   static char c_154;
   static char objname_155[32];
@@ -45,7 +186,7 @@ void InitPlayerEvents(void) {
   if (world_scene[0] == NULL) {
       return;
   }
-    event = PlrEvent;
+    event = move_PlrEvent;
     for(i = 0; i < 8; i++, event++) {
       event->spl = NULL;
       event->played = 0;
@@ -97,7 +238,7 @@ void InitPlayerEvents(void) {
 
 //NGC MATCH
 void CheckPlayerEvents(struct obj_s *obj) {
-  struct plrevent_s *event;
+  struct PlrEvent *event;
   struct nuvec_s* p0;
   struct nuvec_s* p1;
   s32 i;
@@ -105,7 +246,7 @@ void CheckPlayerEvents(struct obj_s *obj) {
   s32 k;
   
   if (world_scene[0] != NULL) {
-    event = PlrEvent;
+    event = move_PlrEvent;
     for(i = 0; i < 8; i++, event++) {
       if (event->spl != NULL) {
         p0 = (struct nuvec_s *)event->spl->pts;

@@ -1,3 +1,8 @@
+#include "main.h"
+#include <string.h>
+
+extern struct PData PData[];
+
 char* tDEATHTORNADOSPIN[6];
 char* tDEATHTORNADOSPINTEXT[6][7]; 
 char* tDOUBLEJUMP[6];

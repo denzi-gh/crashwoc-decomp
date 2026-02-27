@@ -1,4 +1,65 @@
-//#include "gamecode/game_deb.h"
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+typedef struct {
+    char ai_type;
+    s8 status;
+    char pad1;
+    char pad2;
+    char pad3;
+    s8 iRAIL;
+    s16 iALONG;
+    f32 fALONG;
+    f32 time;
+    f32 delay;
+    struct nuvec_s pos[8];
+    struct nuvec_s origin;
+} LevelAI;
+
+struct gdeb_s {
+    s32 i;
+    char* name;
+    u64 levbits;
+};
+
+struct adeb_s {
+    s16 character;
+    s16 action;
+    f32 time;
+    f32 time2;
+    u32 flags;
+    u16 locators;
+    u8 gdeb;
+    s8 count;
+    u8 random;
+    u8 xrot;
+    s8 type;
+    s8 target;
+    s16 sfx;
+    u8 rumble;
+    u8 buzz;
+    char unk[4];
+    u64 levbits;
+    f32 min;
+    f32 max;
+};
+
+extern struct gdeb_s GDeb[170];
+extern struct adeb_s ADeb[112];
+extern s32 NODEBRIS;
+extern struct numtx_s mTEMP;
+extern struct nuvec_s v000;
+extern s32 GemPath;
+extern s32 Death;
+extern s32 Bonus;
+extern s32 jonframe1;
+extern s32 SFXCOUNT_ALL;
+extern s32 gamesfx_effect_volume;
+extern s32 gamesfx_pitch;
+extern LevelAI AITab[96];
+extern f32 EShadY;
+extern struct nuvec_s ShadNorm;
 
 s32 atlasbits[7];
 s32 helibits[7];
@@ -91,7 +152,7 @@ void AddMechanicalDebris(struct nuvec_s* pos, s32 vehicle) {
 }
 
 //94.88% NGC
-void AddAnimDebris(CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 action,float time,struct obj_s *obj) {
+void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 action,float time,struct obj_s *obj) {
   struct adeb_s *adeb;
   u16 xrot;
   u16 yrot;
@@ -148,7 +209,7 @@ void AddAnimDebris(CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 action,f
             //pLoc = pLoc + 1;
           }
           if (count > 0) {
-            NuVecScale(&pos,&pos,(1.0f / j));
+            NuVecScale((1.0f / (float)count),&pos,&pos);
           }
           if (((adeb->flags & 0x8000) != 0) && (obj != NULL)) {
             count = 1;

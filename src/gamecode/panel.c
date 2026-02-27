@@ -1,4 +1,354 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
 #define LANGUAGE_JAPANESE 0x63
+
+/* ---- Struct definitions ---- */
+
+struct objtab_s {
+    struct nuhspecial_s obj;
+    struct nugscn_s** scene;
+    char visible;
+    char font3d_letter;
+    char pad1;
+    char pad2;
+    char* name;
+    char unk[4];
+    u64 levbits;
+};
+
+struct plritem_s {
+    s32 draw;
+    s32 count;
+    s32 frame;
+    s32 wait;
+    s32 delay;
+};
+
+struct plrbonus_s {
+    u32 item;
+    s32 count;
+    s32 frame;
+};
+
+struct pdeb_vec2_s {
+    float x;
+    float y;
+};
+
+struct pdebnfo_s {
+    u32 i_objtab;
+    f32 duration;
+    f32 gravity;
+};
+
+struct pdeb_s {
+    s8 active;
+    s8 type;
+    short i_objtab;
+    u16 xrot;
+    u16 yrot;
+    u16 zrot;
+    char pad1;
+    char pad2;
+    struct pdebnfo_s* info;
+    struct pdeb_vec2_s pos;
+    struct pdeb_vec2_s oldpos;
+    struct pdeb_vec2_s mom;
+    float oldscale;
+    float scale;
+    float time;
+};
+
+typedef struct crate_s CRATE;
+
+struct crate_s {
+    s32 id;
+    char type[4];
+    struct nuvec_s pos;
+    struct crate_s* linked;
+    struct crate_s* trigger;
+    u16 orientation;
+    s16 offx;
+    s16 offy;
+    s16 offz;
+    s16 ccindex;
+    s8 draw;
+    s8 cpad1;
+};
+
+typedef struct {
+    CRATE* model;
+    struct nuvec_s pos0;
+    struct nuvec_s pos;
+    f32 oldy;
+    f32 shadow;
+    f32 mom;
+    f32 timer;
+    f32 duration;
+    s8 on;
+    s8 iRAIL;
+    s16 iALONG;
+    f32 fALONG;
+    u16 flags;
+    s8 type1;
+    s8 type2;
+    s8 type3;
+    s8 type4;
+    s8 newtype;
+    s8 subtype;
+    s8 i;
+    s8 metal_count;
+    s8 appeared;
+    s8 in_range;
+    s16 dx;
+    s16 dy;
+    s16 dz;
+    s16 iU;
+    s16 iD;
+    s16 iN;
+    s16 iS;
+    s16 iE;
+    s16 iW;
+    s16 trigger;
+    s8 counter;
+    s8 anim_cycle;
+    s16 index;
+    f32 anim_time;
+    f32 anim_duration;
+    f32 anim_speed;
+    u16 xrot0;
+    u16 zrot0;
+    u16 xrot;
+    u16 zrot;
+    u16 surface_xrot;
+    u16 surface_zrot;
+    s16 character;
+    s16 action;
+    struct nuvec_s colbox[2];
+} CrateCube;
+
+struct crate_type_s {
+    struct nuhspecial_s obj;
+    s32 id;
+    char* name;
+    s32 character;
+};
+
+struct wscr_s {
+    struct nuvec_s pos;
+    f32 timer;
+    f32 xs;
+    f32 ys;
+    f32 scale;
+    s8 bonus;
+    char pad1;
+    char pad2;
+    char pad3;
+};
+
+/* ---- Extern declarations ---- */
+
+extern s16 Font3DRemap[256];
+extern float font3d_xleft;
+extern float font3d_xright;
+extern float font3d_ytop;
+extern float font3d_ybottom;
+extern struct nugscn_s* font3d_scene;
+extern float menu_pulsate;
+extern s32 disable_safearea_clamp;
+extern float FONT3D_JSCALEX;
+
+extern struct plritem_s plr_wumpas;
+extern struct plritem_s plr_crates;
+extern struct plritem_s plr_crystal;
+extern struct plritem_s plr_crategem;
+extern struct plritem_s plr_bonus_wumpas;
+extern struct plrbonus_s plr_bonusgem;
+
+extern s32 new_mode;
+extern s32 new_level;
+extern s32 Hub;
+extern s32 Bonus;
+extern s32 Demo;
+extern s32 TimeTrial;
+extern s32 VEHICLECONTROL;
+extern s32 ExtraMoves;
+extern s32 in_finish_range;
+extern s32 SmokeyPosition;
+extern s32 SmokeyCountDownValue;
+extern s32 cutmovie;
+extern s32 pause_rndr_on;
+extern s32 ShowPlayerCoordinate;
+extern s32 carpet_place;
+extern s32 i_ring;
+extern s32 RINGCOUNT;
+extern s32 GATECOUNT;
+extern s32 plr_gates;
+extern s32 MAXLAPS;
+extern s32 CRATECOUNT;
+extern s32 DESTRUCTIBLECRATECOUNT;
+extern s32 DESTRUCTIBLEBONUSCRATECOUNT;
+extern s32 mask_crates;
+extern s32 bonus_finish_frame;
+extern s32 save_bonus_crates_destroyed;
+extern s32 bonus_wumpa_delay;
+extern f32 bonus_wumpa_wait;
+extern s32 bonus_life_delay;
+extern f32 bonus_lives_wait;
+extern f32 bonus_crates_wait;
+extern f32 bonus_panel_wait;
+extern unsigned int bonus_frame;
+extern s32 tt_flash;
+extern s32 newleveltime_slot;
+extern u16 new_lev_flags;
+extern u32 timetrial_frame;
+extern u32 finish_frame;
+extern u32 finish_frames;
+extern f32 tt_sx;
+extern f32 tt_sy;
+extern f32 TT_SCALE;
+extern f32 TT_TIMESDY;
+extern s32 TT_RELICX;
+extern s32 TT_RELICY;
+extern f32 TT_MESSAGEY;
+extern struct nuvec_s TTScrPos;
+extern struct GTimer TimeTrialTimer;
+extern f32 TimeTrialWait;
+extern struct GTimer GlobalTimer;
+extern struct cammtx_s* pCam;
+extern struct nuvec_s cpPOS;
+extern struct nuvec_s vNEWMASK;
+extern struct nuvec_s vTEMP;
+extern CrateCube Crate[];
+extern struct nugscn_s* crate_scene;
+extern volatile struct crate_type_s crate_list[29];
+extern struct wscr_s WScr[32];
+extern struct ldata_s LData[];
+extern struct PData PData[];
+extern s32 sapphire_relics;
+extern s32 gold_relics;
+extern f32 platinum_relics;
+extern struct tubinfo_s {
+    struct creature_s* c;
+    s8 track;
+    s8 count;
+    u8 wait;
+    s8 laps;
+    f32 time;
+    f32 duration;
+    f32 lap_position;
+    s8 place;
+    u8 finished;
+    u8 finishframes;
+    u8 stall;
+    u16 old_xrot;
+    u16 old_yrot;
+    u16 old_zrot;
+    u8 boost;
+    s8 spark;
+} PlrTub;
+extern s32 crate_wumpa;
+extern s32 carpet_panelpos;
+extern f32 hubleveltext_pos;
+extern s32 hubleveltext_level;
+extern s32 hubleveltext_open;
+extern s32 hubleveltext_i;
+extern char* LevelName[44][6];
+extern char* PlaceName[][6];
+extern float PANELMENUX;
+extern s32 PHYSICAL_SCREEN_X;
+extern s32 PHYSICAL_SCREEN_Y;
+extern float DIVPANEL3DX;
+extern float DIVPANEL3DY;
+extern float PANEL3DMULX;
+extern float PANEL3DMULY;
+
+extern char* tLOADING[6];
+extern char* tCHECK[];
+extern char* tPOINT[];
+extern char* tCRYSTALS[6];
+extern char* tPOWERS[6];
+extern char* tGEMS[6];
+extern char* tRELICS[6];
+extern char* tTIMES[6];
+extern char* tBONUS[6];
+extern char* tDEMO[6];
+extern char* tOK[6];
+extern char* tRELICSREQUIRED[6];
+extern char* tBESTTIME[6];
+extern char* t2NDBESTTIME[6];
+extern char* t3RDBESTTIME[6];
+extern char* tNONEWTIME[6];
+extern char* tENTERINGTIMETRIAL[6];
+extern char* tTCR_PRESSSTARTTORESUME[6];
+
+extern float PANELOFF;
+extern float PAUSEVMUL;
+extern float PAUSEHMUL;
+extern float PAUSEPANELZ;
+extern float PAUSEPANELX;
+extern float PAUSENAMEY;
+extern float PAUSETEXTZ;
+extern float PAUSEPERCENTY;
+extern float PAUSEINFOY;
+extern float BONUSWUMPATXTSX;
+extern float BONUSCRATETXTSX;
+extern float BONUSCRATEOBJSX;
+extern float BONUSLIVESTXTSX;
+extern float WUMPATXTSX;
+extern float CRATEOBJSX;
+extern float CRATETXTSX;
+extern float LIVESTXTSX;
+extern u16 PANELWUMPAYROT;
+extern u16 PANELCRATEYROT;
+extern float CHECKPOINT3DSEPERATION;
+extern float CHECKPOINT3DHEIGHT;
+extern float CHECKPOINT3DSCALE;
+extern f32 CHECKWAIT;
+extern f32 CPLTIME;
+extern f32 POINTWAIT;
+extern f32 check_time;
+extern f32 check_duration;
+extern f32 check_delay;
+extern f32 point_time;
+extern f32 point_duration;
+extern f32 point_delay;
+extern s32 nCheckLetters;
+extern s32 nPointLetters;
+extern float ATMBOSSBARX;
+extern float ATMBOSSBARY;
+extern float ATMBOSSBARZ;
+extern float ATMBOSSBARSCALEX;
+extern float ATMBOSSBARSCALEY;
+extern float RUMBOSSBARX;
+extern float RUMBOSSBARY;
+extern float RUMBOSSBARZ;
+extern float RUMBOSSBARSCALEX;
+extern float RUMBOSSBARSCALEY;
+extern float FIREBOSSBARX;
+extern float FIREBOSSBARY;
+extern float FIREBOSSBARZ;
+extern float FIREBOSSBARSCALEX;
+extern float FIREBOSSBARSCALEY;
+extern float PANELSINKX;
+extern float PANELSINKY;
+extern float PANELSINKZ;
+extern float PANELSINKSCALE;
+extern float PANELCRUNCHX;
+extern float PANELCRUNCHY;
+extern float PANELCRUNCHZ;
+extern float PANELCRUNCHSCALE;
+extern u16 PANELCRUNCHXROT;
+extern float PANELBLIMPX;
+extern float PANELBLIMPY;
+extern float PANELBLIMPZ;
+extern float PANELBLIMPSCALE;
+extern float PANELRINGX;
+extern float PANELRINGY;
+extern float PANELRINGSIZE;
+
+/* ---- Global variables ---- */
 
 s32 MAXVPSIZEX;
 s32 MINVPSIZEX;
@@ -27,6 +377,11 @@ s32 force_panel_lives_update;
 s32 bonus_lives;
 unsigned short panel_head_yrot;
 unsigned short panel_head_xrot;
+
+s32 i_pdeb;
+s32 crates_destroyed;
+s32 bonus_crates_destroyed;
+s32 old_bonus_crates;
 
 /*
 	DrawPanel 97%
@@ -615,8 +970,8 @@ void Draw3DCheckpointLetters(void) {
     struct nuspecial_s* obj[2];
 
     if (font3d_scene != NULL) {
-        dx = NuTrigTable[((GameCam.yrot + 0x4000 & 0xffff))] * CHECKPOINT3DSEPERATION;
-        dz = NuTrigTable[((GameCam.yrot - 0x8000 & 0xffff))] * CHECKPOINT3DSEPERATION;
+        dx = NuTrigTable[((GameCam->yrot + 0x4000 & 0xffff))] * CHECKPOINT3DSEPERATION;
+        dz = NuTrigTable[((GameCam->yrot - 0x8000 & 0xffff))] * CHECKPOINT3DSEPERATION;
         ang = ((GameTimer.frame % 0xb4) * 0x10000) / 0xb4;
         if ((check_time < check_duration) && (check_time >= CHECKWAIT)) {
             time = (check_time - CHECKWAIT);
@@ -653,7 +1008,7 @@ void Draw3DCheckpointLetters(void) {
 
                     for (j = 0; j < 2; j++) {
                         if (obj[j] != NULL) {
-                            Draw3DObject(-1, &pos, 0, GameCam.yrot, 0, s.x, s.y, (j == 1) ? (s.z * 1.5f) : s.z, font3d_scene, obj[j], 0);
+                            Draw3DObject(-1, &pos, 0, GameCam->yrot, 0, s.x, s.y, (j == 1) ? (s.z * 1.5f) : s.z, font3d_scene, obj[j], 0);
                         }
                     }
                 }
@@ -694,7 +1049,7 @@ void Draw3DCheckpointLetters(void) {
 
                     for (j = 0; j < 2; j++) {
                         if (obj[j] != NULL) {
-                            Draw3DObject(-1, &pos, 0, GameCam.yrot, 0, s.x, s.y, (j == 1) ? (s.z * 1.5f) : s.z, font3d_scene, obj[j], 0);
+                            Draw3DObject(-1, &pos, 0, GameCam->yrot, 0, s.x, s.y, (j == 1) ? (s.z * 1.5f) : s.z, font3d_scene, obj[j], 0);
                         }
                     }
                 }

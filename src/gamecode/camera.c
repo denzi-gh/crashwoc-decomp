@@ -1,5 +1,75 @@
 #include "gamecode/camera.h"
 
+float temp_fALONG;
+float temp_fACROSS;
+s32 temp_rail_end;
+struct RPos_s cRPos[3];
+struct RPos_s* best_cRPos;
+s32 cRPosCOUNT;
+struct RPos_s temp_cRPos[3];
+struct RPos_s* temp_best_cRPos;
+s32 temp_cRPosCOUNT;
+struct nugspline_s* pVIS;
+s32 iVIS;
+s32 cut_on;
+u16 best_railangle;
+static struct numtl_s* ctmtl;
+
+extern char* tInPlatRail;
+extern char* tInCamRail;
+extern char* tLeftRail;
+extern char* tCamRail;
+extern char* tRightRail;
+extern char* tOutCamRail;
+extern char* tOutPlatRail;
+extern char* tRailExt[8];
+extern s32 Bonus;
+extern s32 Death;
+extern s32 GemPath;
+extern s32 VEHICLECONTROL;
+extern s32 CrunchTime_Intro;
+extern s32 SpaceCortex_Defeated;
+extern s32 level_part_2;
+extern s32 GameMode;
+extern f32 vtog_time;
+extern f32 vtog_duration;
+extern s32 vtog_blend;
+extern struct pVTog* pVTog;
+extern s32 temp_creature_i;
+extern s32 iTEMP;
+extern struct nugspline_s* bonus_pCAM;
+extern struct nugspline_s* death_pCAM;
+extern struct nugspline_s* gempath_pCAM;
+extern s32 set_cutscenecammtx;
+extern struct numtx_s cutscenecammtx;
+extern s32 DrainDamage_Intro;
+extern struct nuvec_s* pos_START;
+extern struct nuvec_s v000;
+extern f32 ATLASCAMHEIGHT;
+extern s32 ResetAtlasCamera;
+extern struct nuvec_s JeepvObj;
+extern struct nuvec_s JeepvPos;
+extern f32 WesternCountdown;
+extern struct GTimer GlobalTimer;
+extern f32 bonus_time;
+extern f32 bonus_duration;
+extern f32 death_time;
+extern f32 death_duration;
+extern f32 gempath_time;
+extern f32 gempath_duration;
+extern struct nuvec_s campos_SPACE;
+extern struct nuvec_s cutcamlook_FRONTEND;
+extern struct nuvec_s BOSSCAMPOS;
+extern struct nuvec_s BOSSCAMPOS2;
+extern f32 LOGOCAMX;
+extern f32 LOGOCAMY;
+extern f32 LOGOCAMZ;
+extern f32 CAMSTOPNEAR;
+extern f32 CAMSTOPFAR;
+extern f32 SIDECAMDISTANCE;
+
+void RailInfo(struct RPos_s* RPos, struct nuvec_s* pos, u16* yrot, u16* cam_yrot, u8* mode);
+
 /*
 	MoveGameCamera	    77.48%*
 */
@@ -1141,10 +1211,10 @@ switch(GameCamera->mode) {
                 PointAlongSpline(SplTab[68].spl,GameTimer.ftime / 3.0f,&local_120,NULL,NULL);
                 PointAlongSpline(SplTab[69].spl,dVar39,&local_114,NULL,NULL);
                 dVar40 = (1.0f - dVar39);
-                NuVecScale(&local_120,&local_120,dVar40);
-                NuVecScale(&local_114,&local_114,dVar40);
-                NuVecScaleAccum(&local_120,&vec,dVar39);
-                NuVecScaleAccum(&local_114,&local_150,dVar39);
+                NuVecScale(dVar40,&local_120,&local_120);
+                NuVecScale(dVar40,&local_114,&local_114);
+                NuVecScaleAccum(dVar39,&local_120,&vec);
+                NuVecScaleAccum(dVar39,&local_114,&local_150);
                 vec = local_120;
                 local_150 = local_114;
               }
@@ -1176,10 +1246,10 @@ switch(GameCamera->mode) {
               if (fVar43 != 0.0f) {
                 dVar39 = (fVar43 * fVar43);
                 dVar40 = (1.0f - dVar39);
-                NuVecScale(&local_120,&local_120,(1.0f - dVar39));
-                NuVecScale(&local_114,&local_114,dVar40);
-                NuVecScaleAccum(&local_120,&vec,dVar39);
-                NuVecScaleAccum(&local_114,&local_150,dVar39);
+                NuVecScale((1.0f - dVar39),&local_120,&local_120);
+                NuVecScale(dVar40,&local_114,&local_114);
+                NuVecScaleAccum(dVar39,&local_120,&vec);
+                NuVecScaleAccum(dVar39,&local_114,&local_150);
                 vec = local_120;
                 local_150 = local_114;
               }
@@ -1321,11 +1391,11 @@ switch(GameCamera->mode) {
                 c->obj.pos.y + 0.666f;
         dst.z = c->obj.pos.z;
         NuVecAdd(&local_150,&local_150,&dst);
-        NuVecScale(&local_150,&local_150,0.5f);
+        NuVecScale(0.5f,&local_150,&local_150);
         if (Level == 0x19) {
           NuVecSub(&dst,&local_150,&vec);
           NuVecNorm(&dst,&dst);
-          NuVecScale(&dst,&dst,3.0f);
+          NuVecScale(3.0f,&dst,&dst);
           NuVecAdd(&vec,&vec,&dst);
         }
     break;
@@ -1555,7 +1625,7 @@ switch(GameCamera->mode) {
           p0 = (struct nuvec_s *)((SplTab[unaff_r14 + 9].spl)->pts + iVar17);
           NuVecAdd(&dst,&dst,p0);
       }
-      NuVecScale(&dst,&dst,(1.0f / (uVar14)));
+      NuVecScale((1.0f / (uVar14)),&dst,&dst);
       iVar34 = NuAtan2D(dst.x - GameCamera->pos.x,dst.z - GameCamera->pos.z);
       iVar13 = RotDiff(iVar34,iVar13) * iVar30;
       if (iVar13 < 0) {

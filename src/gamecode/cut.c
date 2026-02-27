@@ -1,5 +1,232 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+struct cutscenedesc_s {
+    char *gscname;
+    char *cutname;
+    s32 sfxid;
+    s32 debgroup;
+};
+
+struct pcutanm_s {
+    short character;
+    short action;
+    short sfx;
+    s8 i;
+    char pad1;
+};
+
+struct instNUGCUTCHAR_s {
+    void *character;
+    float blend;
+    float mtxblend;
+    float frame1;
+    float frame2;
+    char flags;
+    u8 prev_animix;
+    u8 current_animix;
+    u8 blendto_animix;
+};
+
+struct instNUGCUTLOCATOR_s {
+    float time;
+    void *data;
+};
+
+struct instNUGCUTLOCATORSYS_s {
+    struct instNUGCUTLOCATOR_s *ilocators;
+};
+
+struct NUGCUTLOCATOR_s {
+    struct numtx_s mtx;
+    struct nuvec_s pivot;
+    float rate;
+    struct nuanimdata2_s *anim;
+    int direction;
+    u8 flags;
+    u8 locator_type;
+    u8 joint_ix;
+    char pad;
+    float param1;
+    float param2;
+};
+
+struct NUGCUTLOCATORSYS_s {
+    struct NUGCUTLOCATOR_s *locators;
+    void *locator_types;
+    u8 nlocators;
+    u8 ntypes;
+    char pad[2];
+};
+
+struct NUGCUTCHAR_s {
+    struct numtx_s mtx;
+    char *name;
+    struct nuanimdata2_s *char_anim;
+    struct nuanimdata2_s *joint_anim;
+    struct nuanimdata2_s *face_anim;
+    void *character;
+    struct NUGCUTLOCATOR_s *locators;
+    float animrate;
+    u8 flags;
+    u8 animix;
+    u8 nlocators;
+    u8 type;
+    u8 first_locator;
+    u8 blendframes;
+    char pad[2];
+};
+
+struct NUGCUTCHARSYS_s {
+    struct NUGCUTCHAR_s *chars;
+    u16 nchars;
+    char pad[2];
+};
+
+struct NUGCUTSCENE_s {
+    s32 version;
+    s32 address_offset;
+    float nframes;
+    char *name_table;
+    void *cameras;
+    void *rigids;
+    struct NUGCUTCHARSYS_s *chars;
+    struct NUGCUTLOCATORSYS_s *locators;
+    void *bbox;
+    void *triggersys;
+};
+
+struct instNUGCUTSCENE_s {
+    struct instNUGCUTSCENE_s *next;
+    struct instNUGCUTSCENE_s *prev;
+    char name[16];
+    struct numtx_s mtx;
+    struct NUGCUTSCENE_s *cutscene;
+    struct nuvec_s centre;
+    float maxdistsqr;
+    int is_visible:1;
+    int checkmaxdist:1;
+    int checkbboxclip:1;
+    int has_mtx:1;
+    int autostart:1;
+    int looping:1;
+    unsigned int is_playing:1;
+    int played_first_frame:1;
+    int is_disabled:16;
+    int been_updated_this_frame:1;
+    float cframe;
+    float rate;
+    void *icameras;
+    void *irigids;
+    void *ichars;
+    struct instNUGCUTLOCATORSYS_s *ilocators;
+    void *itriggersys;
+    struct instNUGCUTSCENE_s *next_to_play;
+    void *endfn;
+};
+
+struct NUGCUTLOCFNDATA_s {
+    char *name;
+    void *void_fn;
+};
+
 #define rate_val 1.0f
 short RO_640460[8];
+
+struct anim_s CutAnim;
+struct GTimer CutTimer;
+s32 CutAudio[32];
+static struct NUGCUTLOCFNDATA_s cutscene_locatorfns[2];
+static struct instNUGCUTSCENE_s *CutInst[32];
+static struct NUGCUTSCENE_s *CutScene[32];
+struct anim_s CutVortexAnim;
+struct nuvec_s campos_SPACE;
+u16 cutang_FRONTEND[2];
+u16 cutang_SPACE[3];
+struct nuvec_s cutpos_CRASH;
+struct nuvec_s cutpos_FRONTEND[2];
+struct nuvec_s cutpos_SPACE[3];
+float SPACEMASKADJUSTY;
+float HUBHOLOSCALE;
+float FRONTENDCORTEXADJUSTY;
+struct pcutanm_s *pCutAnim;
+s32 gamecut_finished;
+s32 gamecut_hold;
+s32 gamecut_sfx;
+s32 gamecut_hack;
+s32 gamecut_newlevel;
+s32 gamecut_start;
+s32 gamecut;
+s32 cutmovie_hold;
+s32 cutmovie;
+s32 cutworldix;
+static float cutratefrig;
+s32 logos_played;
+void *SpaceGameCutTab[2][26];
+struct nucolour3_s cutdircol[3];
+struct nuvec_s cutambcol;
+struct nuvec_s cutdir[3];
+
+static s32 cutdebgroups[32];
+static s32 ghg_inst_count;
+static struct ghg_inst_s ghg_insts[32];
+static s32 scene_inst_count;
+static struct scene_inst_s scene_insts[32];
+static u8 music_volume;
+struct csc_s *CutChar;
+s32 loadcut_chardatfile;
+char chardatfilename[128];
+void *hCutLoadScreenThread;
+s32 cut_loading_finished;
+s32 cut_load_framecount;
+s32 next_cut_movie;
+float TITLESTARTTIME;
+float TITLEFPS;
+
+extern s32 cut_on;
+extern s32 gamesfx_channel;
+extern s32 fadeval;
+extern s32 fade_rate;
+extern s32 Demo;
+extern u16 new_lev_flags;
+extern s32 GameMode;
+extern s32 new_mode;
+extern s32 new_level;
+extern s32 last_hub;
+extern f32 tumble_time;
+extern f32 tumble_duration;
+extern s32 fadehack;
+extern s32 set_cutscenecammtx;
+extern struct numtx_s cutscenecammtx;
+extern struct cammtx_s *pCam;
+extern struct nugscn_s *pause_scene;
+extern struct nugscn_s *font3d_scene;
+extern struct nuscene_s *font3d_scene2;
+extern s32 PHYSICAL_SCREEN_X;
+extern s32 PHYSICAL_SCREEN_Y;
+extern char *tLOADING[6];
+extern float cufps;
+extern float DIVPANEL3DX;
+extern float DIVPANEL3DY;
+extern float PANEL3DMULX;
+extern float PANEL3DMULY;
+
+static struct csc_s csc_titles[] = {{NULL, NULL, NULL}};
+static struct cutscenedesc_s csd_titles[] = {{NULL, NULL, -1, 0}};
+static struct csc_s csc_s32ro1[] = {{NULL, NULL, NULL}};
+static struct cutscenedesc_s csd_s32ro1[] = {{NULL, NULL, -1, 0}};
+static struct csc_s csc_s32ro2[] = {{NULL, NULL, NULL}};
+static struct cutscenedesc_s csd_s32ro2[] = {{NULL, NULL, -1, 0}};
+static struct csc_s csc_outro[] = {{NULL, NULL, NULL}};
+static struct cutscenedesc_s csd_outro[] = {{NULL, NULL, -1, 0}};
+static struct csc_s csc_outro2[] = {{NULL, NULL, NULL}};
+static struct cutscenedesc_s csd_outro2[] = {{NULL, NULL, -1, 0}};
+
+static void AppCutSceneFindCharacters(struct NUGCUTSCENE_s *cutscene);
+void AppCutSceneCharacterRender(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTSCENE_s *cutscene,
+                                struct instNUGCUTCHAR_s *icutchar,struct NUGCUTCHAR_s *cutchar,
+                                float current_frame);
 
 //NGC MATCH
 static struct NUHGOBJ_s * InstNuGHGRead(union variptr_u *superbuf_ptr,char *path) {
@@ -357,8 +584,9 @@ static void AppCutSceneFindCharacters(struct NUGCUTSCENE_s *cutscene)
         cutchar = &charSys->chars[i];
         cutchar->character = FindCutChar(cutchar->name);
         if (cutchar->character == NULL) {
-            NuDebugMsgProlog(".\\cut.c", 0x292)
-            ("AppCutSceneFindCharacters: cannot fixup cutscene character <%s>", cutchar->name);
+            NuDebugMsgProlog(".\\cut.c", 0x292,
+                             "AppCutSceneFindCharacters: cannot fixup cutscene character <%s>",
+                             cutchar->name);
         }
         
         if ((cutchar->nlocators != 0) && ((s32)cutchar->locators < 0xff ))
@@ -402,7 +630,7 @@ void UpdateCutMovie(void) {
 }
 
 //PS2
-void UpdateCutMovieCamera(struct CamMtx *cam)
+void UpdateCutMovieCamera(struct cammtx_s *cam)
 {
   if (set_cutscenecammtx != 0) {
     memcpy(&cam->m, &cutscenecammtx, sizeof(struct numtx_s));
@@ -504,7 +732,7 @@ void UpdateGameCut(void) {
             UpdateTimer(&CutTimer);
             if (fadeval == 0) {
                 if ((Pad[0] != NULL) && ((Pad[0]->oldpaddata & 0x840) != 0)) {
-                    Game.music_volume = music_volume[3];
+                    Game.music_volume = music_volume;
                     if (Level == 0x28) {
                         new_level = gamecut_newlevel;
                     } else {
@@ -526,7 +754,7 @@ void UpdateGameCut(void) {
             }
         }
         if (gamecut_finished != 0) {
-            Game.music_volume = music_volume[3];
+            Game.music_volume = music_volume;
             if (Level == 0x28) {
                 if (gamecut_newlevel != -1) {
                     new_level = gamecut_newlevel;
@@ -751,7 +979,7 @@ void CloseCutMovie(s32 all)
 //part of cutscene_locatorfns variable
 static void locatorfn_fadeout(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTLOCATORSYS_s *locatorsys, struct instNUGCUTLOCATOR_s *ilocator,struct NUGCUTLOCATOR_s *locator,struct numtx_s *wm) {
     float currf;
-    nuanimtime_s atime;
+    struct nuanimtime_s atime;
     float remaining;
     
     if (locator->anim != NULL) {

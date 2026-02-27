@@ -1,4 +1,259 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
 #define ALIGN_ADDRESS(addr, al) (((s32)addr + (al-1)) & ~(al-1))
+
+struct CharacterModel;
+struct BUGSAVE;
+
+struct MYDRAW {
+  char _pad0[0x1c];
+  struct CharacterModel *Model;
+  char _pad1[0xc0];
+};
+
+struct SIMWHEEL {
+  struct nuvec_s Position;
+  struct nuvec_s OldPosition;
+  f32 TrailWidth;
+  f32 Radius;
+  s32 Platform;
+  s32 SurfaceType;
+};
+
+struct POINTANG {
+  f32 x;
+  f32 y;
+  f32 z;
+  s32 Ang;
+};
+
+struct MYSPLINE {
+  struct nugspline_s *Spline;
+  f32 Cur;
+  f32 Nex;
+  f32 Act;
+  f32 Inc;
+  struct nuvec_s CurPos;
+  struct nuvec_s NexPos;
+  f32 LookaheadDist;
+};
+
+struct VEHICLE {
+  struct nuvec_s ActualWheelPosition[4];
+  struct nuvec_s OldWheelPosition[4];
+  s32 BigSpin[4];
+  struct nuvec_s ActualPosition;
+  struct nuvec_s Resolved;
+  struct nuvec_s Velocity;
+  struct nuvec_s WheelAxis[3];
+  f32 FrontWheelSpeedAdj;
+  s16 aTargetAngle;
+  s16 aTarSurfRotX;
+  s16 aTarSurfRotZ;
+  s16 aActualAngle;
+  s16 aActSurfRotX;
+  s16 aActSurfRotZ;
+  s16 ActFrontRotX;
+  s16 ActRearRotX;
+  s16 TarFrontRotX;
+  s16 TarRearRotX;
+  s32 AnyOnGroundBits;
+  s32 AllOnGroundBits;
+  s32 AllTouchingGroundBits;
+  s32 AnyTouchingGroundBits;
+  struct nuvec_s AirNormal;
+  struct nuvec_s SurfaceNormal;
+  s16 *TerrHandle;
+  s32 FrontWheelGroundBits;
+};
+
+struct JEEPSTRUCT {
+  struct creature_s *Cre;
+  struct MYDRAW ChassisDraw;
+  struct numtx_s ChassisLocators[16];
+  struct numtx_s DrawMtx;
+  char Joints[0x1a0];
+  struct SIMWHEEL TrailWheel[4];
+  struct POINTANG RestartPoint;
+  f32 DownHoleTimer;
+  s32 DownHole;
+  s32 Dropped;
+  struct nuvec_s RestartCamPos;
+  struct nuvec_s RestartCamObj;
+  f32 FireBossTurnTimer;
+  f32 WheelHeight[4];
+  f32 TimeLine;
+  s32 FireBossDir;
+  s32 CantMove;
+  s32 Quick;
+  f32 MaxSpeed;
+  f32 MySpeed;
+  f32 DefaultSpeed;
+  f32 StartSpeed;
+  f32 StartSpeedTimer;
+  s32 Active;
+  s16 aWRot[4];
+  s16 aFrontWheelAng;
+  s16 aOldFrontWheelAng;
+  struct nuvec_s Pos;
+  s16 aAngleY;
+  s16 aMovementAng;
+  s16 aSurfRotX;
+  s16 aSurfRotZ;
+  f32 TiltSeekTime;
+  s16 aTiltX;
+  s16 aTiltZ;
+  s16 aDestTiltX;
+  s16 aDestTiltZ;
+  s16 aInputAng;
+  f32 InputSpeed;
+  s32 WheelSpin;
+  s16 aDeltaAng;
+  s16 aLastDeltaAng;
+  s16 aLastDeltaAngA;
+  s16 aOldChassisAngleY;
+  s16 aChassisAngleY;
+  s16 aChassisTargetAngleY;
+  s32 aChassisAngMom;
+  f32 Accelerator;
+  f32 AccelerationForce;
+  f32 CentrefugalForce;
+  f32 Traction;
+  f32 GroundTractionAcc;
+  f32 TurnSin;
+  s16 aBaseMoveAng;
+  f32 CentRailDist;
+  f32 BoostOnTimer;
+  f32 BoostTimer;
+  s32 Finished;
+  f32 CarryOnRecordTime;
+  f32 FloorHeight;
+  s32 TerrainType;
+  struct MYSPLINE Spline;
+  f32 FireTimer;
+  struct VEHICLE Move;
+};
+
+struct enemyjeep_s {
+  struct nuvec_s Position;
+  struct MYDRAW Draw;
+  f32 PlayBackTime;
+  s32 PlayBackMax;
+  char Joints[0x1a0];
+  struct numtx_s Locators[16];
+  s32 LocatorValidFrame;
+  struct SIMWHEEL TrailWheel[4];
+  f32 TimeLine;
+  s8 Active;
+  s8 DrawOn;
+  s8 TrailOn;
+  s8 Pad;
+};
+
+struct jeeptrail_s {
+  struct nuvec_s pos1;
+  struct nuvec_s pos2;
+  s32 intensity;
+  s32 RealIntensity;
+};
+
+struct JEEPBALLOON {
+  struct nuvec_s Pos;
+  struct nuvec_s Vel;
+  s32 Active;
+  s32 Seen;
+  s32 Explode;
+  s32 SmallDamage;
+  f32 Life;
+  s16 AngY;
+  s16 unk;
+};
+
+struct FIREBOSSSTRUCT {
+  struct numtx_s Locator[16];
+  s32 DropSide;
+  f32 FootTime;
+  s32 HitPoints;
+  s32 Pass;
+  s32 Active;
+  f32 AngleY;
+  struct nuvec_s Position;
+  struct MYDRAW MainDraw;
+  struct MYDRAW ExplodeDraw;
+  struct MYSPLINE MainSpline;
+  s32 Seen;
+  f32 Speed;
+  s32 Action;
+  s32 LastAction;
+  f32 ActionTimer;
+  f32 ActionTimer2;
+  struct nuvec_s Vel;
+  s32 Dead;
+  struct numtx_s DrawMtx;
+  s32 BeenHitThisPass;
+  f32 BeenHitThisPassTimer;
+  void *Rock;
+};
+
+struct gdeb_s {
+  s32 i;
+};
+
+extern s32 VEHICLECONTROL;
+extern struct nuvec_s WorldAxis[3];
+extern f32 WesternCountdown;
+extern f32 WesternTime;
+extern struct MYSPLINE JeepFollowSpline;
+extern struct nugspline_s *JeepIntroCamSpline;
+extern struct nugspline_s *JeepIntroLookSpline;
+extern struct nuvec_s JeepvPos;
+extern struct nuvec_s JeepvObj;
+extern struct nuvec_s IdealCamPos;
+extern struct nuvec_s IdealObjPos;
+extern s32 SmokeyCam;
+extern s32 SmokeyFinished;
+extern s32 SmokeyPosition;
+extern s32 SmokeyCountDownValue;
+extern struct RPos_s *best_cRPos;
+extern struct nugspline_s *pVIS;
+extern s32 iVIS;
+extern struct BUGSAVE *BuggyData[4];
+extern struct JEEPSTRUCT PlayerJeep;
+extern s32 TrailAir[20];
+extern s32 TrailPntr[20];
+extern s32 TrailActive[20];
+extern struct numtx_s mTEMP;
+extern struct nuvec_s FIREBOSSSCALE;
+extern s32 WallOfFireOn;
+extern struct nuvec_s WallOfFirePosition;
+extern f32 WallOfFireAngleY;
+extern struct gdeb_s GDeb[170];
+extern s32 ChrisBigBossDead;
+extern s32 FireBossHoldPlayer;
+extern s32 FireBossHealth;
+extern f32 FireBossWaterSoundTimer;
+extern s32 WATERFIRESOUNDVOL;
+extern f32 FIREWATERSOUNDTIME;
+extern s16 SEEKANGSPEED;
+extern f32 MAXWATERTIME;
+extern f32 WaterLength;
+extern f32 WaterWidth;
+extern s32 FBSCREAMVOL;
+extern f32 AshesMechOutZ;
+extern s32 SMASHRUMPOWER;
+extern struct SIMWHEEL GenericTrail[1];
+
+struct nuvec_s SetNuVec(f32 x,f32 y,f32 z);
+struct nuvec_s *SetNuVecPntr(f32 x,f32 y,f32 z);
+struct numtx_s *DrawJeep(struct JEEPSTRUCT *Jeep);
+struct BUGSAVE *LoadBuggyData(struct BUGSAVE *Data,s32 Indx);
+s32 CurrentWesternPosition(void);
+void ProcessJeepTrails(void);
+
+static f32 JeepCamX;
+static f32 JeepCamY;
 
 struct nuvec_s BaseWheelPosition[6];
 struct enemyjeep_s EnemyJeep[4];
@@ -247,7 +502,7 @@ void SetUpJeepWheelPositions(struct JEEPSTRUCT *Jeep) {
   NuVecAdd(&BaseWheelPosition[5],BaseWheelPosition,&BaseWheelPosition[1]);
   NuVecAdd(&BaseWheelPosition[5],&BaseWheelPosition[5],&BaseWheelPosition[2]);
   NuVecAdd(&BaseWheelPosition[5],&BaseWheelPosition[5],&BaseWheelPosition[3]);
-  NuVecScale(&BaseWheelPosition[5],&BaseWheelPosition[5],0.25f);
+  NuVecScale(0.25f,&BaseWheelPosition[5],&BaseWheelPosition[5]);
   return;
 }
 
@@ -277,7 +532,7 @@ void LimitCam(struct MYSPLINE *Spline,struct nuvec_s *Cam,float LimitDist,float 
   if (Dist > LimitDist) {
     Point.y = Cam->y;
     NuVecSub(&Temp,Cam,&Point);
-    NuVecScaleAccum(&Point,&Temp,(LimitDist / NuVecMag(&Temp)));
+    NuVecScaleAccum((LimitDist / NuVecMag(&Temp)),&Point,&Temp);
     *Cam = Point;
   }
   return;
@@ -303,8 +558,8 @@ void DoCamMtx(struct cammtx_s *CamMtx,struct nuvec_s *Obj,struct nuvec_s *Pos) {
 
 //NGC MATCH
 void BlendNUVECs(struct nuvec_s *Dest,struct nuvec_s *A,struct nuvec_s *B,float Blend) {
-  NuVecScale(Dest,A,(1.0f - Blend));
-  NuVecScaleAccum(Dest,B,Blend);
+  NuVecScale((1.0f - Blend),Dest,A);
+  NuVecScaleAccum(Blend,Dest,B);
   return;
 }
 
@@ -336,10 +591,10 @@ void JeepCamIntro(struct cammtx_s *CamMtx) {
   if (blend != 0.0f) {
     JeepCamFollowAng(NULL,1);
     blend = (blend * blend);
-    NuVecScale(&JeepvPos,&JeepvPos,(1.0f - blend));
-    NuVecScale(&JeepvObj,&JeepvObj,(1.0f - blend));
-    NuVecScaleAccum(&JeepvPos,&IdealCamPos,blend);
-    NuVecScaleAccum(&JeepvObj,&IdealObjPos,blend);
+    NuVecScale((1.0f - blend),&JeepvPos,&JeepvPos);
+    NuVecScale((1.0f - blend),&JeepvObj,&JeepvObj);
+    NuVecScaleAccum(blend,&JeepvPos,&IdealCamPos);
+    NuVecScaleAccum(blend,&JeepvObj,&IdealObjPos);
   }
   DoCamMtx(CamMtx,&JeepvObj,&JeepvPos);
   if (WesternCountdown <= 0.1f) {
@@ -606,7 +861,7 @@ s32 CheckAgainstFireBoss(struct nuvec_s *Position,struct nuvec_s *Move,float RAD
       if (Move != NULL) {
         DotProduct(&Rel,Move); // ?
         Dist2 = NuFsqrt(Dist);
-        NuVecScale(&Rel,&Rel,(RAD / Dist2));
+        NuVecScale((RAD / Dist2),&Rel,&Rel);
         NuVecAdd(&Pos,&FireBoss.Position,&Rel);
         NuVecSub(Move,&Pos,Position);
       }
@@ -750,7 +1005,7 @@ void FireBossWaterFire(s32 WaterOn) {
   if (((FireBoss.BeenHitThisPass == 0) && (FireBoss.Action != 4)) && (WaterTimer != 0.0f)) {
     for(i = 0; i < 3; i++) {
       WaterCurrentLength = i / 3.0f;
-      NuVecScale(&CRel,&nStack_c0,WaterCurrentLength);
+      NuVecScale(WaterCurrentLength,&CRel,&nStack_c0);
       NuVecAdd(&End,&Start,&CRel);
       if (CheckAgainstFireBoss(&End,NULL,(WaterCurrentWidth * WaterCurrentLength + 2.0f)) != 0) {
         FireBoss.HitPoints--;

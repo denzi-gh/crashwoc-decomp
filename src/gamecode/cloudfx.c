@@ -1,3 +1,7 @@
+#include "main.h"
+#include <stddef.h>
+#include <stdlib.h>
+
 float CLOUDRNG;
 float MAXCLOUDSIZE;
 float PARTICLESIZE;
@@ -54,7 +58,7 @@ void cloudInit(union variptr_u *buffer,union variptr_u *buffend) {
   cloudGobj->ngobjs = 1;
   cloudGobj->type = NUGOBJ_MESH;
   cloudGobj->geom = NuGeomCreate();
-  cloudGobj->geom->prims = NuPrimCreate(MAXCLOUDSIZE,NUPT_POINT);
+  cloudGobj->geom->prim = NuPrimCreate(MAXCLOUDSIZE,NUPT_POINT);
   NuGeomCreateVB(cloudGobj->geom,(s32)MAXCLOUDSIZE,NUVT_PS,0);
   cloudGobj->geom->mtl = cloudmtl;
   if (buffer != NULL) {
@@ -86,7 +90,7 @@ void cloudRender(struct nuvec_s *target,struct nuvec_s *cloudoff) {
   struct nuvec_s camoff;
   struct nuvec_s off;
   
-  NuVecScale(&off,cloudoff,CLOUDRNG);
+  NuVecScale(CLOUDRNG,&off,cloudoff);
   camoff.x = target->x + off.x;
   camoff.y = target->y + off.y;
   camoff.z = target->z + off.z;

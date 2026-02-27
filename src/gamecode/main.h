@@ -214,7 +214,7 @@ struct PADStatus {
     short err;
 };
 
-typedef struct PData PData, *PPData;
+typedef struct PData *PPData;
 
 struct PData {
     u8 character;
@@ -237,7 +237,7 @@ struct PlrEvent {
     float fALONG;
 };
 
-typedef struct pVTog pVTog, *PpVTog;
+typedef struct pVTog VTog_s, *PVTog_s;
 
 struct pVTog {
     struct nugspline_s * pTRIGGER;

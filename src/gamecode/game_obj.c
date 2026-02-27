@@ -1,4 +1,86 @@
-//#include "gamecode/game_obj.h"
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+struct gdeb_s {
+    s32 i;
+};
+
+struct tersurface_s {
+    f32 friction;
+    u32 flags;
+};
+
+struct plritem_s {
+    s32 draw;
+    s32 count;
+    s32 frame;
+};
+
+struct plrbonus_s {
+    u32 item;
+    s32 count;
+    s32 frame;
+};
+
+struct projectile_s {
+    struct obj_s obj;
+    struct nuvec_s srcpos;
+    struct nuvec_s dstpos;
+    f32 time;
+    f32 duration;
+    s8 type;
+    s8 active;
+    s16 i_objtab;
+    s8 kill;
+    u8 owner_safety;
+    char pad1;
+    char pad2;
+};
+
+extern struct obj_s *pObj[64];
+extern s32 GAMEOBJECTCOUNT;
+extern s32 temp_cuboid_side;
+extern f32 temp_cuboid_bounce_angle;
+extern u16 temp_yrot;
+extern s32 VEHICLECONTROL;
+extern s32 TimeTrial;
+extern s32 level_part_2;
+extern struct wumpa_s Wumpa[320];
+extern struct winfo_s WInfo[8];
+extern struct gdeb_s GDeb[170];
+extern f32 in_s_friction;
+extern f32 in_speed;
+extern f32 in_f_friction;
+extern u16 temp_xrot;
+extern u16 temp_zrot;
+extern struct tersurface_s TerSurface[];
+extern f32 SAFEY;
+extern struct nuvec_s v010;
+extern struct nuvec_s ShadNorm;
+extern u16 plr_conveyor_yrot;
+extern struct nuvec_s plr_conveyor_mom;
+extern f32 EShadY;
+extern struct tersurface_s TerLayer[];
+extern struct nuvec_s EShadNorm;
+extern f32 ShadRoofY;
+extern struct nuvec_s ShadRoofNorm;
+extern u16 temp_roof_xrot;
+extern u16 temp_roof_zrot;
+extern struct plritem_s plr_crystal;
+extern struct plritem_s plr_crategem;
+extern struct plrbonus_s plr_bonusgem;
+extern u32 plr_items;
+extern s32 new_power;
+extern s32 new_mode;
+extern s32 new_level;
+extern s32 boss_dead;
+extern f32 temp_ratio;
+extern s32 temp_face;
+extern f32 vtog_duration;
+extern f32 vtog_time;
+extern s32 vtog_blend;
+extern struct projectile_s Projectile[16];
 
 /* TODO
 	ObjectCylinderCollision

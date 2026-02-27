@@ -1,8 +1,90 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+struct deb3_s;
+
+struct deb3info {
+  s16 type;
+  s16 classid;
+  s16 info;
+  float timer;
+  float size;
+  s16 deb;
+  s16 rate;
+  void (*impact)(struct deb3_s *);
+  void (*end)(struct deb3_s *);
+  s32 data;
+};
+
+struct deb3_s {
+  struct numtx_s mtx;
+  struct numtx_s invWorldInertiaTensor;
+  struct nuvec_s velocity;
+  struct nuvec_s angularvelocity;
+  struct nuvec_s angularMomentum;
+  struct nuvec_s impact;
+  struct nuvec_s norm;
+  struct nuvec_s diff;
+  float shadow;
+  float grav;
+  s16 status;
+  s16 timer;
+  s16 check;
+  s16 count;
+  struct deb3info *info;
+  s32 data;
+};
+
+struct rbclass_s {
+  struct numtx_s invBodyInertiaTensor;
+  float mass;
+  float kr;
+  float kf;
+};
+
+struct firedrop_s {
+  struct nuvec_s pos;
+  float time;
+  s32 type;
+};
+
+typedef struct ELEC_s {
+  struct nuvec_s start;
+  struct nuvec_s end;
+  s32 time;
+  s32 ang;
+} ELEC;
+
+struct gdeb_s {
+  s32 i;
+};
+
+struct objtab_s {
+  struct nuhspecial_s obj;
+  struct nugscn_s **scene;
+  char visible;
+  char font3d_letter;
+  char pad1;
+  char pad2;
+  char *name;
+  char unk[4];
+  u64 levbits;
+};
+
+extern struct gdeb_s GDeb[170];
+extern struct objtab_s ObjTab[201];
+extern struct nugspline_s *pVIS;
+extern s32 iVIS;
+extern struct nuvec_s ShadNorm;
+
+struct rbclass_s rbclass[5];
+volatile ELEC H2OElec[22];
 
 s32 rsfxcount;
 s32* rsfxpt;
-volatile volatile float HotCoals[13];
-volatile volatile float HotRocks[73];
+volatile float HotCoals[13];
+volatile float HotRocks[73];
 s32 cmask;
 struct deb3_s deb3[64];
 s32 debpt;
@@ -138,7 +220,7 @@ void RBodyMove(struct deb3_s *deb,float dt) {
   rbc = &rbclass[deb->info->classid];
   if (rbc->mass != 0.0f) {
     tmtx = deb->mtx;
-    NuVecScale(&v,&deb->angularvelocity,dt);
+    NuVecScale(dt,&v,&deb->angularvelocity);
     NuMtxSkewSymmetric(&tmtx,&v);
     NuMtxMulR(&tmtx,&deb->mtx,&tmtx);
     NuMtxAddR(&tmtx,&tmtx,&deb->mtx);
