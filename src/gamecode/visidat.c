@@ -1,3 +1,6 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
 
 //NGC MATCH
 void visiSetSplineKnot(struct visidata_s* vd, s32 spix, s32 knotix) {
@@ -39,7 +42,7 @@ void visiSetSplineKnot(struct visidata_s* vd, s32 spix, s32 knotix) {
         if (vd->vspline[spix][knotix] != NULL) {
             i = 0; // r31 set here and used in the most inner loop
             for (ix = 0; ix < vd->binfosize; ix++) {
-                mask = vd->vspline[spix][knotix][ix];
+                mask = ((u64 ***)vd->vspline)[spix][knotix][ix];
                 for (n = 0; n < 64; n++) {
                     vd->sc->instances[i++].flags.visitest = mask & 1;
                     mask >>= 1;

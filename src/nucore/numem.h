@@ -14,8 +14,8 @@
 
 extern struct memexternal_s* memexternal;
 extern s32 highallocaddr;
-static s32 peakallocaddr;
-static s32 totalloc;
+extern s32 peakallocaddr;
+extern s32 totalloc;
 extern s32 malloced;
 
 

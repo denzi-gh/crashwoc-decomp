@@ -1,4 +1,48 @@
-#include "../nu.h"
+#include "debris.h"
+char *debbuffer;
+struct rdata_s *freedebchunks[256];
+struct debkeydatatype_s debkeydata[256];
+struct particlechunkrendertype_s ParticleChunkRenderStack[256];
+s32 debris_emitter_stack_index;
+struct debkeydatatype_s *debris_emitter_stack[32];
+struct debinftype *debtab[128];
+short freedebkeys[256];
+s32 freeDmaDebType;
+s32 debris_chunk_control_stack_index;
+s32 freedebkeyptr;
+s32 freechunkcontrolsptr;
+s32 mydebbuffersize;
+struct debris_chunk_control_s *freechunkcontrols[512];
+struct debris_chunk_control_s debris_chunk_controls[512];
+s32 freedebchkptr;
+struct numtl_s *DebMat[8];
+struct PartHeader *DmaDebTypes[128];
+struct debris_chunk_control_s *debris_chunk_control_stack[32];
+s32 render_debris_enabled;
+s32 globalframes;
+float globaltime;
+
+extern u8 object_switches[128];
+extern s32 scaneffect;
+extern s32 testeffect;
+extern s32 debris_sfx;
+extern const struct numtx_s numtx_identity;
+extern struct uv1deb *(*gensorttab[11])();
+extern void *gencodetab[7];
+
+struct DmaDebTypePointer;
+
+struct DmaDebTypePointer *CreateDmaPartEffectList(void *buffer, int *size);
+void GenericDebinfoDmaTypeUpdate(struct debinftype *debinfo);
+void LinkDmaParticalSets(int **table, int count);
+
+void AddChunkControlToStack(struct debris_chunk_control_s *chunk, struct debris_chunk_control_s **stack);
+void RemoveChunkControlFromStack(struct debris_chunk_control_s *chunk, struct debris_chunk_control_s **stack);
+void DebFreeInstantly(s32 *key);
+struct debkeydatatype_s **FindDebrisEffectStack(struct debkeydatatype_s *effect);
+void RemoveDebrisEffectFromStack(struct debkeydatatype_s *effect, struct debkeydatatype_s **stack);
+void AddDebrisEffect(s32 *key, s32 type, float x, float y, float z);
+float CameraEmitterDistance(struct nuvec_s *vec);
 
 #define RAND_MAX (2147483647)
 
@@ -323,7 +367,7 @@ inline struct uv1deb* GenDebIndexBounceXZ(struct debkeydatatype_s* current_deb_k
     deb->my = emit.y;
     deb->mz = emit.z;
     NuVecRotateY(&normal, &normal, (s32)current_deb_key->refroty);
-    NuVecScale(&poffset, &normal, current_deb_key->refoff);
+    NuVecScale(current_deb_key->refoff, &poffset, &normal);
     debend.x = debinfo->etime * deb->mx + deb->x;
     debend.y = 0.0f;
     debend.z = debinfo->etime * deb->mz + deb->z;
@@ -526,7 +570,7 @@ inline void
 GenDebMomAdjFromPosRevTree(struct debkeydatatype_s* current_deb_key, struct debinftype* debinfo, struct uv1deb* deb) {
     deb->mx += deb->x * -0.6f;
     deb->mz += deb->z * -0.6f;
-    deb->y -= (float)(sqrt(deb->x * deb->x + deb->z * deb->z) * 0.4);
+    deb->y -= NuFsqrt(deb->x * deb->x + deb->z * deb->z) * 0.4f;
     deb->etime = 64.0f / (debinfo->etime + (debinfo->etime * randy()) / 1.503239e+09f); //1.503239e+09f
     return;
 }

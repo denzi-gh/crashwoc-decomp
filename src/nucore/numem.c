@@ -2,19 +2,14 @@
 
 #include "numem.h"
 #include "nuerror.h"
-#include "nucoretypes.h";
+#include "nucoretypes.h"
 
 struct memexternal_s memext;
-extern s32 highallocaddr = 0;
-extern s32 peakallocaddr = 0;
-extern s32 totalloc = 0;
-extern s32 malloced = 0;
+s32 highallocaddr = 0;
+s32 peakallocaddr = 0;
+s32 totalloc = 0;
+s32 malloced = 0;
 struct memexternal_s *memexternal;
-
-
-#define NuError(msg,line)                                                           \
-    error_func e = NuErrorProlog(__FILE__, __LINE__);                          \
-    e(msg);
 
 #define ROUND_UP(x, align) (((x) + (align)-1) & (-(align)))
 
@@ -26,7 +21,7 @@ void NuMemSetExternal(union variptr_u* ptr, union variptr_u* end) {
 		memext.end = end;
         return;
 	}
-	memexternal = ptr;
+	memexternal = NULL;
     return;
 }
 
@@ -36,12 +31,12 @@ void* NuMemAlloc(s32 size) {
 
     // Alloc from main heap if possible
     if (memexternal != NULL) {
-        memexternal->ptr->intaddr = (void*) ROUND_UP((u32) memexternal->ptr->voidptr, 16);
+        memexternal->ptr->intaddr = ROUND_UP((u32)memexternal->ptr->voidptr, 16);
         if (memexternal->end != NULL && (u32)memexternal->end->intaddr - (u32)memexternal->ptr->intaddr < size) {
             return NULL;
         }
-        ret = memexternal->ptr->intaddr;
-        memexternal->ptr->intaddr = ((s8*)memexternal->ptr->intaddr) + size;
+        ret = memexternal->ptr->voidptr;
+        memexternal->ptr->intaddr += size;
         return ret;
     }
     // Main game heap is NULL, fallback on C malloc?

@@ -1,4 +1,7 @@
 #include "../nu.h"
+#include "terrain.h"
+#include "debris.h"
+#include <string.h>
 
 #define FLOAT_INTMAX 2147483647.0f
 #define POW2(x) ((x) * (x))

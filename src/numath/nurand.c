@@ -5,11 +5,13 @@ u32 fseed = 0;
 
 long NuRand(struct nunrand_s* nrand)
 {
+	u32 val;
+
 	if (nrand == NULL)
 	{
 		nrand = &global_rand;
 	}
-	u32 val = (nrand->idum ^ 0x75bd924) * 0x41a7 + ((s32)(nrand->idum ^ 0x75bd924) / 0x31e5) * -0xccbbc77;
+	val = (nrand->idum ^ 0x75bd924) * 0x41a7 + ((s32)(nrand->idum ^ 0x75bd924) / 0x31e5) * -0xccbbc77;
 	nrand->idum = val;
 	if ((s32)val < 0)
 	{

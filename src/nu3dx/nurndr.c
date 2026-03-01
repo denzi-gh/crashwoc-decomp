@@ -1,4 +1,7 @@
 #include "nurndr.h"
+#include "nucamera.h"
+#include "nulight.h"
+#include "../numath.h"
 #include "../system.h"
 
 #define PI 3.1415927f
@@ -450,7 +453,7 @@ s32 NuRndrTri3d(struct nuvtx_tc1_s *vtx,struct numtl_s *mtl,struct numtx_s *wm) 
         NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f2, "NuRndrTri3d : Primitive buffer full!");
     }
     stride = NuVtxStride(geom->vtxtype);
-    vb = (struct nuvtx_tltc1_s *)geom->hVB;
+    vb = (struct nuvtx_tc1_s *)geom->hVB;
     if (vb == 0) {
         NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f9, "NuRndrTri3d : Lock VB failed!");
     }
@@ -686,7 +689,7 @@ static void NuRndrGeomItem(struct nugeomitem_s *item) {
 static void NuRndrBlendedSkinItem(struct nugeomitem_s* item) {
   float blendval;
   int j;
-  struct nuvec_s** LCBlendOffsets;
+  struct nuvec_s* LCBlendOffsets;
   struct nugeom_s *geom;
   struct nuvtx_sk3tc1_s *srcverts;
   struct nuvec_s *destvb;
@@ -709,11 +712,11 @@ static void NuRndrBlendedSkinItem(struct nugeomitem_s* item) {
         for (j = 0; j < blendgeom->nblends; j++) {
           LCBlendOffsets = blendgeom->blend_offsets[j];
             if (LCBlendOffsets != 0) {
-            blendval = (*item->blendvals)[*(j + blendgeom->ix)];
+            blendval = (*item->blendvals)[blendgeom->ix[j]];
             if (blendval != 0.0f) {
-                destvb->x =  ((*(f32*)&LCBlendOffsets[i * 3] * blendval) + destvb->x);
-                destvb->y =  (((i + (blendgeom->blend_offsets[j]))->y * blendval) + destvb->y); //(*LCBlendOffsets[i])
-                destvb->z =  (((i + (blendgeom->blend_offsets[j]))->z * blendval) + destvb->z);
+                destvb->x = LCBlendOffsets[i].x * blendval + destvb->x;
+                destvb->y = LCBlendOffsets[i].y * blendval + destvb->y;
+                destvb->z = LCBlendOffsets[i].z * blendval + destvb->z;
                 }
             }
         }

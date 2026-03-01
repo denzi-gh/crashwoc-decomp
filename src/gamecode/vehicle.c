@@ -2,6 +2,830 @@
 #include <stddef.h>
 #include <string.h>
 
+/* ---- function declarations ---- */
+struct nuvec_s SetNuVec(f32 x, f32 y, f32 z);
+struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
+struct Quat SetNuQuat(f32 x, f32 y, f32 z, f32 w);
+
+/* ---- struct definitions ---- */
+
+struct NEWBUGGY {
+    void *a;
+};
+
+typedef struct CrateCube_s {
+    void *model;
+    struct nuvec_s pos0;
+    struct nuvec_s pos;
+    f32 oldy;
+    f32 shadow;
+    f32 mom;
+    f32 timer;
+    f32 duration;
+    s8 on;
+    s8 iRAIL;
+    s16 iALONG;
+    f32 fALONG;
+    u16 flags;
+    s8 type1;
+    s8 type2;
+    s8 type3;
+    s8 type4;
+    s8 newtype;
+    s8 subtype;
+    s8 i;
+    s8 metal_count;
+    s8 appeared;
+    s8 in_range;
+    s16 dx;
+    s16 dy;
+    s16 dz;
+    s16 iU;
+    s16 iD;
+    s16 iN;
+    s16 iS;
+    s16 iE;
+    s16 iW;
+    s16 trigger;
+    s8 counter;
+    s8 anim_cycle;
+    s16 index;
+    f32 anim_time;
+    f32 anim_duration;
+    f32 anim_speed;
+    u16 xrot0;
+    u16 zrot0;
+    u16 xrot;
+    u16 zrot;
+    u16 surface_xrot;
+    u16 surface_zrot;
+    s16 character;
+    s16 action;
+    struct nuvec_s colbox[2];
+} CrateCube;
+
+struct MYDRAW {
+    struct anim_s Anim;
+    struct CharacterModel *Model;
+    char _pad1[0xc0];
+};
+
+struct MYSPLINE {
+    struct nugspline_s *Spline;
+    float Cur;
+    float Nex;
+    float Act;
+    float Inc;
+    struct nuvec_s CurPos;
+    struct nuvec_s NexPos;
+    float LookaheadDist;
+};
+
+struct objtab_s {
+    struct nuhspecial_s obj;
+    struct nugscn_s **scene;
+    char visible;
+    char font3d_letter;
+    char pad1;
+    char pad2;
+    char *name;
+    char unk[4];
+    u64 levbits;
+};
+
+struct gdeb_s {
+    s32 i;
+};
+
+struct plritem_s {
+    s32 draw;
+    s32 count;
+    s32 frame;
+};
+
+typedef struct GLIDERSTRUCT GLIDERSTRUCT;
+struct GLIDERSTRUCT {
+    struct creature_s *Cre;
+    struct nuvec_s vel;
+    int Dead;
+    int CocoDead;
+    float CocoDeadTimer;
+    float CocoDeathSpinX;
+    float CocoDeathSpinZ;
+    float NextEngRum;
+    float FixVelTimer;
+    float ImmuneAsteroidsTimer;
+    struct nuvec_s Position;
+    struct nuvec_s OldPosition;
+    struct nuvec_s Velocity;
+    struct nuvec_s Resolved;
+    struct nuvec_s RailPoint;
+    float RailAngle;
+    float TiltX;
+    float TiltZ;
+    float DestTiltX;
+    float DestTiltZ;
+    float AngleY;
+    float CamAngleY;
+    float CamTiltX;
+    float CamTornRecoverTimer;
+    float InputX;
+    float InputZ;
+    int BarrelRoll;
+    float BarrelDelta;
+    float BarrelSpeedX;
+    int TerminalDive;
+    int TerminalDir;
+    float FireTimer;
+    float HitTimer;
+    int AutoPilot;
+    int ForceTurn;
+    int HitPoints;
+    char LocatorList[16];
+    float LocatorTime[16];
+    int InTornado;
+    int LastInTornado;
+    float InTornadoTime;
+    float TornadoSpin;
+    float InTornadoScale;
+    struct nuvec_s ApparentPosition;
+    struct nuvec_s ApparentVelocity;
+    struct nuvec_s PositionStack[30];
+    struct nuvec_s VelocityStack[30];
+    int StackIndx;
+    float Speed;
+    float TargetSpeed;
+    float NotInFrontTimer;
+    float PullUpTimer;
+    float OverideTiltZ;
+    float TargetTimer;
+    struct nuvec_s *MovingTargetPoint;
+    struct nuvec_s *MovingTargetVel;
+    int TargetOn;
+    float TargetedTime;
+    int TargetMoving;
+    float NextHitSoundTimer;
+};
+
+struct ATLASSTRUCT {
+    struct creature_s *Cre;
+    int Whacko;
+    int Type;
+    int Dead;
+    int HitPoints;
+    int DestHitPoints;
+    int HitPointCounter;
+    int DrawCrunch;
+    int DrawShell;
+    float InhibitControlTimer;
+    int NumAttacks;
+    int Action;
+    int LastAction;
+    float ActionTimer;
+    float ActionTimer2;
+    int BeenHit;
+    int CantBeHit;
+    float RollSpeed;
+    float RollAccTimer;
+    struct MYDRAW Shell;
+    struct MYDRAW Crunch;
+    struct nuvec_s Position;
+    struct nuvec_s OldPosition;
+    struct nuvec_s LastPosition;
+    struct nuvec_s TargetPosition;
+    struct nuvec_s Velocity;
+    struct nuvec_s OldVelocity;
+    struct nuvec_s Resolved;
+    struct nuvec_s Force;
+    float Radius;
+    float AngleX;
+    float AngleY;
+    float AngleZ;
+    float InputAng;
+    float InputMag;
+    struct Quat Quat;
+    struct Quat ThisQuat;
+    struct Quat FrameQuat[4];
+    struct Quat LastQuat;
+    int LastHit;
+    int Axis;
+    struct nuvec_s LastNormal;
+    struct nuvec_s StoreLastNormal;
+    float DebugAxisTurn;
+    float DebugAngY;
+    float D[7];
+    int OnGround;
+    int PlatformId;
+    struct nuvec_s PlatformNormal;
+    float ShadowY;
+    int SurfaceType;
+    int TrailSurfaceType;
+    int BigDrop;
+    int Embedded;
+    int Rock;
+    int RockNum;
+    float CrunchY;
+    float DestCrunchY;
+    short *TerrHandle;
+    float BoostTimer;
+    struct nuvec_s InterestPoint;
+};
+
+typedef struct ZOFFASTRUCT ZOFFASTRUCT;
+struct ZOFFASTRUCT {
+    struct MYDRAW MainDraw;
+    int ActiveMode;
+    float RespawnTimer;
+    struct nuvec_s Position;
+    struct nuvec_s Velocity;
+    struct nuvec_s Resolved;
+    float TiltX;
+    float TiltZ;
+    float DestTiltX;
+    float DestTiltZ;
+    float DestAngleY;
+    float AngleY;
+    int NoFireSound;
+    float Temp[6];
+    float VisibleTimer;
+    float NewDirectionTimer;
+    float NewAltitudeTimer;
+    float NewAltitudeTarget;
+    int TerminalDive;
+    int Explode;
+    int HitPoints;
+    int FireFrame;
+    int FireNow;
+    float FireTimer;
+    int Seen;
+    int SmkTimer;
+    struct numtx_s Locators[16];
+    int SmokeCounter;
+    float AggressionTimer;
+    int PlayerCloseAndVisable;
+    float NotSeenTimer;
+    float AggressionPoints;
+    int Teleport;
+    float NoTeleportTimer;
+    float Speed;
+    int InFront;
+    int FacingTarget;
+    float Dist;
+    int FireSide;
+    float NotInFrontTimer;
+    float LockedOnTimer;
+    float KeepSameVelocityTimer;
+    float FireBurstTimer;
+};
+
+typedef struct HOVASTRUCT HOVASTRUCT;
+struct HOVASTRUCT {
+    int ActiveMode;
+    struct MYDRAW MainDraw;
+    struct nuvec_s Position;
+    struct nuvec_s StartPos;
+    struct nuvec_s Velocity;
+    float AngleY;
+    int Thrust;
+    float ThrustOff;
+    int TerminalDive;
+    int Explode;
+    int HitPoints;
+    float StayStillTimer;
+    float MoveTimer;
+    struct nuvec_s TargetVelocity;
+};
+
+typedef struct TORNADOSTRUCT TORNADOSTRUCT;
+struct TORNADOSTRUCT {
+    int Active;
+    struct nuvec_s Position;
+    struct nuvec_s StartPosition;
+    struct MYDRAW MainDraw;
+    float Scale;
+    float YAng;
+    float YAngInc;
+    float Rad;
+    float RadInc;
+};
+
+typedef struct SATELLITESTRUCT SATELLITESTRUCT;
+typedef struct SPACESTATIONSTRUCT SPACESTATIONSTRUCT;
+
+struct SATELLITESTRUCT {
+    int Active;
+    struct MYDRAW MainDraw;
+    struct nuvec_s Position;
+    struct nuvec_s Velocity;
+    float AngleY;
+    float TiltX;
+    float TiltZ;
+    float DestTiltX;
+    float DestTiltZ;
+    int Seen;
+    int HitPoints;
+    int Explode;
+    SPACESTATIONSTRUCT *SpaceStation;
+    float SatelliteAngleY;
+};
+
+struct SPACESTATIONSTRUCT {
+    struct numtx_s Matrix;
+    int Active;
+    struct nuvec_s Position;
+    struct nuvec_s Velocity;
+    float AngleY;
+    int Seen;
+    int HitPoints;
+    int Explode;
+    float SatelliteAngleY;
+    SATELLITESTRUCT *Satellite[3];
+    struct numtx_s ShieldMtx;
+    int ShieldDraw;
+    int ShieldGreen;
+    struct nuvec_s AppCentre;
+};
+
+typedef struct GLIDERBULLET GLIDERBULLET;
+struct GLIDERBULLET {
+    struct numtx_s Mat;
+    struct nuvec_s Vel;
+    short Life;
+    short FirstLife;
+};
+
+typedef struct PLANESTRUCT PLANESTRUCT;
+struct PLANESTRUCT {
+    struct nuvec_s Pos;
+    struct nuvec_s Vel;
+    float ActionTimer;
+    int ActionStatus;
+    int Active;
+    struct MYDRAW MainDraw;
+};
+
+typedef struct BATTLESHIPSTRUCT BATTLESHIPSTRUCT;
+struct BATTLESHIPSTRUCT {
+    int Active;
+    struct MYDRAW MainDraw;
+    struct numtx_s Locator[16];
+    struct nuvec_s Position;
+    float AngleY;
+    float TiltX;
+    float TiltZ;
+    float DestTiltX;
+    float DestTiltZ;
+    float DestY;
+    float Seek;
+    int Seen;
+    int HitPoints;
+    float FireTimer[2];
+    struct nuvec_s GooScale;
+    struct nuvec_s DestGooScale;
+    struct nuvec_s BaseGooScale;
+    float GooSpeed;
+    struct nuvec_s GooTimer;
+    int KillMeNow;
+};
+
+typedef struct BIGGUNSTRUCT BIGGUNSTRUCT;
+struct BIGGUNSTRUCT {
+    int Active;
+    struct MYDRAW MainDraw;
+    struct nuvec_s Position;
+    int Type;
+    int HitPoints;
+    float AngleY;
+    float FireAngleX;
+    float FireAngleY;
+    float TiltX;
+    float TiltZ;
+    float DestAngleY;
+    float DestTiltX;
+    float DestTiltZ;
+    int FireFrame;
+    int Seen;
+    int Action;
+    int LastAction;
+    float FireAngMomX;
+    float FireAngMomY;
+    float BurstTimer;
+    int ExplosionEffect;
+    float FireAngMinX;
+    float FireAngMaxX;
+    float FireAngMainY;
+    float FireAngDeviationY;
+    struct nuvec_s TerrPos;
+};
+
+typedef struct GUNBOATSTRUCT GUNBOATSTRUCT;
+struct GUNBOATSTRUCT {
+    int Active;
+    int Character;
+    struct MYDRAW MainDraw;
+    struct nuvec_s Position;
+    float AngleY;
+    float FireAngleX;
+    float FireAngleY;
+    float TiltX;
+    float TiltZ;
+    float DestAngleY;
+    float DestTiltX;
+    float DestTiltZ;
+    int FireFrame;
+    int Seen;
+    int Action;
+    int LastAction;
+    float FireAngMomX;
+    float FireAngMomY;
+    float BurstTimer;
+    float SunkTimer;
+};
+
+typedef struct BOSSSTRUCT BOSSSTRUCT;
+struct BOSSSTRUCT {
+    int Active;
+    int Unleashed;
+    float FireTimer;
+    int FireSide;
+    struct MYDRAW MainDraw;
+    struct MYDRAW BonesDraw;
+    struct numtx_s Locator[16];
+    struct nuvec_s Position;
+    float PossYDest;
+    float AngleY;
+    float BaseAngleY;
+    float DestAngleY;
+    int HitPoints[4];
+    int Seen;
+    float Distance;
+    float DistanceDest;
+    int Action;
+    int OldAction;
+    int NextAction;
+    float ActionTimer;
+    int LastNonSeekAction;
+    int Dead;
+    struct MYSPLINE MainSpline;
+    float HoldFrameTimer;
+    float ChestSoundBTimer;
+    int HitSoundFrame;
+};
+
+typedef struct ASTEROIDSTRUCT ASTEROIDSTRUCT;
+struct ASTEROIDSTRUCT {
+    int Active;
+    struct nuvec_s Position;
+    struct nuvec_s Velocity;
+    float AngleX;
+    float AngleY;
+    float AngVelX;
+    float AngVelY;
+    struct nuvec_s Scale;
+    int Seen;
+    int HitPoints;
+    float CentreDist2;
+    int Stealth;
+    int Explode;
+};
+
+typedef struct ZOFFASTART ZOFFASTART;
+struct ZOFFASTART {
+    float x;
+    float y;
+    float z;
+    float Angle;
+};
+
+typedef struct LIGHTENINGHAIL LIGHTENINGHAIL;
+struct LIGHTENINGHAIL {
+    int Mode;
+    float Timer;
+    float FallX;
+    struct nuvec_s Position;
+    struct nuvec_s Velocity;
+};
+
+typedef struct WBBOLT WBBOLT;
+struct WBBOLT {
+    int Mode;
+    int Owner;
+    struct nuvec_s Position;
+    struct nuvec_s Velocity;
+    float Life;
+    int Type;
+    float SeekSpeed;
+    float Scale;
+};
+
+typedef struct GLIDERBOMBSTRUCT GLIDERBOMBSTRUCT;
+struct GLIDERBOMBSTRUCT {
+    struct nuvec_s Vel;
+    struct nuvec_s Pos;
+    float AngY;
+    int Life;
+    float Gravity;
+    struct nuvec_s Target;
+    struct nuvec_s *TargetPntr;
+    struct nuvec_s *TargetVelPntr;
+    int TargetMoving;
+    int UnderWater;
+    float DropTimer;
+};
+
+struct JEEPROCK {
+    struct nuvec_s Pos;
+    struct nuvec_s Vel;
+    int Active;
+    int Seen;
+    int Stuck;
+    int Explode;
+    int SmallDamage;
+    float Life;
+    struct ATLASSTRUCT Atlas;
+    int Grabbed;
+    int Mode;
+    float FlameTimer;
+    struct nuvec_s Scale;
+    int FireBlob;
+    int SmashMe;
+};
+
+struct VEHMASK {
+    int Active;
+    int Id;
+    int KillAtEnd;
+    struct nuvec_s Position;
+    struct MYDRAW MainDraw;
+    float DrawAngY;
+    int Action;
+    int LastAction;
+    int EffectType;
+    float Tween;
+    float TweenInc;
+    float Ang;
+    struct nuvec_s Store[2];
+    struct nuvec_s *Point[2];
+    struct nuvec_s Offset[2];
+    float AngInc[2];
+    float Rad[2];
+    float Scale[2];
+    float TiltX[2];
+    float DrawScale;
+    int Seen;
+};
+
+/* ---- vehicle.c globals ---- */
+
+GLIDERBOMBSTRUCT GliderBombs[10];
+GLIDERBOMBSTRUCT EnemyGliderBombs[0x1c];
+struct ATLASSTRUCT EarthBoss;
+struct ATLASSTRUCT PlayerAtlas;
+SATELLITESTRUCT SatelliteList[9];
+SPACESTATIONSTRUCT SpaceStationList[3];
+s32 SatelliteCharacterId;
+BATTLESHIPSTRUCT BattleShipList[6];
+BIGGUNSTRUCT BigGunList[12];
+s32 BigGunIndx;
+GUNBOATSTRUCT GunBoatList[4];
+BOSSSTRUCT WeatherBoss;
+ASTEROIDSTRUCT AsteroidList[100];
+s32 AsteroidDebug;
+WBBOLT BoltList[0x78];
+LIGHTENINGHAIL HailList[0x1e];
+struct JEEPROCK JeepRock[6];
+PLANESTRUCT PlayerPlane;
+TORNADOSTRUCT TornadoList[6];
+struct numtx_s WeatherBossCamMtx;
+struct MYSPLINE WeatherBossCamSpline;
+struct MYSPLINE WeatherBossIntroSpline;
+struct numtx_s BoltMtxA;
+struct numtx_s BoltMtxB;
+struct numtx_s BoltMtxC;
+struct nuvec_s WeatherBossTargetVel;
+s32 JeepInControl;
+struct nuvec_s GliderTargetPos;
+struct nuvec_s GliderCollPoints[6];
+struct nuvec_s TeleportPos[4];
+struct nuvec_s TeleportVel[4];
+ZOFFASTART ZoffaStartPoints[16];
+s32 ZoffaTeleportIndx;
+s32 ZoffaCollisionCounter;
+s32 CurrentAggressor;
+s32 JonnyOn;
+s32 ebgo;
+struct nuvec_s ebpos[3];
+float ebtime[3];
+s32 jontorn[20];
+s32 NumRockPanel;
+s32 RockPanelObj[6];
+struct nuvec_s RockPanelData[6];
+float RockPanelScale;
+s32 RockPanelRotX[6];
+s32 RockPanelRotY[6];
+s32 RockPanelRotZ[6];
+float RumbleDisplayY;
+s32 RumbleDisplayMode;
+float RumbleCamTween;
+float RumbleCamTweenDest;
+float RumbleCamTweenInterest;
+s32 RumbleCamVal;
+struct nuvec_s RumbleCamPos;
+s32 RumbleCamY;
+s32 ResetAtlasCamera;
+float AngleY_836;
+float AtlasWhackValue;
+float AtlasWhackTimer;
+s32 AtlasFrame;
+s32 AtlasEmbeddedFrame;
+s32 kj;
+s32 FarmFrame;
+s32 FarmResetTimer;
+float GliderCamHighTimer;
+s32 LastNumZoffasFiring;
+s32 NumZoffasFiring;
+s32 ActiveAsteroidListNum;
+s32 ACTIVEBLIMPCOUNT;
+float FlyingLevelCompleteTimer;
+s32 FlyingLevelExtro;
+s32 FlyingLevelVictoryDance;
+float FlyingLevelVictoryDanceTimer;
+s32 FireFlyIntroAction;
+s32 FireFlyIntroOldAction;
+s32 FireFlyIntroOn;
+float FireFlyStartAngle;
+struct nuvec_s GliderIntroCamPos;
+struct nuvec_s GliderIntroInterest;
+float Timer_549;
+float CamAngY_550;
+float MatchTimer;
+float MatchMaxDist;
+float MatchMinDist;
+float PrePanTime;
+float PanSeekSpeed;
+float MinPanSeekSpeed;
+s32 VehicleLevelImmune;
+s32 ChrisBigBossDead;
+s32 WeatherBossDead;
+s32 EarthBossDeathTimer;
+s32 EarthBossJustEntered;
+s32 EarthBossDeathEffect;
+s32 EarthBossVortexOpen;
+s32 ShootRockSound;
+float WeatherBossSkeletonTimer;
+float WeatherBossSkeletonGlitchTimer;
+float AtmosphericPressureHackedZ;
+struct nuvec_s WBIntroGliderPos;
+float WBIntroDestTiltX;
+float WBIntroDestTiltZ;
+float WBIntroTweenTimer;
+struct nuvec_s WeatherStartPos;
+s32 LevelResetTimer;
+s32 GliderFrameCounter;
+s32 BazookaIconOn;
+struct nuvec_s BazookaTokenPos;
+struct nuvec_s BazookaTokenCurrentPos;
+struct MYDRAW IconMainDraw;
+struct nuvec_s ElectricalPosition;
+s32 RumbleStoreTotalRoks;
+s32 RumbleStoreCrunchRoks;
+s32 RumbleStoreCrashRoks;
+s32 NumRockPanel;
+
+/* ---- extern declarations ---- */
+
+extern struct nuvec_s v000;
+extern struct numtx_s mTEMP;
+extern struct objtab_s ObjTab[201];
+extern struct gdeb_s GDeb[170];
+extern struct nuvec_s *vec;
+extern s32 Paused;
+extern s32 new_mode;
+extern s32 new_level;
+extern s32 GameMode;
+extern s32 Adventure;
+extern s32 TimeTrial;
+extern s32 Hub;
+extern s32 LivesLost;
+extern s32 InvincibilityCHEAT;
+extern struct game_s Game;
+extern struct plritem_s plr_lives;
+extern struct nuvec_s ShadNorm;
+extern s32 temp_crate_type;
+extern CrateCube *temp_pCrate;
+extern s32 temp_xzmomset;
+extern struct nuvec_s *CamOveride;
+extern struct nuvec_s BattleShipCollScale;
+extern struct nuvec_s SPACETRAN;
+extern s32 PLAYERCOUNT;
+extern s32 VEHICLECONTROL;
+extern struct nuvec_s FarmCameraStart;
+extern float FarmZepplinSpeed;
+extern struct nuvec_s FarmZepplinStart;
+extern float FarmZepplinTimer;
+extern struct nuvec_s ZepplinGliderOffset;
+extern struct nuvec_s WRStartPos;
+extern float WRStartAng;
+extern struct trail_s trail[128];
+extern s32 trailpt;
+extern s32 trailair;
+extern float CRATEBALLOONOFFSET;
+extern float CRATEBALLOONRADIUS;
+
+/* vehicle tuning externs */
+extern float Level_GliderSpeed;
+extern float Level_GliderFloor;
+extern float Level_GliderCeiling;
+extern float Level_GliderCurrentCeiling;
+extern float Level_GliderRadius;
+extern float Level_GliderCentreX;
+extern float Level_GliderCentreZ;
+extern float Level_DeadTime;
+extern float Level_TargetTime;
+extern float WBLIMX;
+extern float WBTILTZSCALE;
+extern float WBTILTXSCALE;
+extern float WBBARRELSPEED;
+extern float WBBARRELSEEKSPEEDZERO;
+extern float WBBARRELSEEKSPEEDNONZERO;
+extern float WBTARGLIMX;
+extern float WBTARGLIMY;
+extern float WBTARGSCALE;
+extern float WeatherBossTargetAppearTime;
+extern float BEENHITBIGBUZZTIME;
+extern float BEENHITBIGRUMTIME;
+extern float GLIDERHITSOUNDFREQUENCY;
+extern s32 GLIDERHITSOUNDOTHERID;
+extern short CRASHTEROIDSSATELLITEVOL;
+extern short CRASHTEROIDSAMBIENTVOL;
+extern float HAILCOLLRAD;
+extern float HAILHIDDENTIME;
+extern float HailFallSpeed;
+extern float BOLTHOMESEEKSPEED;
+extern float BOLTHOMESEEKTIME;
+extern float WBTYPE2SCALETIME;
+extern float WBBOSSINTRODIST;
+extern float WBIntroTweenTime;
+extern float WBINTROLOOKAHEAD;
+extern float WBITILTZSCALE;
+extern float WBITILTXSCALE;
+extern float WBDISTANCESPEED;
+extern float WBDISTANCETIME;
+extern float WBDISTANCEYSPEED;
+extern float WBDISTANCEYTIME;
+extern float WBSCALE;
+extern float WBSKELTIME;
+extern float WBSKELTIMERAND;
+extern float WBSNOWBALLSPEED;
+extern float WBSNOWCONESPEED;
+extern float WBANGSCALE;
+extern float WBANGSCALE2;
+extern float WBANGSCALE3;
+extern float WBANGOFF;
+extern float WBANGOFF2;
+extern float WBLOLOSCALE;
+extern float WBLOLOTILTX;
+extern struct nuvec_s WBMASKONHIGH;
+extern struct nuvec_s WBMASKLEFT;
+extern float WBMASKLEFTRAD;
+extern struct nuvec_s WBMASKRIGHT;
+extern float WBMASKRIGHTRAD;
+extern struct nuvec_s WBMASKEYES;
+extern float WBMASKEYESRAD;
+extern struct nuvec_s WBMASKCHEST;
+extern float WBMASKCHESTRAD;
+extern struct nuvec_s WBAKUMASKONHIGH;
+extern float WBAKUAKUSCALE;
+extern float WBLeftStartFrame;
+extern float WBLeftStopFrame;
+extern float WBLeftStopTurnFrame;
+extern struct nuvec_s WBLeftFirePos;
+extern short BALLATTACKVOL;
+extern short CHESTATTACKAVOL;
+extern short CHESTATTACKBVOL;
+extern float CHESTATTACKSOUNDTIME;
+extern short BEAMVOL;
+extern short EYEATTACKVOL;
+extern float EYESTOPTIME;
+extern float EYEBOLTFIRESCALEX;
+extern float EYEBOLTFIRESCALEY;
+extern float EYEBOLTFIRESPEED;
+extern float EYEBOLTFIREY;
+extern float RUMZOOM;
+extern float RADARBASESCALE;
+extern float RADARSCALE;
+extern float RADARSCALEX;
+extern float DOTSCALE;
+extern float RadarX;
+extern float RadarY;
+extern float RadarZ;
+extern float ATLASBOOSTSPEED;
+extern short ATLASBOOSTVOL;
+extern float ATLASLOOPVOL;
+extern float BALLRUMBLESLOPE;
+extern s32 LIFTPLAYER;
+extern float FFINTROHEIGHT;
+extern float FFINTROCAMYOFF;
 s32 jonfirst = 0;
 struct VEHMASK VehicleMask[2];
 ZOFFASTRUCT EnemyZoffa[4];
@@ -78,12 +902,12 @@ s32 StillLockedOnTarget(struct nuvec_s *Target) {
     NuVecSub(&nStack_30, Target, &GameCam[0].pos);
     Mag = NuVecMag(&nStack_30);
     if (10.0f < Mag) {
-      NuVecScale(&nStack_30, &nStack_30, 1.0f / Mag);
+      NuVecScale(1.0f / Mag, &nStack_30, &nStack_30);
       Dot = DotProduct(&nStack_40, &nStack_30);
       if (0.9f < Dot) {
         NuVecSub(&nStack_20, &PlayerGlider.Position, Target);
         NuVecNorm(&nStack_20, &nStack_20);
-        NuVecScale(&nStack_20, &nStack_20, 3.0f);
+        NuVecScale(3.0f, &nStack_20, &nStack_20);
         if (NewRayCast(Target, &nStack_20, 0.0f) == 0) {
           return 1;
         }
@@ -510,7 +1334,7 @@ void ProcessGliderMovementWB(GLIDERSTRUCT *Glider) {
       Glider->Velocity.x = Glider->TiltZ * WBTILTZSCALE;
       Glider->Velocity.y = Glider->TiltX * WBTILTXSCALE;
     }
-    NuVecScaleAccum(&Glider->Position, &Glider->Velocity, 0.01666667f);
+    NuVecScaleAccum(0.01666667f, &Glider->Position, &Glider->Velocity);
     if (Glider->Position.x > WBLIMX) {
       Glider->Position.x = WBLIMX;
     }
@@ -752,11 +1576,11 @@ void DeadGliderCoco(GLIDERSTRUCT *Glider) {
     Glider->CocoDeathSpinX = (frand() - 0.5f) * 360.0f;
     Glider->CocoDeathSpinZ = (frand() - 0.5f) * 360.0f;
     NuVecNorm(&Glider->Velocity, &Glider->Velocity);
-    NuVecScale(&Glider->Velocity, &Glider->Velocity, 2.0f);
+    NuVecScale(2.0f, &Glider->Velocity, &Glider->Velocity);
     AddGameDebris(0x18, &Glider->Position);
   }
   Glider->HitPoints = 0;
-  NuVecScaleAccum(&Glider->Position, &Glider->Velocity, 0.01666667f);
+  NuVecScaleAccum(0.01666667f, &Glider->Position, &Glider->Velocity);
   Glider->TiltX = Glider->CocoDeathSpinX * 0.01666667f + Glider->TiltX;
   Glider->TiltZ = Glider->CocoDeathSpinZ * 0.01666667f + Glider->TiltZ;
   if (ProcessTimer(&Glider->CocoDeadTimer) != 0) {
@@ -983,7 +1807,7 @@ float GetZoffaBestTarget(float Best, struct nuvec_s **TargetPos,
       NuVecSub(&Rel, &EnemyZoffa[i].Position, &GameCam[0].pos);
       Mag = NuVecMag(&Rel);
       if (Mag > 10.0f) {
-        NuVecScale(&Rel, &Rel, (1.0f / Mag));
+        NuVecScale((1.0f / Mag), &Rel, &Rel);
         Dot = DotProduct(&CamDir, &Rel);
         if (Dot > Best) {
           *TargetPos = &EnemyZoffa[i].Position;
@@ -1442,7 +2266,7 @@ void MovePlane(PLANESTRUCT *Plane) {
       Plane->Active = 0;
       break;
     }
-    NuVecScaleAccum(&Plane->Pos, &Plane->Vel, 0.01666667f);
+    NuVecScaleAccum(0.01666667f, &Plane->Pos, &Plane->Vel);
     PlayerGlider.AutoPilot = GrabGlider;
     if (GrabGlider != 0) {
       NuVecAdd(&PlayerGlider.Position, &Plane->Pos, &ZepplinGliderOffset);
@@ -1494,7 +2318,7 @@ void ProcessFarmLevel(struct nupad_s *Pad) {
   if (FarmResetTimer != 0) {
     FarmResetTimer--;
     if (FarmResetTimer == 0) {
-      FarmReset(1);
+      FarmReset();
     }
   }
   TeleportManager();
@@ -1791,7 +2615,7 @@ float GetGunBoatBestTarget(float Best, struct nuvec_s **TargetPos,
         NuVecSub(&Rel, &GunBoatList[i].Position, &GameCam[0].pos);
         Mag = NuVecMag(&Rel);
         if (Mag > 10.0f) {
-          NuVecScale(&Rel, &Rel, (1.0f / Mag));
+          NuVecScale((1.0f / Mag), &Rel, &Rel);
           Dot = DotProduct(&CamDir, &Rel);
           if (Dot > Best) {
             *TargetPos = &GunBoatList[i].Position;
@@ -1847,7 +2671,7 @@ void InitBigGun(struct nuvec_s *Pos, float AngleY, int Type, float MinX,
   BigGun->Type = Type;
   NuVecSub(&vec, &BigGun->Position, SetNuVecPntr(0.0f, 7.75f, 11.17f));
   NuVecNorm(&vec, &vec);
-  NuVecScale(&vec, &vec, 1.5);
+  NuVecScale(1.5, &vec, &vec);
   NuVecAdd(&BigGun->TerrPos, &BigGun->Position, &vec);
   switch (Type) {
   case 0:
@@ -2062,7 +2886,7 @@ float GetBattleShipBestTarget(float Best, struct nuvec_s **TargetPos,
         NuVecSub(&Rel, &BattleShipList[i].Position, &GameCam[0].pos);
         Mag = NuVecMag(&Rel);
         if (Mag > 10.0f) {
-          NuVecScale(&Rel, &Rel, (1.0f / Mag));
+          NuVecScale((1.0f / Mag), &Rel, &Rel);
           Dot = DotProduct(&CamDir, &Rel);
           if (Dot > Best) {
             *TargetPos = &BattleShipList[i].Position;
@@ -2198,6 +3022,10 @@ void ProcessWeatherBoss_a(struct BOSSSTRUCT *Boss) {
   struct nuvec_s local_80;
   struct nuvec_s nStack_70;
   struct nuvec_s local_60;
+  struct nuvec_s *VulnerableA;
+  struct nuvec_s *VulnerableB;
+  float VulnerableRad;
+  s32 VulnerableSection;
 
   Type = GetCurrentWeatherBossObjectives();
   Boss->HitSoundFrame--;
@@ -2355,7 +3183,7 @@ void ProcessWeatherBoss_a(struct BOSSSTRUCT *Boss) {
         NuVecMtxTransform(&FirePos2, &WBLeftFirePos, Boss->Locator);
         NuVecSub(&Vel2, &GliderPos, &FirePos2);
         NuVecNorm(&Vel2, &Vel2);
-        NuVecScale(&Vel2, &Vel2, WBSNOWBALLSPEED);
+        NuVecScale(WBSNOWBALLSPEED, &Vel2, &Vel2);
         Vel2.z -= Level_GliderSpeed;
         FireWBBolt(&FirePos2, &Vel2, 2, 5.0f, Boss->Action);
       }
@@ -2384,7 +3212,7 @@ void ProcessWeatherBoss_a(struct BOSSSTRUCT *Boss) {
         Boss->FireTimer = 0.25f;
         NuVecSub(&nStack_70, &local_80, &local_90);
         NuVecNorm(&nStack_70, &nStack_70);
-        NuVecScale(&nStack_70, &nStack_70, WBSNOWCONESPEED);
+        NuVecScale(WBSNOWCONESPEED, &nStack_70, &nStack_70);
         nStack_70.z -= Level_GliderSpeed;
         FireWBBolt(&local_90, &nStack_70, 3, 1.5f, Boss->Action);
         ElectricalPosition = PlayerGlider.Position;
@@ -2463,8 +3291,8 @@ void ProcessWeatherBoss_a(struct BOSSSTRUCT *Boss) {
   Boss->Position.z = PlayerGlider.Position.z - Boss->Distance;
   if ((VulnerableA != NULL) && (0 < Boss->HitPoints[VulnerableSection])) {
     VulnerableOn = 1;
-    NuVecScale(&Vel, VulnerableA, 0.5f);
-    NuVecScaleAccum(&Vel, VulnerableB, 0.5f);
+    NuVecScale(0.5f, &Vel, VulnerableA);
+    NuVecScaleAccum(0.5f, &Vel, VulnerableB);
     VulnerablePos_524 = Vel;
     if (CollideGliderBullets(&Vel, VulnerableRad, 0, 1.0f, 0, 0) != 0) {
       if (Boss->HitSoundFrame == 0) {
@@ -2540,7 +3368,7 @@ void DrawGliderTarget(void) {
   s32 Obj = 0x72;
 
   NuVecSub(&nStack_20, &GliderTargetPos, &GameCam[0].pos);
-  NuVecScale(&Centre, &nStack_20, 5.0f / NuVecMag(&nStack_20));
+  NuVecScale(5.0f / NuVecMag(&nStack_20), &Centre, &nStack_20);
   NuVecAdd(&Centre, &Centre, (struct nuvec_s *)&GameCam[0].m._30);
   if (ObjTab[Obj].obj.special != NULL) {
     mTEMP = GameCam[0].m;
@@ -2607,8 +3435,8 @@ void ProcessFireFlyIntro(void) {
     FFINTROCAMYOFF = 1.75f;
   }
   if (FireFlyIntroOn != 0) {
-    NuVecScale(&PlayerGlider.Velocity, &Dir2, Level_GliderSpeed);
-    NuVecScaleAccum(&PlayerGlider.Position, &PlayerGlider.Velocity, 0.01666667);
+    NuVecScale(Level_GliderSpeed, &PlayerGlider.Velocity, &Dir2);
+    NuVecScaleAccum(0.01666667, &PlayerGlider.Position, &PlayerGlider.Velocity);
   }
   GliderIntroInterest = PlayerGlider.Position;
   if (FireFlyIntroAction != FireFlyIntroOldAction) {
@@ -2649,16 +3477,15 @@ void ProcessFireFlyIntro(void) {
   case 1:
     GliderIntroCamPos.x = PlayerGlider.Position.x;
     GliderIntroCamPos.z = PlayerGlider.Position.z;
-    NuVecScaleAccum(&GliderIntroCamPos, &Dir,
-                    (Timer_549 / MatchTimer) * (MatchMaxDist - MatchMinDist) +
-                        MatchMinDist);
+    NuVecScaleAccum((Timer_549 / MatchTimer) * (MatchMaxDist - MatchMinDist) +
+                        MatchMinDist, &GliderIntroCamPos, &Dir);
     if (ProcessTimer(&Timer_549) != 0) {
       FireFlyIntroAction = 3;
     }
     break;
   case 2:
     GliderIntroCamPos = PlayerGlider.Position;
-    NuVecScaleAccum(&GliderIntroCamPos, &Dir, MatchMinDist);
+    NuVecScaleAccum(MatchMinDist, &GliderIntroCamPos, &Dir);
     if (ProcessTimer(&Timer_549) != 0) {
       FireFlyIntroAction = 3;
     }
@@ -2693,7 +3520,7 @@ void ProcessFireFlyIntro(void) {
   GliderIntroInterest.y += 1.0f;
   if (FireFlyIntroAction != 0) {
     GliderIntroCamPos = PlayerGlider.Position;
-    NuVecScale(&Rel, &Dir, MatchMinDist);
+    NuVecScale(MatchMinDist, &Rel, &Dir);
     NuVecRotateY(
         &Rel, &Rel,
         (s32)(((CamAngY_550 - FireFlyStartAngle) - 180.0f) * 182.04445f));
@@ -2976,7 +3803,7 @@ struct nuvec_s *FireWBBolt(struct nuvec_s *Pos, struct nuvec_s *Vel, int Type,
     memset(Bolt, 0, 0x30);
     Bolt->Owner = Owner;
     Bolt->Position = *Pos;
-    NuVecScale(&Bolt->Velocity, Vel, 0.01666667f);
+    NuVecScale(0.01666667f, &Bolt->Velocity, Vel);
     Bolt->Life = Life;
     Bolt->Type = Type;
     Bolt->Mode = 2;
@@ -3017,7 +3844,7 @@ void ProcessWBBolts(void) {
           Bolt->Velocity.x = 0.0f;
           Bolt->Velocity.y = 0.0f;
         } else {
-          NuVecScale(&Temp, &Temp, Bolt->SeekSpeed / Scale);
+          NuVecScale(Bolt->SeekSpeed / Scale, &Temp, &Temp);
           Temp.z = Bolt->Velocity.z;
           SeekHalfLifeNUVEC(&Bolt->Velocity, &Temp, BOLTHOMESEEKTIME,
                             0.01666667f);
@@ -3170,8 +3997,8 @@ void ProcessWBIntro(void) {
     FindSplineClosestPointAndDist(&WeatherBossIntroSpline, 0x300, &IntroPos,
                                   &Target, 0, 0);
     NuVecSub(&Dest, &Target, &WBIntroGliderPos);
-    NuVecScale(&Dest, &Dest, (96.0f / NuFabs(Dest.z)));
-    NuVecScaleAccum(&WBIntroGliderPos, &Dest, 0.01666667f);
+    NuVecScale((96.0f / NuFabs(Dest.z)), &Dest, &Dest);
+    NuVecScaleAccum(0.01666667f, &WBIntroGliderPos, &Dest);
     WBIntroDestTiltZ = Dest.x * WBITILTZSCALE;
     WBIntroDestTiltX = Dest.y * WBITILTXSCALE;
     PlayerGlider.Velocity = Dest;
@@ -3277,19 +4104,19 @@ void ResetVehicleLevel(s32 PlayerDead) {
   GliderIntroCamPos = v000;
   switch (Level) {
   case 13:
-    FarmReset(PlayerDead);
+    FarmReset();
     break;
   case 18:
     FireFlyReset(PlayerDead);
     break;
   case 36:
-    WeatherResearchReset(PlayerDead);
+    WeatherResearchReset();
     break;
   case 26:
     SpaceArenaReset(PlayerDead);
     break;
   case 24:
-    WeatherBossReset(PlayerDead);
+    WeatherBossReset();
     break;
   case 3:
     WesternArenaReset(PlayerDead);
@@ -3298,7 +4125,7 @@ void ResetVehicleLevel(s32 PlayerDead) {
     FireBossReset(PlayerDead);
     break;
   case 21:
-    EarthBossReset(PlayerDead);
+    EarthBossReset();
     break;
   }
   if (Level == 0x12) {
@@ -3384,8 +4211,8 @@ void CheckAtlasGround(struct ATLASSTRUCT *Atlas) {
   float Temp;
 
   Pos = Atlas->Position;
-  NuVecScaleAccum(&Pos, &Normal, 0.01f);
-  NuVecScale(&Rel, &Normal, -0.02f);
+  NuVecScaleAccum(0.01f, &Pos, &Normal);
+  NuVecScale(-0.02f, &Rel, &Normal);
   NewRayCastSetHandel(&Pos, &Rel, Atlas->Radius, 0.0f, 0.0f, Atlas->TerrHandle);
   Atlas->PlatformId = TerrainPlatId();
   Atlas->PlatformNormal = ShadNorm;
@@ -3626,7 +4453,7 @@ void CheckAtlasVortex(struct ATLASSTRUCT *Atlas) {
   NuVecSub(&Rel, &VortexPosition, &Atlas->Position);
   Dist = NuVecMag(&Rel);
   if (Dist < 1.0f) {
-    NuVecScaleAccum(&Atlas->Velocity, &Rel, 0.08333334f / Dist);
+    NuVecScaleAccum(0.08333334f / Dist, &Atlas->Velocity, &Rel);
   }
 }
 
@@ -3974,8 +4801,8 @@ void RumbleCam(struct cammtx_s *CamMtx) {
   struct nuvec_s CamPos;
   struct nuvec_s Interest;
 
-  NuVecScale(&Interest, &EarthBoss.InterestPoint, RumbleCamTween);
-  NuVecScaleAccum(&Interest, &PlayerAtlas.InterestPoint, 1.0f - RumbleCamTween);
+  NuVecScale(RumbleCamTween, &Interest, &EarthBoss.InterestPoint);
+  NuVecScaleAccum(1.0f - RumbleCamTween, &Interest, &PlayerAtlas.InterestPoint);
   Interest.y +=
       (1.0f - RumbleCamTweenInterest) + (1.0f - RumbleCamTweenInterest);
   fVar6 = ((float)NuAtani((-Interest.x * 256.0f), (-Interest.z * 256.0f))) /
@@ -4001,8 +4828,8 @@ void RumbleCam(struct cammtx_s *CamMtx) {
   NuVecRotateY(&CamPos, SetNuVecPntr(0.0f, 5.0f, 9.9f),
                (int)(AngleY_836 * 182.04445f));
   Interest.y += RumbleCamVal;
-  NuVecScale(&CamPos, &CamPos, 1.0f - RumbleCamTweenInterest);
-  NuVecScaleAccum(&CamPos, &Interest, RumbleCamTweenInterest);
+  NuVecScale(1.0f - RumbleCamTweenInterest, &CamPos, &CamPos);
+  NuVecScaleAccum(RumbleCamTweenInterest, &CamPos, &Interest);
   DeltaVec.x = Interest.x - CamPos.x;
   DeltaVec.y = Interest.y - CamPos.y;
   DeltaVec.z = Interest.z - CamPos.z;

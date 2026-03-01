@@ -1,5 +1,10 @@
 #include "nuanim.h"
 #include "../system.h"
+#include "../nucore/nuerror.h"
+#include "../nucore/nufile.h"
+#include "../nucore/numem.h"
+
+double floor(double x);
 
 #define ASSIGN_IF_SET(a, b) a = (a == NULL) ? NULL : b
 
@@ -101,7 +106,7 @@ struct nuanimdata_s * NuAnimDataLoadBuff(char *file,union variptr_u *buff,union 
   void *mem;
   struct NUANIMDATAHDR_s *dathdr;
 
-  mem = (((s32)buff->voidptr + 0xf) & 0xfffffff0);
+  mem = (void *)(((s32)buff->voidptr + 0xf) & 0xfffffff0);
   buff->voidptr = mem;
   addroff = NuFileLoadBuffer(file,mem,(s32)endbuff->voidptr - (s32)mem);
   if (addroff == 0) {
@@ -467,7 +472,7 @@ float NuAnimCurve2CalcVal(struct nuanimcurve2_s* animcurve, struct nuanimtime_s*
     struct NUANIMKEYINTEGER_s* inextkey;
     struct NUANIMKEYINTEGER_s* ikey;
     s32 frame;
-    u32 *ixtmp;
+    u32 ixtmp;
 
     if (keytype == NUANIMKEYTYPE_NONE) {
         return animcurve->data.constant;

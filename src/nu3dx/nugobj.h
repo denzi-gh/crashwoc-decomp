@@ -27,7 +27,27 @@ void* GS_CreateBuffer(u32 bufsize, s32 bufferType);
 void GS_DeleteBuffer(void* ptr);
 int NuVtxStride(enum nuvtxtype_e type);
 void NuAnimUV(void);*/
+void NuGobjInit(void);
+void NuGobjClose(void);
+struct nugobj_s* NuGobjCreate(void);
+void NuGobjDestroy(struct nugobj_s* obj);
+void NuGobjAddGeom(struct nugobj_s* gobj, struct nugeom_s* geom);
+void NuGobjAddFaceOnGeom(struct nugobj_s* gobj, struct nufaceongeom_s* Fgeom);
+void NuGobjCalcFaceOnDims(struct nugobj_s* gobj);
 void NuGobjCalcDims(struct nugobj_s* gobj);
+struct nugeom_s* NuGeomCreate(void);
+struct nufaceongeom_s* NuFaceOnGeomCreate(void);
+void NuGeomDestroy(struct nugeom_s* geom);
+void NuGeomCreateVB(struct nugeom_s* geom, s32 vtxCount, enum nuvtxtype_e vtxType, s32 dynamic);
+void NuGeomDestroyVB(struct nugeom_s* geom);
+void NuGeomAddPrim(struct nugeom_s* geom, struct nuprim_s* prim);
+void NuGeomAddSkin(struct nugeom_s* geom, struct nuskin_s* skin);
+struct nuprim_s* NuPrimCreate(int amount, enum nuprimtype_e type);
+void NuPrimDestroy(struct nuprim_s* prim);
+void* GS_CreateBuffer(u32 bufsize, s32 bufferType);
+void GS_DeleteBuffer(void* ptr);
+int NuVtxStride(enum nuvtxtype_e type);
+void NuAnimUV(void);
 /**********************************************************/
 // Variables
 /**********************************************************/

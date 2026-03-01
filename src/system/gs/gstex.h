@@ -1,9 +1,7 @@
 #ifndef GSTEX_H
 #define GSTEX_H
 
-#include "types.h"
-#include "nu3dx/nu3dxtypes.h"
-#include "nuraster/nurastertypes.h"
+#include "system/gs.h"
 
 
 /*

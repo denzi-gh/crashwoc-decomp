@@ -138,6 +138,8 @@ typedef struct
 	void (*cb)(FPar*);
 } FParCommand;*/
 
+struct nufpar_s;
+
 struct nufpcomjmp_s {
     char * fname;
     void (*func)(struct nufpar_s*);

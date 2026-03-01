@@ -1,3 +1,61 @@
+#include "gcutscn.h"
+
+#include <stdio.h>
+#include <string.h>
+
+#include "../numath/nuquat.h"
+
+extern const struct numtx_s numtx_identity;
+extern s32 set_cutscenecammtx;
+extern struct numtx_s cutscenecammtx;
+error_func *NuDebugMsgProlog(char *file, s32 line, ...);
+
+typedef void (*NuCutScnCharacterCreateDataFn)(struct NUGCUTCHAR_s *, struct instNUGCUTCHAR_s *, union variptr_u *);
+typedef void (*NuCutScnCharacterRndr)(struct instNUGCUTSCENE_s *, struct NUGCUTSCENE_s *, struct instNUGCUTCHAR_s *, struct NUGCUTCHAR_s *, float);
+typedef void (*NuCutScnFindCharacters)(struct NUGCUTSCENE_s *);
+typedef void (*NuCutScnRigidCollisionCheckFn)(struct NUGCUTRIGID_s *, struct numtx_s *);
+
+NuCutScnCharacterCreateDataFn NuCutSceneCharacterCreateData;
+NuCutScnCharacterRndr NuCutSceneCharacterRender;
+NuCutScnFindCharacters NuCutSceneFindCharacters;
+NuCutScnRigidCollisionCheckFn NuCutSceneRigidCollisionCheck;
+
+static s32 do_cameras = 1;
+static s32 do_rigids = 1;
+static s32 do_chars = 1;
+static s32 do_locator = 1;
+
+static void instNuGCutSceneUpdate(struct instNUGCUTSCENE_s *icutscene, s32 paused);
+static void instNuGCutSceneRender(struct instNUGCUTSCENE_s *icutscene);
+static void instNuGCutSceneStart(struct instNUGCUTSCENE_s *icutscene);
+static void instNuGCutSceneEnd(struct instNUGCUTSCENE_s *icutscene);
+static void NuGCutCamsSysFixPtrs(struct NUGCUTSCENE_s *cutscene, s32 address_offset);
+static void NuGCutLocatorSysFixPtrs(struct NUGCUTSCENE_s *cutscene, s32 address_offset);
+static void NuGCutRigidSysFixPtrs(struct NUGCUTSCENE_s *cutscene, s32 address_offset);
+static void NuGCutCharSysFixPtrs(struct NUGCUTSCENE_s *cutscene, s32 address_offset);
+static void NuGCutTriggerSysFixPtrs(struct NUGCUTSCENE_s *cutscene, s32 address_offset);
+static void instNuGCutSceneCalculateCentre(struct instNUGCUTSCENE_s *icutscene, struct numtx_s *mtx);
+static void NuGCutLocatorSysFixUp(struct NUGCUTLOCATORSYS_s *locatorsys);
+static void NuGCutRigidSysFixUp(struct NUGCUTSCENE_s *cutscene, struct nugscn_s *scene);
+static void NuGCutCharSysFixUp(struct NUGCUTSCENE_s *cutscene);
+static void NuGCutTriggerSysFixUp(struct NUGCUTSCENE_s *cutscene, struct NUTRIGGERSYS_s *triggersys);
+static void instNuGCutDebrisLocatorUpdate(struct NUGCUTLOCATORSYS_s *locatorsys, struct instNUGCUTLOCATOR_s *ilocator, struct NUGCUTLOCATOR_s *locator, float current_frame, struct numtx_s *wm);
+void instNuGCutLocatorUpdate(struct instNUGCUTSCENE_s *icutscene, struct NUGCUTLOCATORSYS_s *locatorsys, struct instNUGCUTLOCATOR_s *ilocator, struct NUGCUTLOCATOR_s *locator, float current_frame, struct numtx_s *wm);
+struct instNUGCUTCAMSYS_s *instNuCGutCamSysCreate(struct NUGCUTCAMSYS_s *cameras, union variptr_u *buff);
+void instNuGCutCamSysStart(struct instNUGCUTCAMSYS_s *icamsys, struct NUGCUTCAMSYS_s *camsys);
+struct instNUGCUTLOCATORSYS_s *NuCGutLocatorSysCreateInst(struct NUGCUTLOCATORSYS_s *locators, union variptr_u *buff);
+static struct instNUGCUTRIGIDSYS_s *instNuCGutRigidSysCreate(struct NUGCUTSCENE_s *cutscene, struct nugscn_s *gscene, union variptr_u *buff);
+static struct instNUGCUTCHARSYS_s *instNuCGutCharSysCreate(struct NUGCUTSCENE_s *cutscene, union variptr_u *buff);
+struct instNUGCUTTRIGGERSYS_s *instNuCGutTriggerSysCreate(struct NUGCUTSCENE_s *cutscene, struct instNUTRIGGERSYS_s *itriggersys, union variptr_u *buff);
+static void instNuGCutLocatorSysStart(struct instNUGCUTLOCATORSYS_s *ilocatorsys, struct NUGCUTLOCATORSYS_s *locatorsys);
+static void instNuGCutRigidSysStart(struct instNUGCUTRIGIDSYS_s *irigidsys, struct NUGCUTRIGIDSYS_s *rigidsys);
+void instNuGCutCharSysRender(struct instNUGCUTSCENE_s *icutscene, float current_frame);
+void instNuGCutTriggerSysUpdate(struct instNUGCUTSCENE_s *icutscene, float current_frame);
+static void instNuGCutTriggerSysStart(struct instNUGCUTSCENE_s *icutscene);
+static int StateAnimEvaluate(struct NUSTATEANIM_s *stateanim, u8 *lastix, u8 *newstate, float frame);
+static struct NUSTATEANIM_s *StateAnimFixPtrs(struct NUSTATEANIM_s *sanim, s32 address_offset);
+static void NuGCutRigidCalcMtx(struct NUGCUTRIGID_s *rigid, float current_frame, struct numtx_s *mtx);
+
 //#define ALIGN_ADDRESS(addr, al) (((u32)(addr) + ((u32)al - 1)) & ~((u32)al - 1))
 #define ASSIGN_IF_SET(a, b) a = (a == NULL) ? NULL : b
 #define ALIGN_ADDRESS(addr, al) (((u32)(addr) + (al - 1)) & ~(al - 1))
@@ -9,7 +67,9 @@
 // but the compiler doesn't feel like doing the optimization itself??
 #define FAST_DIV_20(num) (((iVar5 - iVar4) * (s32)0xCCCCCCCD) >> 4)
 
-#define PI 3.1415927finstNuCGutCharSysCreate
+#ifndef PI
+#define PI 3.1415927f
+#endif
 #define TAU 6.2831855f
 #define MAX_FIXED_POINT 65536
 #define DEG_TO_FIXED_POINT (MAX_FIXED_POINT * (1 / (2 * PI)))
@@ -184,7 +244,7 @@ struct instNUGCUTSCENE_s *instNuGCutSceneCreate (struct NUGCUTSCENE_s *cutscene,
 void instNuGCutSceneDestroy(instNUGCUTSCENE_s *icutscene)
 
 {
-  if ((*(uint *)&icutscene->field_0x6c & 0x40000000) != 0) //param_1[0x1b] & 0x40000000U
+  if (icutscene->is_playing != 0)
   {
     instNuGCutSceneEnd(icutscene);
   }
@@ -201,7 +261,7 @@ void instNuGCutSceneDestroy(instNUGCUTSCENE_s *icutscene)
 }
 
 //PS2
-inline static void instNuGCutSceneStart(struct instNUGCUTSCENE_s* icutscene)
+static void instNuGCutSceneStart(struct instNUGCUTSCENE_s* icutscene)
 {
     icutscene->cframe = 1.0f;
     
@@ -227,7 +287,7 @@ inline static void instNuGCutSceneStart(struct instNUGCUTSCENE_s* icutscene)
 }
 
 //PS2
-inline static void instNuGCutSceneEnd(struct instNUGCUTSCENE_s *icutscene)
+static void instNuGCutSceneEnd(struct instNUGCUTSCENE_s *icutscene)
 {
     struct NUGCUTSCENE_s* cutscene;
     float nframes;
@@ -378,9 +438,9 @@ static void instNuGCutCamSysUpdate(struct instNUGCUTSCENE_s *icutscene, float cu
     struct numtx_s aim_mtx;
     float lerp_factor;
     float nframes;
-    struct nuquat_s q_from;
-    struct nuquat_s q_to;
-    struct nuquat_s q_result;
+    struct Quat q_from;
+    struct Quat q_to;
+    struct Quat q_result;
     s32 lerp_out;
     struct nuvec_s campos;
     u8 camchange;
@@ -469,10 +529,10 @@ static void instNuGCutCamSysUpdate(struct instNUGCUTSCENE_s *icutscene, float cu
             lerp_factor = 1.0f - lerp_factor;
         }
         
-        NuMtxToQuat(&aim_mtx, &q_to);
-        NuMtxToQuat(&cutscenecammtx, &q_from);
-        NuQuatSlerp(&q_result, &q_from, &q_to, lerp_factor);
-        NuQuatToMtx(&q_result, &cutscenecammtx);
+        NuMtxToQuat((struct Mtx *)&aim_mtx, &q_to);
+        NuMtxToQuat((struct Mtx *)&cutscenecammtx, &q_from);
+        NuQuatSlerp(lerp_factor, &q_result, &q_from, &q_to);
+        NuQuatToMtx(&q_result, (struct Mtx *)&cutscenecammtx);
         *(struct nuvec_s*)&cutscenecammtx._30 = campos;
     }
     return;
@@ -855,7 +915,7 @@ void instNuGCutLocatorSysStart(struct instNUGCUTLOCATORSYS_s *ilocatorsys,struct
 }
 
 //PS2
-inline static s32 LookupLocatorFn(char* name)
+static s32 LookupLocatorFn(char* name)
 {
     s32 ix = 0;
       if (locatorfns != NULL) {
@@ -1336,9 +1396,6 @@ static void NuGCutCharSysFixPtrs(struct NUGCUTSCENE_s* cutscene, s32 address_off
     return;
 }
 
-typedef void(*NuCutScnFindCharacters)(struct NUGCUTSCENE_s*);
-NuCutScnFindCharacters NuCutSceneFindCharacters;
-
 static void NuGCutCharSysFixUp(struct NUGCUTSCENE_s* cutscene) 
 {
   if (NuCutSceneFindCharacters != NULL) {
@@ -1706,18 +1763,11 @@ static struct NUSTATEANIM_s * StateAnimFixPtrs(struct NUSTATEANIM_s *sanim, s32 
     return rv;
 }
 
-typedef void(*NuCutScnCharacterRndr)(struct instNUGCUTSCENE_s*, struct NUGCUTSCENE_s*, 
-                                    struct instNUGCUTCHAR_s*, struct NUGCUTCHAR_s*, float);
-NuCutScnCharacterRndr NuCutSceneCharacterRender;
-
 void NuSetCutSceneCharacterRenderFn(NuCutScnCharacterRndr fn)
 {
     NuCutSceneCharacterRender = fn;
     return;
 }
-
-typedef void(*NuCutScnFindCharacters)(struct NUGCUTSCENE_s*);
-NuCutScnFindCharacters NuCutSceneFindCharacters;
 
 void NuSetCutSceneFindCharactersFn(NuCutScnFindCharacters fn)
 {

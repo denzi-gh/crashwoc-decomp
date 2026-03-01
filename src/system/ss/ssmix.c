@@ -82,7 +82,9 @@ s32 __MIXGetPanR(s8 pan)
 
 void MIXInit()
 {
-    for (s32 i = 0; i < NUM_MIX_CHANNELS; i++)
+    s32 i;
+
+    for (i = 0; i < NUM_MIX_CHANNELS; i++)
     {
         //__MIXResetChannel(&__MIXChannel[i]);
     }

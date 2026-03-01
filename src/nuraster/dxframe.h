@@ -34,12 +34,15 @@ extern s32 backbuffer_grabbed_this_frame;
 // Back buffer TID.
 extern s32 backbuffer_tid;
 
+struct HWND__;
+
 static int g_dwCurrentRT;
 
 char DebugText[256];
 
 // Reset the globals.
 void ResetFwGlobals(); // TODO: IMPLEMENT THIS!!!
+void InitRenderTargets(void);
 
 // Destroy the back buffer copy.
 void NudxFw_DestroyBackBufferCopy();
@@ -57,8 +60,10 @@ void NudxFw_SetBackBufferCopied(s32 copied);
 s32 NudxFw_Init();
 
 // Create the graphics environment.
-//s32 CreateEnvironment(HWND* hwnd); // TODO: IMPLEMENT THIS!!!
-//s32 CreateEnvironment(struct HWND__ *hwnd);
+s32 CreateEnvironment(struct HWND__ *hwnd);
+s32 GetFullscreenBuffers(struct D3DDevice *lpdev);
+s32 CreateDirect3D(struct HWND__ *hwnd);
+s32 SetRenderTarget(u32 hRT);
 
 // TODO FUNCTIONS!!!
 

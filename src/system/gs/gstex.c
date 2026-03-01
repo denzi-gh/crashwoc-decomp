@@ -1,5 +1,17 @@
 #include "gstex.h"
 
+#ifndef GX_PASSCLR
+#define GX_PASSCLR 4
+#endif
+
+#ifndef GX_TG_MTX2x4
+#define GX_TG_MTX2x4 1
+#endif
+
+#ifndef GX_TG_TEX0
+#define GX_TG_TEX0 4
+#endif
+
 static unsigned int GS_TexInitFlag;
 unsigned int GS_TexAllocs;
 static unsigned int GS_NumTextures;
@@ -8,8 +20,9 @@ s32 iss3cmp;
 static struct _GS_TEXTURE* GS_TexList;
 enum _GXTexWrapMode GS_TexWrapMode_t [4];
 enum _GXTexWrapMode GS_TexWrapMode_s [4];
-enum _GXTevStageID ShadowBodge = GX_TEVSTAGE0;
+s32 ShadowBodge = GX_TEVSTAGE0;
 enum _GXTevStageID maxstage_189 = GX_TEVSTAGE15 | GX_MAX_TEVSTAGE | 0; //GX_TEVSTAGE15 | GX_MAX_TEVSTAGE | FFFFFFE0h
+extern s32 ShadowMatBodge;
 
 //NGC MATCH
 void GS_TexInit(void) {

@@ -1,4 +1,4 @@
-#include "../system.h"
+#include "system.h"
 #include "nu.h"
 
 //PS2 MATCH

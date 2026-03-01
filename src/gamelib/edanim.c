@@ -1,6 +1,71 @@
 //#include "edanim.h"
 #include "../nu.h"
 
+extern u8 object_switches[128];
+extern const struct numtx_s numtx_identity;
+
+struct nuvec_s *edmainQueryLocVec(void);
+void AddVariableShotDebrisEffectMtx2(s32 type, struct nuvec_s *pos, s32 numdeb, struct numtx_s *emitrotmtx, struct numtx_s *rotmtx);
+s32 LookupDebrisEffect(char *name);
+s32 edbitsLookupSoundFX(char *name);
+void edbitsSoundPlay(struct nuvec_s *pos, s32 sid);
+s32 FindPlatInst(s32 instance);
+void PlatInstBounce(s32 platid, float plrgrav, float tension, float damp);
+s32 EdFileOpen(char *filename, s32 mode);
+s32 EdFileClose(void);
+void EdFileRead(void *dest, size_t size);
+f32 EdFileReadFloat(void);
+s32 EdFileReadInt(void);
+s16 EdFileReadShort(void);
+s32 edanimLookupSpecial(char *name);
+s32 edanimLookupInstanceIndex(s32 specialid);
+void edanimSoundDestroy(s32 obj, s32 sound);
+void edanimParticleDestroy(s32 obj, s32 ptl);
+
+struct anim_parameters_s {
+    s32 objid;
+    s32 usedpart;
+    s32 usedsound;
+    s32 trigger_type;
+    s32 trigger_id;
+    f32 trigger_var;
+    f32 trigger_wait;
+    char particle_name[16][8];
+    s32 particle_type[8];
+    s32 particle_rate[8];
+    s32 particle_switch[8];
+    struct nuvec_s particle_offset[8];
+    s16 particle_emitrotz[8];
+    s16 particle_emitroty[8];
+    f32 sound_last_time;
+    char sound_name[16][8];
+    s32 sound_id[8];
+    s32 sound_type[8];
+    f32 sound_time[8];
+    struct nuvec_s sound_offset[8];
+    s32 terrplatid;
+    f32 playergrav;
+    f32 tension;
+    f32 damping;
+};
+
+struct anim_parameters_s AnimParams[64];
+struct nugscn_s *edanim_base_scene;
+struct numtl_s *edanim_mtl;
+struct numtl_s *edanim_mtl_zoff;
+struct nuvec_s edanim_cam_pos;
+f32 edanim_cam_dist;
+s32 edanim_cam_ax;
+s32 edanim_cam_ay;
+s32 edanim_nearest;
+s32 edanim_nearest_param_id;
+s32 edanim_nearest_particle;
+s32 edanim_nearest_sound;
+s32 edanim_next_param;
+s32 edanim_particle_mode;
+s32 edanim_sound_mode;
+static s32 localframecount_156;
+
 //NGC MATCH
 float edanimPlayerAnimDistance(s32 id) {
   if (edmainQueryLocVec() != NULL) {

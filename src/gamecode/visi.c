@@ -1,3 +1,17 @@
+#include "main.h"
+#include <stddef.h>
+#include <string.h>
+
+struct visidat_s {
+  struct nugspline_s *sp;
+  s32 numinstances;
+  struct nuinstance_s *i[1];
+};
+
+static s32 vscnt;
+static struct visidat_s *visidat[50];
+static char *vsdata;
+
 //NGC MATCH
 static s32 PtInsideSpline(struct nuvec_s *wpos,struct nugspline_s *sp) {
   struct nuvec_s *curr;
@@ -110,9 +124,8 @@ void BuildVisiTable(struct nugscn_s *gsc) {
                   ocnt = VSAddObjs(vd->i,gsc,&gsc->splines[n]);
                   vd->sp = &gsc->splines[n];
                   vd->numinstances = ocnt;
-                  ptr = (ocnt * 4);
-                  ptr += 0xc;
-                  (char*)vd +=  (s32)ptr;
+                  ptr = (char *)vd + 0xc + ocnt * 4;
+                  vd = (struct visidat_s *)ptr;
                 }
             }
             

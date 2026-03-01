@@ -1,6 +1,14 @@
 #include "nulight.h"
+#include "nucamera.h"
+#include "../numath.h"
+#include "../numath/nu_asm.h"
+#include "../numath/nuvec.h"
+#include "../numath/nuvec4.h"
+#include "../gamecode/main.h"
 
 #define POW2(x) ((x) * (x))
+
+void* NuScratchAlloc32(s32 size);
 
 //s32 initialised = 0;
 s32 maxlights = 3;
@@ -389,7 +397,7 @@ void NuLgtArcLaser(s32 type,struct nuvec_s *start,struct nuvec_s *target,struct 
                 pnts[6].w = 1.0f;
             }
             
-            sqrt(POW2(pnts[6].x - NuLgtArcLaserData[iVar10].target.x) + POW2(pnts[6].y - NuLgtArcLaserData[iVar10].target.y) + POW2(pnts[6].z - NuLgtArcLaserData[iVar10].target.z));
+            NuFsqrt(POW2(pnts[6].x - NuLgtArcLaserData[iVar10].target.x) + POW2(pnts[6].y - NuLgtArcLaserData[iVar10].target.y) + POW2(pnts[6].z - NuLgtArcLaserData[iVar10].target.z));
             if (0.5f > pnts[5].w) {
                 pnts[7].x = NuLgtArcLaserData[iVar10].start.x + ((NuLgtArcLaserData[iVar10].target.x - NuLgtArcLaserData[iVar10].start.x) * (pnts[4].w - 0.5f)) / (pnts[4].w - pnts[5].w);
                 pnts[7].y = NuLgtArcLaserData[iVar10].start.y + ((NuLgtArcLaserData[iVar10].target.y - NuLgtArcLaserData[iVar10].start.y) * (pnts[4].w - 0.5f)) / (pnts[4].w - pnts[5].w);
@@ -422,7 +430,7 @@ void NuLgtArcLaser(s32 type,struct nuvec_s *start,struct nuvec_s *target,struct 
             pnts[7].z = pnts[7].z - pnts[6].z;
             pnts[7].w = pnts[7].w - pnts[6].w;
             
-            dVar19 = sqrt(POW2(pnts[7].x) + POW2(pnts[7].y) + POW2(pnts[7].z));
+            dVar19 = NuFsqrt(POW2(pnts[7].x) + POW2(pnts[7].y) + POW2(pnts[7].z));
             if (0.0f < dVar19) {
                 pnts[10].x = NuLgtArcLaserData[iVar10].lasdir.x;
                 pnts[10].y = NuLgtArcLaserData[iVar10].lasdir.y;

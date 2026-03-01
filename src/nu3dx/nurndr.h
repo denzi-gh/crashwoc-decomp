@@ -3,7 +3,7 @@
 
 #include "../types.h"
 #include "nu3dx/nu3dxtypes.h"
-#include "nu3dx/nucvtskin.h"
+#include "nu3dx/nucvtskn.h"
 #include "nu3dx/nuanim.h"
 #include "nu3dx/nuhgobj.h"
 
@@ -141,11 +141,12 @@ struct setup_s
             float mx;
             float my;
             float mz;
-            float etime
+            float etime;
         } debris[32];
     };
 /************************************************************/
 
+void NuRndrFlush(void);
 
 
 struct numtl_s* nurndr_forced_mtl;

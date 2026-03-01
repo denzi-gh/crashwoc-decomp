@@ -90,7 +90,7 @@ void NuMtxInvRSS(struct Mtx* dest, struct Mtx* m);
 //NuMtxInvH
 
 //NuMtxAlignZ
-void NuMtxAlignZ(struct Mtx* dest, struct Mtx* m);
+void NuMtxAlignZ(struct Mtx* dest, struct nuvec_s* v);
 
 // Create a matrix to look at Z.
 void NuMtxLookAtZ(struct Mtx* dest, struct nuvec_s* v);

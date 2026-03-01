@@ -1,23 +1,28 @@
 #include "edbits.h"
 
-u32 edqseed;
-u32 edbitsSfxVol;
-char* edSfxGlobalTab;
-char* edSfxLevelTab;
-u32 edSfxGlobalCount;
-u32 edSfxAllCount;
-nugscn_s* edbits_base_scene;
-
 u32 edqseed = 0x3039;
 u32 edbitsSfxVol = 0x64;
+struct pSFX *edSfxGlobalTab;
+struct pSFX *edSfxLevelTab;
+u32 edSfxGlobalCount;
+u32 edSfxAllCount;
+struct nugscn_s *edbits_base_scene;
 
-u32 edqrand()
+extern s32 gamesfx_pitch;
+extern s32 gamesfx_effect_volume;
+extern s32 gamesfx_edbits;
+extern s32 debris_sfx;
+extern char edbits_what_game;
+
+void GameSfx(s32 sfx, struct nuvec_s *pos);
+
+u32 edqrand(void)
 {
 	edqseed = (edqseed * 0x24cd + 1) & 0xffff;
 	return edqseed;
 }
 
-void edbitsRegisterSfx(char* sfxGlobalTab, char* sfxLevelTab, u32 sfxGlobalCount, u32 sfxAllCount)
+void edbitsRegisterSfx(struct pSFX *sfxGlobalTab, struct pSFX *sfxLevelTab, u32 sfxGlobalCount, u32 sfxAllCount)
 {
 	edSfxGlobalTab = sfxGlobalTab;
 	edSfxLevelTab = sfxLevelTab;
@@ -25,7 +30,7 @@ void edbitsRegisterSfx(char* sfxGlobalTab, char* sfxLevelTab, u32 sfxGlobalCount
 	edSfxAllCount = sfxAllCount;
 }
 
-void edbitsRegisterBaseScene(NuScene* s)
+void edbitsRegisterBaseScene(struct nugscn_s *s)
 {
 	edbits_base_scene = s;
 }
@@ -36,17 +41,17 @@ void edbitsSetSoundFxVolume(u32 vol)
 }
 
 
-int edbitsLookupSoundFX(char *name)	//CHECK
+s32 edbitsLookupSoundFX(char *name)	//CHECK
 
 {
-  int cmp;
-  int i;
-  int j;
+  s32 cmp;
+  s32 i;
+  s32 j;
   
-  if ((edSfxLevelTab != (pSFX *)0x0) && (j = 0, 0 < edSfxAllCount - edSfxGlobalCount)) {
+  if ((edSfxLevelTab != NULL) && (j = 0, 0 < edSfxAllCount - edSfxGlobalCount)) {
     i = 0;
     do {
-      cmp = strncmp(edSfxLevelTab->name + i,name,0xf);
+      cmp = strncmp((char *)edSfxLevelTab + i, name, 0xf);
       if (cmp == 0) {
         return j + edSfxGlobalCount;
       }
@@ -68,11 +73,11 @@ int edbitsLookupSoundFX(char *name)	//CHECK
   return -1;
 }
 
-void edbitsSoundPlay(nuvec_s *pos,int sid)		//CHECK
+void edbitsSoundPlay(struct nuvec_s *pos, s32 sid)		//CHECK
 
 {
-  pSFX *SFXTab;
-  int tsid;
+  struct pSFX *SFXTab;
+  s32 tsid;
   
   if (edbits_what_game == '\x02') {
     if (sid < edSfxGlobalCount) {
@@ -83,40 +88,37 @@ void edbitsSoundPlay(nuvec_s *pos,int sid)		//CHECK
       tsid = (sid - edSfxGlobalCount) * 0x30;
       SFXTab = edSfxLevelTab;
     }
-    gamesfx_pitch = (int)*(ushort *)(SFXTab->name + tsid + 0x10);
-    gamesfx_effect_volume = (int)*(ushort *)(SFXTab->name + tsid + 0x12);
+    gamesfx_pitch = (s32)*(u16 *)((char *)SFXTab + tsid + 0x10);
+    gamesfx_effect_volume = (s32)*(u16 *)((char *)SFXTab + tsid + 0x12);
     gamesfx_edbits = 1;
-    GameSfx(sid,pos);
+    GameSfx(sid, pos);
     debris_sfx = 0;
   }
   else if (sid < edSfxGlobalCount) {
-    tsid = (int)((uint)edSfxGlobalTab[sid].volume * edbitsSfxVol) / 100;
-    NuSoundPlay3d(pos,sid,tsid,tsid,(uint)edSfxGlobalTab[sid].pitch);
+    tsid = (s32)((u32)edSfxGlobalTab[sid].volume * edbitsSfxVol) / 100;
+    NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxGlobalTab[sid].pitch);
   }
   else {
-    tsid = (int)((uint)edSfxLevelTab[sid - edSfxGlobalCount].volume * edbitsSfxVol) / 100;
-    NuSoundPlay3d(pos,sid,tsid,tsid,(uint)edSfxLevelTab[sid - edSfxGlobalCount].pitch);
+    tsid = (s32)((u32)edSfxLevelTab[sid - edSfxGlobalCount].volume * edbitsSfxVol) / 100;
+    NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxLevelTab[sid - edSfxGlobalCount].pitch);
   }
   return;
 }
 
 
-int edbitsLookupInstance(char *name)		//CHECK
+s32 edbitsLookupInstance(char *name)		//CHECK
 
 {
-  int cmp;
-  int i;
-  int cnt;
+  s32 cmp;
+  s32 cnt;
   
-  if ((edbits_base_scene != (nugscn_s *)0x0) && (cnt = 0, 0 < edbits_base_scene->numspecial)) {
-    i = 0;
+  if ((edbits_base_scene != NULL) && (cnt = 0, 0 < edbits_base_scene->numspecial)) {
     do {
-      cmp = strncmp(*(char **)((int)(&edbits_base_scene->specials->mtx + 1) + i + 4),name,0x13);
+      cmp = strncmp(edbits_base_scene->specials[cnt].name, name, 0x13);
       if (cmp == 0) {
         return cnt;
       }
       cnt = cnt + 1;
-      i = i + 0x50;
     } while (cnt < edbits_base_scene->numspecial);
   }
   return -1;

@@ -1,5 +1,32 @@
 //#include "edgra.h"
 #include "../nu.h"
+#include "edbits.h"
+#include "edfile.h"
+
+struct edgra_clump_s {
+  s32 id;
+  s32 num;
+  struct nuvec_s centre;
+  f32 radius;
+  f32 wind;
+  s32 reactive;
+  f32 height;
+};
+
+extern struct numtl_s *edgra_mtl;
+extern struct numtl_s *edgra_mtl_zoff;
+extern struct nuvec_s edgra_cam_pos;
+extern f32 edgra_cam_dist;
+extern s32 edgra_cam_ax;
+extern s32 edgra_cam_ay;
+extern f32 edgra_radius;
+extern s32 edgra_nearest;
+extern s32 edgra_instance_type;
+extern s32 edgra_next_clump;
+extern s32 edgra_units_used;
+extern s32 edgra_clumps_used;
+extern s32 edgra_clump_size;
+extern struct edgra_clump_s GrassClumps[64];
 
 //NGC MATCH
 void edgraInitAllClumps(void) {

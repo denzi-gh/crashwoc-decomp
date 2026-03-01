@@ -1,3 +1,12 @@
+#include "../types.h"
+#include "../nu.h"
+#include <stdio.h>
+#include <string.h>
+
+extern s32 NewPlatInst(struct numtx_s *mat, s32 instance);
+extern void PlatInstRotate(s32 platid, s32 state);
+extern s32 PlatInstGetHit(s32 platid);
+
 typedef struct {
     // total size: 0xB4C
     struct nuvec_s pos[24][2]; // offset 0x0, size 0x240
@@ -29,6 +38,24 @@ s32 BridgeFree;
 s32 NuBridgeProc;
 
 struct nugscn_s* NuBridge_base_scene;
+struct numtx_s ropemat;
+float ropeu1;
+float ropev1;
+float ropeu2;
+float ropev2;
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+void NuBridgeOn(s32 flag) {
+    NuBridgeProc = flag;
+}
+
 #define SQR(x) ((x)*(x))
 
 
@@ -366,7 +393,7 @@ void NuBridgeDraw(struct nugscn_s *scn,struct numtl_s *mtl) {
     if (NuBridgeProc != 0) {
         iVar7 = 0;
         ropecnt = 0;
-        bridge = &Bridges;
+        bridge = Bridges;
         ropetab[iVar7] = ropecnt;
         
         for (i = 0; i < BridgeFree; i++) {
@@ -445,7 +472,7 @@ void NuBridgeDraw(struct nugscn_s *scn,struct numtl_s *mtl) {
 void NuBridgeUpdate(struct nuvec_s* playerpos) {
     s32 i;
     s32 lp;
-    struct Bridge_s* bridge;
+    BridgeType* bridge;
     struct nuvec_s dir;
     s32 gsec;
     float ratio;
@@ -453,14 +480,18 @@ void NuBridgeUpdate(struct nuvec_s* playerpos) {
     float gn;
     float gf;
     float dot;
+    float dx;
+    float dy;
+    float dz;
+    float dist_sq;
     
     if (NuBridgeProc != 0) {
         bridge = Bridges;
         for (i = 0; i < BridgeFree; i++, bridge++) {
-            float dx = bridge->center.x - global_camera.mtx._30;
-            float dy = bridge->center.y - global_camera.mtx._31;
-            float dz = bridge->center.z - global_camera.mtx._32;
-            float dist_sq = dx * dx + dy * dy + dz * dz;
+            dx = bridge->center.x - global_camera.mtx._30;
+            dy = bridge->center.y - global_camera.mtx._31;
+            dz = bridge->center.z - global_camera.mtx._32;
+            dist_sq = dx * dx + dy * dy + dz * dz;
             
             if (dist_sq < (global_camera.farclip * global_camera.farclip + bridge->radius)) {
                 bridge->inrange = 1;

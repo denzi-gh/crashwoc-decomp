@@ -1,9 +1,50 @@
-#include "../system.h"
+#include "system.h"
 #include "nu3dx/nu3dxtypes.h"
+#include "nu3dx/nurndr.h"
+#include "gamelib/gcutscn.h"
+#include "gamelib/debris.h"
+#include "numath/nutrig.h"
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 #define ALIGN4(n) (((n) + 3) & ~3)
+
+struct padrecdata_s {
+  u8 ok;
+  u8 read_id;
+  u8 buttons_hi;
+  u8 buttons_lo;
+  u8 r_alg_x;
+  u8 r_alg_y;
+  u8 l_alg_x;
+  u8 l_alg_y;
+  u8 l_algpad_r;
+  u8 l_algpad_l;
+  u8 l_algpad_u;
+  u8 l_algpad_d;
+  u8 r_algpad_u;
+  u8 r_algpad_r;
+  u8 r_algpad_d;
+  u8 r_algpad_l;
+  u8 l1_alg;
+  u8 r1_alg;
+  u8 l2_alg;
+  u8 r2_alg;
+};
+
+struct padrecinfo_s {
+  s32 padpointer;
+  s32 padmode;
+  s32 padend;
+  s32 padsize;
+  struct padrecdata_s PadRecData[48000];
+};
+
+struct padrecinfo_s *PadRecInfo;
+s32 PadDemoEnd;
+f32 gravdiv = 1.0f;
+
+void *renderpsdma(s32 count, struct rdata_s *rdata, struct PartHeader_testretail *setup, struct numtl_s *mtl, float time, struct numtx_s *wm);
 
 int maxblend_cntcnt;
 int maxblend_cnt;
@@ -41,7 +82,7 @@ void NuGScnRndr3(struct nugscn_s *scn) {
       }
       else {
         iVar3 = i->objid;
-        instanim = i;
+        instanim = (struct nuinstanim_s *)i;
       }
 
        i->flags.onscreen = NuRndrGScnObj(scn->gobjs[iVar3],&instanim->mtx);
@@ -110,11 +151,11 @@ s32 old;
 s32 sizeAligned;
 s32 addrAligned;
 
-    old = ps2_scratch_free;
+    old = (s32)ps2_scratch_free;
     sizeAligned = ALIGN4(size);
-    addrAligned = ALIGN4(ps2_scratch_free);
+    addrAligned = ALIGN4((s32)ps2_scratch_free);
 
-    ps2_scratch_free = addrAligned + sizeAligned;
+    ps2_scratch_free = (s32 *)(addrAligned + sizeAligned);
     *(s32 *)(addrAligned + sizeAligned) = old;
     ps2_scratch_free += 4;
     return (void *)addrAligned;
@@ -122,7 +163,7 @@ s32 addrAligned;
 
 //MATCH NGC
 void NuScratchRelease(void) {
-  ps2_scratch_free = ps2_scratch_free[-1];
+  ps2_scratch_free = (s32 *)ps2_scratch_free[-1];
   return;
 }
 
@@ -843,7 +884,6 @@ s32 NuPs2PadDemoEnd(void)
 {
   return PadDemoEnd;
 }
-*/
 
 s32 DeadZoneValue(s32 dx) {
   if (dx < 1) {
@@ -1457,11 +1497,11 @@ void NuSceneAverageTextureSpaceVerts(struct nuscene_s *scene) {
                     gobj2 = gsc->gobjs[gsc->instances[ix2].objid];
                     globalix2 = ix2;
                     NuVecMtxTransform(&pos1,&gobj1->bounding_box_center,&gsc->instances[ix1].mtx);
-                    NuVecMtxTransform(&pos2,&gobj2->bounding_box_center,&gsc->instances[ix2]);
+                    NuVecMtxTransform(&pos2,&gobj2->bounding_box_center,&gsc->instances[ix2].mtx);
                     dist = NuVecDist(&pos1,&pos2,NULL);
                     if (dist < ((gobj1->bounding_radius_from_center + gobj2->bounding_radius_from_center) + 0.5f)) {
                         NuGobjAverageTextureSpaceVerts
-                                  (gobj1,&gsc->instances[ix1].mtx,gobj2,&gsc->instances[ix2]);
+                                  (gobj1,&gsc->instances[ix1].mtx,gobj2,&gsc->instances[ix2].mtx);
                     }
                 }
         }

@@ -2,8 +2,20 @@
 
 #define AT_ADDRESS(xyz) __attribute__((address((xyz))))
 
+#ifndef GX_QUADS
+#define GX_QUADS 128
+#endif
+
+#ifndef GX_TRIANGLES
+#define GX_TRIANGLES 144
+#endif
+
 
 volatile PPCWGPipe GXFIFO AT_ADDRESS(0xCC008000);
+static struct _GXColor GXWhite = { 0xFF, 0xFF, 0xFF, 0xFF };
+static s32 QBlockverts;
+u32 QuadListColour;
+s32 ShadowColour;
 
 
 static inline void GXPosition3f32(const f32 x, const f32 y, const f32 z)
@@ -451,8 +463,6 @@ void GS_DrawQuadListEndBlock(void)
 {
   return;
 }
-
-u32 QuadListColour;
 
 //NGC MATCH
 void GS_SetQuadListRGBA(s32 r,s32 g,s32 b,s32 a) {

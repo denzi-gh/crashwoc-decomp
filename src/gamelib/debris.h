@@ -160,15 +160,6 @@ struct uv1deb {
         float etime; // Offset: 0x1C, DWARF: 0x615D87
 };
 
-// Size: 0x410, DWARF: 0x61704B
-struct rdata_s
-{
-    s32 dmadata[2]; // Offset: 0x0, DWARF: 0x61705D
-    // s32 unpackdata[2]; // Offset: 0x8, DWARF: 0x617089
-/* 0x010 */ //s32 giftaginfo[4];
-    struct uv1deb debris[32]; // Offset: 0x10, DWARF: 0x6170B8
-};
-
 // Size: 0x10, DWARF: 0x3719E
 struct debrissphere_s
 {
@@ -261,30 +252,28 @@ struct debris_chunk_control_s
     float refbounce; // Offset: 0x28, DWARF: 0x619C49
 };
 
-static struct nuvec_s lbl_80119E30 = { 1.0f, 0.0f, 0.0f };
-char* debbuffer;
-struct rdata_s* freedebchunks[256];
-struct debkeydatatype_s debkeydata[256];
-struct particlechunkrendertype_s ParticleChunkRenderStack[256];
-s32 debris_emitter_stack_index;
-struct debkeydatatype_s* debris_emitter_stack[32];
-struct debinftype* debtab[128];
-short freedebkeys[256];
-s32 freeDmaDebType;
-s32 debris_chunk_control_stack_index;
-s32 freedebkeyptr;
-s32 freechunkcontrolsptr;
-s32 mydebbuffersize;
-struct debris_chunk_control_s* freechunkcontrols[512];
-struct debris_chunk_control_s debris_chunk_controls[512];
-s32 freedebchkptr;
-struct numtl_s* DebMat[8];
-struct PartHeader* DmaDebTypes[128];
-struct debris_chunk_control_s* debris_chunk_control_stack[32];
-struct debris_chunk_control_s* debris_chunk_control_stack[32];
+extern char* debbuffer;
+extern struct rdata_s* freedebchunks[256];
+extern struct debkeydatatype_s debkeydata[256];
+extern struct particlechunkrendertype_s ParticleChunkRenderStack[256];
+extern s32 debris_emitter_stack_index;
+extern struct debkeydatatype_s* debris_emitter_stack[32];
+extern struct debinftype* debtab[128];
+extern short freedebkeys[256];
+extern s32 freeDmaDebType;
+extern s32 debris_chunk_control_stack_index;
+extern s32 freedebkeyptr;
+extern s32 freechunkcontrolsptr;
+extern s32 mydebbuffersize;
+extern struct debris_chunk_control_s* freechunkcontrols[512];
+extern struct debris_chunk_control_s debris_chunk_controls[512];
+extern s32 freedebchkptr;
+extern struct numtl_s* DebMat[8];
+extern struct PartHeader* DmaDebTypes[128];
+extern struct debris_chunk_control_s* debris_chunk_control_stack[32];
 extern s32 debris_render_group;
-static s32 render_debris_enabled;
-s32 globalframes;
-float globaltime;
+extern s32 render_debris_enabled;
+extern s32 globalframes;
+extern float globaltime;
 
 #endif // !DEBRIS_H

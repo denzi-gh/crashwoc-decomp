@@ -1,4 +1,7 @@
 #include "nuerror.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 char txt[0x400];
 char captxt[0x100];
@@ -15,9 +18,10 @@ u32 errmsg_to_file = 0;
 
 static void NuErrorFunction(char* msg, ...)
 {
+	va_list aptr;
+
 	printf(captxt, "NuError - %s Line %d : ", nufile, nuline);
 	puts(captxt);
-	va_list aptr;
 	va_start(aptr, msg);
 	vsprintf(txt, msg, aptr);
 	puts(txt);
@@ -84,13 +88,20 @@ error_func* NuErrorProlog(char* file, s32 line, ...)
 // PS2 MATCH 
 error_func* NuDebugMsgProlog(char* file, s32 line, ...)
 {
-	char c;
+	char* c;
+	char* p;
 
 	errfilepath = file;
 	errline = line;
-	c = strrchr(file, '\\');
+	c = NULL;
+	p = file;
+	while (*p != '\0') {
+		if (*p == '\\')
+			c = p;
+		p++;
+	}
 	errfile = file;
-	if (c != '\0')
+	if (c != NULL)
 		errfile = c + 1;
 	return NuDebugMsgFunction;
 }

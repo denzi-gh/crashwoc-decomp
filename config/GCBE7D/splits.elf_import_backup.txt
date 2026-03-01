@@ -148,7 +148,7 @@ text.c: (IMPORTIERT)
 	.rodata     start:0x80111D1C end:0x80117EC8
 	.bss        start:0x8016C970 end:0x8016CA88
 
-vehicle.c:
+vehicle.c: (IMPORTIERT)
 	.text       start:0x8006210C end:0x8007A7C4
 	.rodata     start:0x80117EC8 end:0x80119058
 	.data       start:0x80144A78 end:0x80144D94
@@ -156,42 +156,42 @@ vehicle.c:
 	.sdata      start:0x803D2D90 end:0x803D2F90
 	.sbss       start:0x803D3C94 end:0x803D3CD0
 
-vehsupp.c:
+vehsupp.c: (IMPORTIERT)
 	.text       start:0x8007A7C4 end:0x8007BA10
 	.rodata     start:0x80119058 end:0x801193A0
 	.bss        start:0x8016CAA0 end:0x8016CAF8
 
-vehterr.c:
+vehterr.c: (IMPORTIERT)
 	.text       start:0x8007BA10 end:0x8007D570
 	.rodata     start:0x801193A0 end:0x801196A0
 	.data       start:0x80144D94 end:0x8015FA0C
 	.sdata      start:0x803D2F90 end:0x803D2FB8
 
-visi.c:
+visi.c: (IMPORTIERT)
 	.text       start:0x8007D570 end:0x8007DA14
 	.rodata     start:0x801196A0 end:0x801198E8
 	.bss        start:0x8016CAF8 end:0x8016CBC0
 	.sbss       start:0x803D3CD0 end:0x803D3CD8
 
-visidat.c:
+visidat.c: (IMPORTIERT)
 	.text       start:0x8007DA14 end:0x8007E41C
 	.rodata     start:0x801198E8 end:0x80119B78
 
-debris.c:
+debris.c: (IMPORTIERT)
 	.text       start:0x8007E41C end:0x80083478
 	.rodata     start:0x80119B78 end:0x80119F88
 	.sdata      start:0x803D2FB8 end:0x803D2FD4
 
-edanim.c:
+edanim.c: (IMPORTIERT)
 	.text       start:0x80083478 end:0x80084718
 	.rodata     start:0x80119F88 end:0x8011A1F0
 	.sdata      start:0x803D2FD4 end:0x803D2FE8
 
-edbits.c:
+edbits.c: (IMPORTIERT)
 	.text       start:0x80084718 end:0x800849E8
 	.rodata     start:0x8011A1F0 end:0x8011A42C
 
-edfile.c:
+edfile.c: (IMPORTIERT)
 	.text       start:0x800849E8 end:0x80084B74
 	.rodata     start:0x8011A42C end:0x8011A670
 
@@ -199,44 +199,44 @@ edgra.c:
 	.text       start:0x80084B74 end:0x80085080
 	.rodata     start:0x8011A670 end:0x8011A8E0
 
-edobj.c:
+edobj.c: (IMPORTIERT)
 	.text       start:0x80085080 end:0x80088478
 	.rodata     start:0x8011A8E0 end:0x8011AB88
 	.sdata      start:0x803D2FE8 end:0x803D3008
 
-edptl.c:
+edptl.c: (IMPORTIERT)
 	.text       start:0x80088478 end:0x80089610
 	.rodata     start:0x8011AB88 end:0x8011ADF0
 
-gcutscn.c:
+gcutscn.c: (IMPORTIERT)
 	.text       start:0x80089610 end:0x8008C560
 	.rodata     start:0x8011ADF0 end:0x8011B1B8
 	.sdata      start:0x803D3008 end:0x803D3050
 	.sbss       start:0x803D3CD8 end:0x803D3CDC
 
-glutils.c:
+glutils.c: (IMPORTIERT)
 	.text       start:0x8008C560 end:0x8008C8BC
 	.rodata     start:0x8011B1B8 end:0x8011B410
 
-nubridge.c:
+nubridge.c: (IMPORTIERT)
 	.text       start:0x8008C8BC end:0x8008E51C
 	.rodata     start:0x8011B410 end:0x8011B6B0
 
-nuwind.c:
+nuwind.c: (IMPORTIERT)
 	.text       start:0x8008E51C end:0x8008F0DC
 	.rodata     start:0x8011B6B0 end:0x8011B948
 
-terrain.c:
+terrain.c: (IMPORTIERT)
 	.text       start:0x8008F0DC end:0x800A970C
 	.rodata     start:0x8011B948 end:0x8011BE90
 
-nuanim.c:
+nuanim.c: (IMPORTIERT)
 	.text       start:0x800A970C end:0x800AC708
 	.rodata     start:0x8011BE90 end:0x8011C2A8
 	.bss        start:0x8016CBC0 end:0x8016CE44
 	.sdata      start:0x803D3050 end:0x803D3054
 
-nucamera.c:
+nucamera.c: (IMPORTIERT)
 	.text       start:0x800AC708 end:0x800AD8E8
 	.rodata     start:0x8011C2A8 end:0x8011C548
 	.data       start:0x8015FA0C end:0x8015FE30
@@ -244,66 +244,66 @@ nucamera.c:
 	.sdata      start:0x803D3054 end:0x803D305C
 	.sbss       start:0x803D3CDC end:0x803D3CE4
 
-nucvtskn.c:
+nucvtskn.c: (IMPORTIERT)
 	.text       start:0x800AD8E8 end:0x800AED6C
 	.rodata     start:0x8011C548 end:0x8011C860
 	.bss        start:0x8016D0A0 end:0x8016D1A0
 	.sbss       start:0x803D3CE4 end:0x803D3CEC
 
-nuglass.c:
+nuglass.c: (IMPORTIERT)
 	.text       start:0x800AED6C end:0x800AF700
 	.rodata     start:0x8011C860 end:0x8011CAF8
 	.bss        start:0x8016D1A0 end:0x8016E3E0
 	.sdata      start:0x803D305C end:0x803D3090
 
-nugobj.c:
+nugobj.c: (IMPORTIERT)
 	.text       start:0x800AF700 end:0x800B031C
 	.rodata     start:0x8011CAF8 end:0x8011CE30
 	.sdata      start:0x803D3090 end:0x803D3098
 	.sbss       start:0x803D3CEC end:0x803D3CF0
 
-nuhaze.c:
+nuhaze.c: (IMPORTIERT)
 	.text       start:0x800B031C end:0x800B06F8
 	.rodata     start:0x8011CE30 end:0x8011D0C8
 	.bss        start:0x8016E3E0 end:0x8016E560
 	.sdata      start:0x803D3098 end:0x803D30A4
 	.sbss       start:0x803D3CF0 end:0x803D3D08
 
-nuhgobj.c:
+nuhgobj.c: (IMPORTIERT)
 	.text       start:0x800B06F8 end:0x800B14DC
 	.rodata     start:0x8011D0C8 end:0x8011D3C0
 
-nulight.c:
+nulight.c: (IMPORTIERT)
 	.text       start:0x800B14DC end:0x800B2AAC
 	.rodata     start:0x8011D3C0 end:0x8011D6B8
 	.bss        start:0x8016E560 end:0x801B8918
 	.sdata      start:0x803D30A4 end:0x803D30D4
 	.sbss       start:0x803D3D08 end:0x803D3D18
 
-numtl.c:
+numtl.c: (IMPORTIERT)
 	.text       start:0x800B2AAC end:0x800B4484
 	.rodata     start:0x8011D6B8 end:0x8011D9E0
 	.bss        start:0x801B8918 end:0x801F9298
 	.sdata      start:0x803D30D4 end:0x803D3110
 
-nurndr.c:
+nurndr.c: (IMPORTIERT)
 	.text       start:0x800B4484 end:0x800B7F00
 	.rodata     start:0x8011D9E0 end:0x8011DF70
 	.data       start:0x8015FE30 end:0x80160630
 	.bss        start:0x801F9298 end:0x8020E298
 	.sdata      start:0x803D3110 end:0x803D313C
 
-nuscene.c:
+nuscene.c: (IMPORTIERT)
 	.text       start:0x800B7F00 end:0x800B9788
 	.rodata     start:0x8011DF70 end:0x8011E258
 
-nutex.c:
+nutex.c: (IMPORTIERT)
 	.text       start:0x800B9788 end:0x800BA124
 	.rodata     start:0x8011E258 end:0x8011E518
 	.bss        start:0x8020E298 end:0x8020E718
 	.sdata      start:0x803D313C end:0x803D3150
 
-nutexanm.c:
+nutexanm.c: (IMPORTIERT)
 	.text       start:0x800BA124 end:0x800BB8E8
 	.rodata     start:0x8011E518 end:0x8011E9D0
 	.data       start:0x80160630 end:0x801606F0
@@ -311,83 +311,83 @@ nutexanm.c:
 	.sdata      start:0x803D3150 end:0x803D315C
 	.sbss       start:0x803D3D18 end:0x803D3D24
 
-nuvport.c:
+nuvport.c: (IMPORTIERT)
 	.text       start:0x800BB8E8 end:0x800BBD60
 	.rodata     start:0x8011E9D0 end:0x8011EC40
 	.bss        start:0x80210158 end:0x80210A58
 	.sbss       start:0x803D3D24 end:0x803D3D30
 
-nuwater.c:
+nuwater.c: (IMPORTIERT)
 	.text       start:0x800BBD60 end:0x800BD358
 	.rodata     start:0x8011EC40 end:0x8011EF70
 	.bss        start:0x80210A58 end:0x80210F48
 	.sdata      start:0x803D315C end:0x803D31D0
 	.sbss       start:0x803D3D30 end:0x803D3D4C
 
-nuerror.c:
+nuerror.c: (IMPORTIERT)
 	.text       start:0x800BD358 end:0x800BD450
 	.rodata     start:0x8011EF70 end:0x8011F1FC
 	.bss        start:0x80210F48 end:0x802140C8
 	.sbss       start:0x803D3D4C end:0x803D3D54
 
-nufile.c:
+nufile.c: (IMPORTIERT)
 	.text       start:0x800BD450 end:0x800BE0D4
 	.rodata     start:0x8011F1FC end:0x8011F4E4
 	.data       start:0x801606F0 end:0x80160804
 	.bss        start:0x802140C8 end:0x802145F8
 
-nufpar.c:
+nufpar.c: (IMPORTIERT)
 	.text       start:0x800BE0D4 end:0x800BE5C8
 	.rodata     start:0x8011F4E4 end:0x8011F720
 	.sbss       start:0x803D3D54 end:0x803D3D58
 
-numem.c:
+numem.c: (IMPORTIERT)
 	.text       start:0x800BE5C8 end:0x800BE774
 	.rodata     start:0x8011F720 end:0x8011F9AC
 	.data       start:0x80160804 end:0x80160824
 	.sdata      start:0x803D31D0 end:0x803D31EC
 	.sbss       start:0x803D3D58 end:0x803D3D70
 
-nu_asm.c:
+nu_asm.c: (IMPORTIERT)
 	.text       start:0x800BE774 end:0x800BE864
 	.rodata     start:0x8011F9AC end:0x8011FBEC
 
-nufloat.c:
+nufloat.c: (IMPORTIERT)
 	.text       start:0x800BE864 end:0x800BE8DC
 	.rodata     start:0x8011FBEC end:0x8011FE38
 
-numtx.c:
+numtx.c: (IMPORTIERT)
 	.text       start:0x800BE8DC end:0x800C0934
 	.rodata     start:0x8011FE38 end:0x80120160
 	.data       start:0x80160824 end:0x80160864
 
-nuplane.c:
+nuplane.c: (IMPORTIERT)
 	.text       start:0x800C0934 end:0x800C0A04
 	.rodata     start:0x80120160 end:0x801203A0
 
-nuquat.c:
+nuquat.c: (IMPORTIERT)
 	.text       start:0x800C0A04 end:0x800C1028
 	.rodata     start:0x801203A0 end:0x80120628
 
-nurand.c:
+nurand.c: (IMPORTIERT)
 	.text       start:0x800C1028 end:0x800C10E4
 	.rodata     start:0x80120628 end:0x80120868
 	.sdata      start:0x803D31EC end:0x803D31F4
 
-nutrig.c:
+nutrig.c: (IMPORTIERT)
 	.text       start:0x800C10E4 end:0x800C13C0
 	.rodata     start:0x80120868 end:0x80120AC0
 	.data       start:0x80160864 end:0x80160C74
 
-nuvec.c:
+nuvec.c: (IMPORTIERT)
 	.text       start:0x800C13C0 end:0x800C1B48
 	.rodata     start:0x80120AC0 end:0x80120D10
 
-nuvec4.c:
+nuvec4.c: (IMPORTIERT)
 	.text       start:0x800C1B48 end:0x800C1C64
 	.rodata     start:0x80120D10 end:0x80120F58
 
-dxframe.cpp:
+dxframe.cpp: (IMPORTIERT)
 	.text       start:0x800C1C64 end:0x800C20D0
 	.bss        start:0x802145F8 end:0x802147B8
 	.sdata      start:0x803D31F4 end:0x803D322C
@@ -397,22 +397,22 @@ NuSound.c: (IMPLEMENTIERT)
 	.text       start:0x800C20D0 end:0x800C292C
 	.rodata     start:0x80120F58 end:0x801211B8
 
-crash_xbox.c:
+crash_xbox.c: (IMPLEMENTIERT)
 	.text       start:0x800C292C end:0x800C2FB8
 	.rodata     start:0x801211B8 end:0x80121410
 
-dummyfunc.c:
+dummyfunc.c: (IMPLEMENTIERT)
 	.text       start:0x800C2FB8 end:0x800C5D68
 	.rodata     start:0x80121410 end:0x801217D8
 	.data       start:0x80160C74 end:0x80162C40
 	.sdata      start:0x803D322C end:0x803D3298
 	.sbss       start:0x803D3D88 end:0x803D3DA0
 
-ps2dma.c:
+ps2dma.c: (IMPLEMENTIERT)
 	.text       start:0x800C5D68 end:0x800C6854
 	.rodata     start:0x801217D8 end:0x80121B38
 
-gba.c:
+gba.c: (IMPLEMENTIERT)
 	.text       start:0x800C6854 end:0x800C7C20
 	.rodata     start:0x80121B38 end:0x80122680
 	.bss        start:0x802147B8 end:0x80214988
@@ -420,275 +420,275 @@ gba.c:
 	.sbss       start:0x803D3DA0 end:0x803D3DB0
 	.data5      start:0x803D4BE0 end:0x803D4BF8
 
-gcInit.c:
+gcInit.c: (IMPLEMENTIERT)
 	.text       start:0x800C7C20 end:0x800C85C0
 	.bss        start:0x80214988 end:0x802149C4
 	.sdata      start:0x803D32A8 end:0x803D32C8
 	.sbss       start:0x803D3DB0 end:0x803D3DE0
 
-gcPuts.c:
+gcPuts.c: (IMPLEMENTIERT)
 	.text       start:0x800C85C0 end:0x800C9AFC
 	.bss        start:0x802149C4 end:0x802149E4
 	.sdata      start:0x803D32C8 end:0x803D32D4
 
-gsinit.c:
+gsinit.c: (IMPLEMENTIERT)
 	.text       start:0x800C9AFC end:0x800C9C24
 
-gslight.c:
+gslight.c: (IMPLEMENTIERT)
 	.text       start:0x800C9C24 end:0x800CA60C
 	.bss        start:0x802149FC end:0x80214B60
 
-gsprim.c:
+gsprim.c: (IMPLEMENTIERT)
 	.text       start:0x800CA60C end:0x800CB6D8
 	.sdata      start:0x803D33A0 end:0x803D33C4
 
-gstex.c:
+gstex.c: (IMPLEMENTIERT)
 	.text       start:0x800CB6D8 end:0x800CC180
 	.bss        start:0x80214B60 end:0x80214C90
 	.sdata      start:0x803D33C4 end:0x803D33D4
 	.sbss       start:0x803D3E18 end:0x803D3E24
 
-ss.c:
+ss.c: (IMPLEMENTIERT)
 	.text       start:0x800CC180 end:0x800CC328
 	.sdata      start:0x803D33D4 end:0x803D33E8
 
-ssam.c:
+ssam.c: (IMPLEMENTIERT)
 	.text       start:0x800CC328 end:0x800CCB8C
 	.bss        start:0x80214C90 end:0x80214EA0
 	.sdata      start:0x803D33E8 end:0x803D33F8
 	.sbss       start:0x803D3E24 end:0x803D3E48
 
-ssdtk.c:
+ssdtk.c: (IMPLEMENTIERT)
 	.text       start:0x800CCB8C end:0x800CD2BC
 	.bss        start:0x80214EA0 end:0x80215050
 	.sbss       start:0x803D3E48 end:0x803D3E5C
 
-ssmix.c:
+ssmix.c: (IMPLEMENTIERT)
 	.text       start:0x800CD2BC end:0x800CD988
 	.bss        start:0x80215050 end:0x80216650
 	.sbss       start:0x803D3E5C end:0x803D3E68
 
-sssfx.c:
+sssfx.c: (IMPLEMENTIERT)
 	.text       start:0x800CD988 end:0x800CE1D0
 	.bss        start:0x80216650 end:0x802166C8
 	.sdata      start:0x803D33F8 end:0x803D3418
 	.sbss       start:0x803D3E68 end:0x803D3E70
 
-sssp.c:
+sssp.c: (IMPLEMENTIERT)
 	.text       start:0x800CE1D0 end:0x800CEAA0
 
-sstrack.c:
+sstrack.c: (IMPLEMENTIERT)
 	.text       start:0x800CEAA0 end:0x800CEAAC
 
-stats.c:
+stats.c: (IMPLEMENTIERT)
 	.text       start:0x800CEAAC end:0x800CED2C
 	.sdata      start:0x803D3418 end:0x803D3440
 	.sbss       start:0x803D3E70 end:0x803D3EC0
 
-crashlib.c:
+crashlib.c: (IMPLEMENTIERT)
 	.text       start:0x800CED2C end:0x800CF554
 	.rodata     start:0x80122680 end:0x80122C4C
 	.sdata      start:0x803D3440 end:0x803D3460
 
-gsmatrix.c:
+gsmatrix.c: (IMPLEMENTIERT)
 	.text       start:0x800CF554 end:0x800CF988
 
-memcard.c:
+memcard.c: (IMPLEMENTIERT)
 	.text       start:0x800CF988 end:0x800D0EA4
 	.data       start:0x80162C40 end:0x801655D0
 	.bss        start:0x802166C8 end:0x80216734
 	.sdata      start:0x803D3460 end:0x803D3484
 	.sbss       start:0x803D3EC0 end:0x803D3ECC
 
-pointspr.c:
+pointspr.c: (IMPLEMENTIERT)
 	.text       start:0x800D0EA4 end:0x800D0EA8
 	.rodata     start:0x80122C4C end:0x80122EA0
 
-port.c:
+port.c: (IMPLEMENTIERT)
 	.text       start:0x800D0EA8 end:0x800D4238
 	.rodata     start:0x80122EA0 end:0x80123180
 	.bss        start:0x80216734 end:0x80217774
 	.sdata      start:0x803D3484 end:0x803D34E0
 
-skinning.c:
+skinning.c: (IMPLEMENTIERT)
 	.text       start:0x800D4238 end:0x800D4508
 	.rodata     start:0x80123180 end:0x80123440
 
-syserror.c:
+syserror.c: (IMPLEMENTIERT)
 	.text       start:0x800D4508 end:0x800D45A4
 
-Version.c:
+Version.c: (IMPLEMENTIERT)
 	.text       start:0x800D45A4 end:0x800D4694
 
-xboxlibs.c:
+xboxlibs.c: (IMPLEMENTIERT)
 	.text       start:0x800D4694 end:0x800D4CB4
 	.rodata     start:0x80123440 end:0x801236F8
 
-xform.c:
+xform.c: (IMPLEMENTIERT)
 	.text       start:0x800D4CB4 end:0x800D4D00
 	.rodata     start:0x801236F8 end:0x80123A80
 
-dummy.c:
+dummy.c: (IMPLEMENTIERT)
 	.text       start:0x800D4D00 end:0x800D4F30
 	.sdata      start:0x803D34E0 end:0x803D388C
 
-GameCube_sn_libSN_fileserver.s:
+GameCube_sn_libSN_fileserver.s: (IMPLEMENTIERT)
 	.text       start:0x800D4F30 end:0x800D5020
 	.data       start:0x80165610 end:0x801656F0
 
-GameCube_sn_libSN_ppcdown.s:
+GameCube_sn_libSN_ppcdown.s: (IMPLEMENTIERT)
 	.text       start:0x800D5020 end:0x800D6290
 	.data       start:0x801656F0 end:0x80165810
 	.bss        start:0x80217774 end:0x80218E68
 
-sbrk.c:
+sbrk.c: (IMPLEMENTIERT)
 	.text       start:0x800D6290 end:0x800D63B0
 
-GameCube_sn_libSN_tealeaf.s:
+GameCube_sn_libSN_tealeaf.s: (IMPLEMENTIERT)
 	.text       start:0x800D63B0 end:0x800D6458
 
-DOCUME_1_bill_LOCALS_1_Temp_e_acos56102144002.s:
+DOCUME_1_bill_LOCALS_1_Temp_e_acos56102144002.s: (IMPLEMENTIERT)
 	.text       start:0x800D6458 end:0x800D66D4
 	.data5      start:0x803D4BF8 end:0x803D4C68
 
-DOCUME_1_bill_LOCALS_1_Temp_e_atan256132251482.s:
+DOCUME_1_bill_LOCALS_1_Temp_e_atan256132251482.s: (IMPLEMENTIERT)
 	.text       start:0x800D66D4 end:0x800D6954
 	.data5      start:0x803D4C68 end:0x803D4C98
 
-DOCUME_1_bill_LOCALS_1_Temp_e_fmod5617231292.s:
+DOCUME_1_bill_LOCALS_1_Temp_e_fmod5617231292.s: (IMPLEMENTIERT)
 	.text       start:0x800D6954 end:0x800D6CE0
 	.data5      start:0x803D4C98 end:0x803D4CB0
 
-DOCUME_1_bill_LOCALS_1_Temp_e_pow56232246252.s:
+DOCUME_1_bill_LOCALS_1_Temp_e_pow56232246252.s: (IMPLEMENTIERT)
 	.text       start:0x800D6CE0 end:0x800D74F8
 	.data5      start:0x803D4CB0 end:0x803D4DB8
 
-DOCUME_1_bill_LOCALS_1_Temp_e_sqrt5626226062.s:
+DOCUME_1_bill_LOCALS_1_Temp_e_sqrt5626226062.s: (IMPLEMENTIERT)
 	.text       start:0x800D74F8 end:0x800D775C
 	.data5      start:0x803D4DB8 end:0x803D4DC8
 
-DOCUME_1_bill_LOCALS_1_Temp_s_atan56432235802.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_atan56432235802.s: (IMPLEMENTIERT)
 	.text       start:0x800D775C end:0x800D799C
 	.data5      start:0x803D4DC8 end:0x803D4E70
 
-DOCUME_1_bill_LOCALS_1_Temp_s_cos56432235802.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_cos56432235802.s: (IMPLEMENTIERT)
 	.text       start:0x800D799C end:0x800D7A7C
 
-DOCUME_1_bill_LOCALS_1_Temp_s_fabs5646215602.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_fabs5646215602.s: (IMPLEMENTIERT)
 	.text       start:0x800D7A7C end:0x800D7AB8
 
-DOCUME_1_bill_LOCALS_1_Temp_s_floor5646215602.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_floor5646215602.s: (IMPLEMENTIERT)
 	.text       start:0x800D7AB8 end:0x800D7C24
 	.data5      start:0x803D4E70 end:0x803D4E78
 
-DOCUME_1_bill_LOCALS_1_Temp_s_sin56492123092.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_sin56492123092.s: (IMPLEMENTIERT)
 	.text       start:0x800D7C24 end:0x800D7D04
 
-DOCUME_1_bill_LOCALS_1_Temp_s_tan56492123092.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_tan56492123092.s: (IMPLEMENTIERT)
 	.text       start:0x800D7D04 end:0x800D7D88
 
-DOCUME_1_bill_LOCALS_1_Temp_ef_sqrt56722220122.s:
+DOCUME_1_bill_LOCALS_1_Temp_ef_sqrt56722220122.s: (IMPLEMENTIERT)
 	.text       start:0x800D7D88 end:0x800D7E94
 	.data5      start:0x803D4E78 end:0x803D4E80
 
-DOCUME_1_bill_LOCALS_1_Temp_s_scalbn5698296952.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_scalbn5698296952.s: (IMPLEMENTIERT)
 	.text       start:0x800D7E94 end:0x800D7FE8
 	.data5      start:0x803D4E80 end:0x803D4EA0
 
-DOCUME_1_bill_LOCALS_1_Temp_k_cos56102144002.s:
+DOCUME_1_bill_LOCALS_1_Temp_k_cos56102144002.s: (IMPLEMENTIERT)
 	.text       start:0x800D7FE8 end:0x800D80DC
 	.data5      start:0x803D4EA0 end:0x803D4ED8
 
-DOCUME_1_bill_LOCALS_1_Temp_k_sin56102144002.s:
+DOCUME_1_bill_LOCALS_1_Temp_k_sin56102144002.s: (IMPLEMENTIERT)
 	.text       start:0x800D80DC end:0x800D8188
 	.data5      start:0x803D4ED8 end:0x803D4F10
 
-DOCUME_1_bill_LOCALS_1_Temp_k_tan56102144002.s:
+DOCUME_1_bill_LOCALS_1_Temp_k_tan56102144002.s: (IMPLEMENTIERT)
 	.text       start:0x800D8188 end:0x800D83E4
 	.data5      start:0x803D4F10 end:0x803D4F90
 
-DOCUME_1_bill_LOCALS_1_Temp_e_rem_pio25626226062.s:
+DOCUME_1_bill_LOCALS_1_Temp_e_rem_pio25626226062.s: (IMPLEMENTIERT)
 	.text       start:0x800D83E4 end:0x800D8748
 	.data5      start:0x803D4F90 end:0x803D5168
 
-DOCUME_1_bill_LOCALS_1_Temp_s_copysign5698296952.s:
+DOCUME_1_bill_LOCALS_1_Temp_s_copysign5698296952.s: (IMPLEMENTIERT)
 	.text       start:0x800D8748 end:0x800D87A0
 
-DOCUME_1_bill_LOCALS_1_Temp_k_rem_pio25607236512.s:
+DOCUME_1_bill_LOCALS_1_Temp_k_rem_pio25607236512.s: (IMPLEMENTIERT)
 	.text       start:0x800D87A0 end:0x800D902C
 	.data5      start:0x803D5168 end:0x803D51D8
 
-atoi.c:
+atoi.c: (IMPLEMENTIERT)
 	.text       start:0x800D902C end:0x800D9054
 
-exit.c:
+exit.c: (IMPLEMENTIERT)
 	.text       start:0x800D9054 end:0x800D90D4
 
-rand.c:
+rand.c: (IMPLEMENTIERT)
 	.text       start:0x800D90D4 end:0x800D9104
 
-strtol.c:
+strtol.c: (IMPLEMENTIERT)
 	.text       start:0x800D9104 end:0x800D9470
 
-vfprintf.c:
+vfprintf.c: (IMPLEMENTIERT)
 	.text       start:0x800D9470 end:0x800DADBC
 	.rodata     start:0x80123A80 end:0x80123B10
 	.data       start:0x80165810 end:0x80165838
 	.bss        start:0x80218E68 end:0x80218F40
 	.sbss       start:0x803D3ECC end:0x803D3ED0
 
-vsprintf.c:
+vsprintf.c: (IMPLEMENTIERT)
 	.text       start:0x800DADBC end:0x800DAE18
 
-memchr.c:
+memchr.c: (IMPLEMENTIERT)
 	.text       start:0x800DAE18 end:0x800DAED8
 
-memcmp.c:
+memcmp.c: (IMPLEMENTIERT)
 	.text       start:0x800DAED8 end:0x800DAF68
 
-memcpy.c:
+memcpy.c: (IMPLEMENTIERT)
 	.text       start:0x800DAF68 end:0x800DB00C
 
-memset.c:
+memset.c: (IMPLEMENTIERT)
 	.text       start:0x800DB00C end:0x800DB0A0
 
-strcat.c:
+strcat.c: (IMPLEMENTIERT)
 	.text       start:0x800DB0A0 end:0x800DB130
 
-strchr.c:
+strchr.c: (IMPLEMENTIERT)
 	.text       start:0x800DB130 end:0x800DB1CC
 
-strcmp.c:
+strcmp.c: (IMPLEMENTIERT)
 	.text       start:0x800DB1CC end:0x800DB274
 
-strcasecmp.c:
+strcasecmp.c: (IMPLEMENTIERT)
 	.text       start:0x800DB274 end:0x800DB308
 
-strcpy.c:
+strcpy.c: (IMPLEMENTIERT)
 	.text       start:0x800DB308 end:0x800DB38C
 
-strlen.c:
+strlen.c: (IMPLEMENTIERT)
 	.text       start:0x800DB38C end:0x800DB3F8
 
-strlwr.c:
+strlwr.c: (IMPLEMENTIERT)
 	.text       start:0x800DB3F8 end:0x800DB43C
 
-strncmp.c:
+strncmp.c: (IMPLEMENTIERT)
 	.text       start:0x800DB43C end:0x800DB51C
 
-strncasecmp.c:
+strncasecmp.c: (IMPLEMENTIERT)
 	.text       start:0x800DB51C end:0x800DB5D8
 
-strncpy.c:
+strncpy.c: (IMPLEMENTIERT)
 	.text       start:0x800DB5D8 end:0x800DB6A4
 
-strstr.c:
+strstr.c: (IMPLEMENTIERT)
 	.text       start:0x800DB6A4 end:0x800DB73C
 
-mbtowc_r.c:
+mbtowc_r.c: (IMPLEMENTIERT)
 	.text       start:0x800DB73C end:0x800DB854
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s: 
 	.text       start:0x800DB854 end:0x800DB894
 
 DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s_1:

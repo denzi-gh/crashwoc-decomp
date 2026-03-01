@@ -1,4 +1,47 @@
 #include "../nu.h"
+#include "debris.h"
+#include "edfile.h"
+
+struct edpp_ptldesc_s {
+  struct nuvec_s pos;
+  s32 type;
+  s32 handle;
+  s16 rotz;
+  s16 roty;
+  s16 emitrotz;
+  s16 emitroty;
+  s32 offset;
+  char name[16];
+  s32 trigger_type;
+  s32 trigger_id;
+  f32 trigger_var;
+  s16 refrotz;
+  s16 refroty;
+  f32 refoff;
+  f32 refbounce;
+  s16 group_id;
+};
+
+extern struct edpp_ptldesc_s edpp_ptls[];
+extern struct nuvec_s edpp_cam_pos;
+extern s32 edpp_nextalloc;
+extern s32 edpp_nearest;
+extern struct debinftype effecttypes[128];
+extern s32 effect_types_used;
+
+void edmainRegisterLocVec(struct nuvec_s *loc);
+void DebFreeInstantly(s32 *key);
+void DebReAlloc(struct debkeydatatype_s *debkey, s32 newdebcount);
+s32 LookupDebrisEffect(char *name);
+void AddDebrisEffect(s32 *key, s32 type, float x, float y, float z);
+void DebrisOrientation(s32 key, short rotz, short roty);
+void DebrisEmitterOrientation(s32 key, short emitrotz, short emitroty);
+void DebrisStartOffset(s32 key, s32 offset);
+void DebrisSetTrigger(s32 key, s32 trigger_type, s32 trigger_id, float trigger_var);
+void DebrisReflectionOrientation(s32 key, short refrotz, short refroty, float refoff, float refbounce);
+void DebrisSetGroupID(s32 key, short group_id);
+void TidyAllEffects(void);
+void ParticleReset(void);
 
 //NGC MATCH
 void edppRegisterPointerToGameCharLocation(struct nuvec_s *charloc) {

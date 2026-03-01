@@ -4,67 +4,40 @@
 #include "../types.h"
 #include "../nu.h"
 
-// Ed random seed.
-extern u32 edqseed;
+typedef struct pSFX pSFX, *PpSFX;
 
-// SFX volume.
-extern u32 edbitsSfxVol;
-
-// SFX name global tab.
-extern char* edSfxGlobalTab;
-
-// SFX name level tab.
-extern char* edSfxLevelTab;
-
-// SFX name global count.
-extern s32 edSfxGlobalCount;
-
-// SFX name total count.
-extern u32 edSfxAllCount;
-
-extern pSFX* edSfxLevelTab;
-
-extern char edbits_what_game;
-
-// Base scene.
-extern nugscn_s* edbits_base_scene;
-
-/*
-  80084750 0000ec 80084750  4 edbitsLookupSoundFX 	Global
-  80084844 000118 80084844  4 edbitsSoundPlay 	Global
-  8008495c 00008c 8008495c  4 edbitsLookupInstance 	Global
-*/
-
-
-// Size: 0x30
-struct
-{
+struct pSFX {
     char name[16];
-    unsigned short pitch;
-    unsigned short volume;
-    unsigned char buzz;
-    unsigned char rumble;
-    unsigned char delay;
-    unsigned char wait;
-    char* path;
-    unsigned short frequency;
-    unsigned short stream;
-    signed char type;
+    u16 pitch;
+    u16 volume;
+    u8 buzz;
+    u8 rumble;
+    u8 delay;
+    u8 wait;
+    char *path;
+    u16 frequency;
+    u16 stream;
+    char type;
     char pad1;
-    unsigned short id;
-    nuvec_s Pos;
-}pSFX;
+    u16 id;
+    struct nuvec_s Pos;
+};
 
-// Get a random number.
-u32 edqrand();
+extern u32 edqseed;
+extern u32 edbitsSfxVol;
+extern struct pSFX *edSfxGlobalTab;
+extern struct pSFX *edSfxLevelTab;
+extern u32 edSfxGlobalCount;
+extern u32 edSfxAllCount;
+extern char edbits_what_game;
+extern struct nugscn_s *edbits_base_scene;
 
-// Register the SFX tabs.
-void edbitsRegisterSfx(char* sfxGlobalTab, char* sfxLevelTab, u32 sfxGlobalCount, u32 sfxAllCount);
-
-// Register the base scene.
-void edbitsRegisterBaseScene(NuScene* s);
-
-// Set the SFX volume.
+u32 edqrand(void);
+void edbitsRegisterSfx(struct pSFX *sfxGlobalTab, struct pSFX *sfxLevelTab, u32 sfxGlobalCount, u32 sfxAllCount);
+void edbitsRegisterBaseScene(struct nugscn_s *s);
 void edbitsSetSoundFxVolume(u32 vol);
+s32 edbitsLookupSoundFX(char *name);
+void edbitsSoundPlay(struct nuvec_s *pos, s32 sid);
+s32 edbitsLookupInstance(char *name);
 
 #endif // !EDBITS_H

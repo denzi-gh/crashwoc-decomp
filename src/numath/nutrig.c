@@ -1,5 +1,7 @@
 #include "nutrig.h"
-#include <math.h>
+
+double sin(double x);
+double atan2(double y, double x);
 
 f32 NuTrigTable[NU_TRIG_TABLE_SIZE];
 
@@ -139,7 +141,9 @@ angle ang[UNIT_CIRCLE_PRECISION] = {
 void NuTrigInit()
 {
 	f32 inc = 0.00009587f;
-	for (s32 i = 0; i < NU_TRIG_TABLE_SIZE; i++)
+	s32 i;
+
+	for (i = 0; i < NU_TRIG_TABLE_SIZE; i++)
 	{
 		NuTrigTable[i] = (f32)sin((f64)(i * inc));
 		//printf("table: %d\n", NuTrigTable[i]);

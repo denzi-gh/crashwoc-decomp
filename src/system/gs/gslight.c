@@ -1,5 +1,7 @@
 #include "gslight.h"
 
+static struct _GXColor GX_White = { 0xFF, 0xFF, 0xFF, 0xFF };
+
 struct _D3DMATERIAL8 GS_CurrentMaterial;
 struct _GXColor GS_CurrentMaterialAmbient;
 struct _GXColor GS_CurrentMaterialDiffuse;
@@ -7,6 +9,18 @@ struct _GXColor GS_CurrentMaterialDiffuseGX;
 struct _GXColor GS_CurrentMaterialEmissive;
 struct _GXColor GS_CurrentMaterialEmissiveGX;
 struct _GXColor GS_CurrentMaterialEmissivergba;
+struct _GXLightObj GSLights[3];
+struct _GSMATRIX GS_CurMat;
+struct _GSMATRIX GS_LightMat;
+struct _GSMATRIX GS_LightViewMat;
+struct _GS_VECTOR3 XFLightPos;
+s32 GS_EnableLightingFlag;
+s32 GS_MaterialSourceAmbient;
+s32 GS_MaterialSourceEmissive;
+s32 GS_EnableColorVertexFlag;
+s32 GS_EnableSpecularFlag;
+
+void MatReorder(struct _GSMATRIX *MatrixA);
 
 //MATCH NGC
 void GS_SetMaterial(struct _D3DMATERIAL8 *pMaterial) {
@@ -154,13 +168,7 @@ void GXSetChanMatColor(enum _GXChannelID chan, struct _GXColor mat_color);
 void GXSetNumChans(unsigned char nChans);                                
 s32 IsTitleScreen();                               
 //void MatReorder(struct _GSMATRIX* MatrixA);                               
-extern struct _GXLightObj GSLights[3];
-extern struct _GSMATRIX GS_CurMat;
 extern struct _D3DMATERIAL8 GS_CurrentMaterial;
-extern s32 GS_EnableLightingFlag;
-extern struct _GSMATRIX GS_LightMat;
-extern struct _GSMATRIX GS_LightViewMat;
-extern struct _GS_VECTOR3 XFLightPos;
 */
 
 

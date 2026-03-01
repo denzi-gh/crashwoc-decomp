@@ -91,8 +91,10 @@ void NudxFw_SetBackBufferCopied(s32 copied)
 
 s32 NudxFw_Init()
 {
+	s32 code;
+
 	ResetFwGlobals();
-	s32 code = CreateEnvironment(NULL);
+	code = CreateEnvironment(NULL);
 	if (code > -1)
 	{
 		code = 0;

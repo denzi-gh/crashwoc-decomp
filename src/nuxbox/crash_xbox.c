@@ -1,10 +1,11 @@
-#include "../system.h"
+#include "system.h"
 #include "nu.h"
 #include "gamecode/creature.h"
 #include "gamecode/main.h"
 #include "gamecode/game.h"
 
 s32 VEHICLECONTROL; //vehicle.c
+struct nuscene_s *InstSceneLoad(char *name);
 
 //NGC MATCH
 void AddQuad3DrotXYZ(struct nuvec_s *pos,struct nuvec_s *shape,struct numtl_s *mtl,struct nuangvec_s *a,float *uvs,u32 colour)
@@ -17,8 +18,8 @@ void AddQuad3DrotXYZ(struct nuvec_s *pos,struct nuvec_s *shape,struct numtl_s *m
   col = (colour & 0xff000000) + (colour & 0xff) * 0x10000 + (colour & 0xff00) + (colour >> 0x10 & 0xff);
   outcode = NuCameraClipTestPoints(pos,1,NULL);
   if (outcode == 0) {
-    NuMtxSetRotateXYZ(&mtx,a);
-    NuMtxTranslate(&mtx,pos);
+    NuMtxSetRotateXYZ((struct Mtx *)&mtx,(s32 *)a);
+    NuMtxTranslate((struct Mtx *)&mtx,pos);
     pt[0].pnt.x = shape->x;
     pt[0].pnt.y = shape->y;
     pt[0].pnt.z = shape->z;

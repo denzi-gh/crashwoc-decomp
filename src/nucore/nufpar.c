@@ -1,5 +1,6 @@
 #include "nufpar.h"
 #include "nufile.h"
+#include "numem.h"
 
 #define LF 0xA	// '\n'
 #define CR 0xD	// '\r'
@@ -22,7 +23,7 @@ char NuGetChar(struct nufpar_s* fPar) {
     if (fPar->cpos > fPar->buffend) {
         if (fPar->buffend + 1 < fPar->size) {
             size = fPar->size - bufferEndPos;
-            tmp = NuFileRead(fPar->fh, fPar->fbuff, size > 0x1000 ? 0x1000 : size);
+            tmp = NuFileRead(fPar->handle, fPar->fbuff, size > 0x1000 ? 0x1000 : size);
             fPar->buffstart = fPar->buffend + 1;
             fPar->buffend = fPar->buffend + tmp;
             if (tmp == 0) {
@@ -76,8 +77,9 @@ s32 NuFParGetWord(struct nufpar_s* fPar) {
 
 s32 NuFParGetInt(struct nufpar_s* fPar)
 {
-    NuFParGetWord(fPar);
     s32 ret = 0;
+
+    NuFParGetWord(fPar);
     if (fPar->wbuff[1] != 0)
     {
         ret = atoi((char*)(fPar->wbuff + 1));
@@ -107,12 +109,14 @@ struct nufpar_s* NuFParOpen(s32 handle)
     struct nufpar_s* fPar = NuMemAlloc(sizeof(struct nufpar_s));	//size: 0x1244
     if (fPar != NULL)
     {
+        s32 originalPos;
+
         memset(fPar, 0, sizeof(struct nufpar_s));
         fPar->handle = handle;
         fPar->compos = -1;
         fPar->buffend = -1;
         fPar->line_num = -1;
-        s32 originalPos = NuFilePos(handle);
+        originalPos = NuFilePos(handle);
         NuFileSeek(handle, 0, 2);
         fPar->size = NuFilePos(handle);	// = filelength (global var s32)
         NuFileSeek(handle, originalPos, 0);
@@ -131,7 +135,7 @@ void NuFParDestroy(struct nufpar_s* fPar)
 struct nufpar_s* NuFParCreate(char* filename)
 {
     s32 handle = NuFileOpen(filename, 0); //0= NUFILE_READ
-    if (handle != NULL)
+    if (handle != 0)
     {
         struct nufpar_s* fPar = NuFParOpen(handle);
         if (fPar != NULL)
@@ -146,12 +150,11 @@ struct nufpar_s* NuFParCreate(char* filename)
 s32 NuFParGetLine(struct nufpar_s* fPar) {
     s32 i;
     char ch;
-    char* textBuffer_ptr;
+    char inc_f2_flag;
 
     i = 0;
     fPar->line_pos = 0;
-
-    char inc_f2_flag = 1;
+    inc_f2_flag = 1;
     while ((ch = NuGetChar(fPar)) != 0) {
         if (inc_f2_flag) {
             fPar->line_num += 1;

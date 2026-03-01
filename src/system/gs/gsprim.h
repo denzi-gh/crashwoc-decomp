@@ -19,9 +19,10 @@
 */
 
 
-struct _D3DCOLORVALUE* GS_CurrentMaterialEmissivergba;
-s32 GS_CurrentVertDesc;
-s32 GS_MaterialSourceEmissive;
-s32 IsStencil;
-s32 ShadowBodge;
-s32 ShadowColour;
+extern struct _GXColor GS_CurrentMaterialEmissivergba;
+extern s32 GS_CurrentVertDesc;
+extern s32 GS_MaterialSourceEmissive;
+extern s32 GS_EnableLightingFlag;
+extern s32 IsStencil;
+extern s32 ShadowBodge;
+extern s32 ShadowColour;

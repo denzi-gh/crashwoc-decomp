@@ -461,23 +461,31 @@ void NuMtxInv(struct Mtx* dest, struct Mtx* m)
 	f32 m42 = m->m42;
 	f32 m43 = m->m43;
 	f32 m41 = -m->m41;
+	f32 m13;
+	f32 m31;
+	f32 m32;
+	f32 m23;
+	f32 m11;
+	f32 m22;
+	f32 m33;
+
 	dest->m21 = m12;
 	m42 = -m42;
 	dest->m12 = m21;
 	m43 = -m43;
-	f32 m13 = m->m13;
-	f32 m31 = m->m31;
+	m13 = m->m13;
+	m31 = m->m31;
 	dest->m31 = m13;
 	dest->m13 = m31;
-	f32 m32 = m->m32;
-	f32 m23 = m->m23;
+	m32 = m->m32;
+	m23 = m->m23;
 	dest->m23 = m32;
 	dest->m32 = m23;
-	f32 m11 = m->m11;
+	m11 = m->m11;
 	dest->m11 = m11;
-	f32 m22 = m->m22;
+	m22 = m->m22;
 	dest->m22 = m22;
-	f32 m33 = m->m33;
+	m33 = m->m33;
 	dest->m14 = 0.00000000;
 	dest->m24 = 0.00000000;
 	dest->m33 = m33;
@@ -516,6 +524,10 @@ void NuMtxInvRSS(struct Mtx* dest, struct Mtx* m)
 {
 	f32 diff = m->m22 * m->m33 - m->m23 * m->m32;
 	f32 scale = 1.0 / (m->m13 * (m->m21 * m->m32 - m->m22 * m->m31) + (m->m11 * diff - m->m12 * (m->m21 * m->m33 - m->m23 * m->m31)));
+	f32 m12;
+	f32 m11;
+	f32 m22;
+
 	dest->m11 = diff * scale;
 	diff = -scale;
 	dest->m21 = (m->m21 * m->m33 - m->m23 * m->m31) * diff;
@@ -526,9 +538,9 @@ void NuMtxInvRSS(struct Mtx* dest, struct Mtx* m)
 	dest->m13 = (m->m12 * m->m23 - m->m13 * m->m22) * scale;
 	dest->m23 = (m->m11 * m->m23 - m->m13 * m->m21) * diff;
 	diff = m->m21;
-	f32 m12 = m->m12;
-	f32 m11 = m->m11;
-	f32 m22 = m->m22;
+	m12 = m->m12;
+	m11 = m->m11;
+	m22 = m->m22;
 	dest->m43 = 0.0;
 	dest->m44 = 1.0;
 	dest->m14 = 0.0;
@@ -540,51 +552,51 @@ void NuMtxInvRSS(struct Mtx* dest, struct Mtx* m)
 }
 
 // TODO: Clean this function up
-void NuMtxAlignZ(struct Mtx* dest, struct Mtx* m)
+void NuMtxAlignZ(struct Mtx* dest, struct nuvec_s* v)
 {
 	float tmp1;
 	float tmp2;
-	float *tmp3;
-	float *tmp4;
-	double tmp5;
-	double tmp6;
-	double tmp7;
+	struct nuvec_s* tmp3;
+	struct nuvec_s* tmp4;
+	float tmp5;
+	float tmp6;
+	float tmp7;
 
-    tmp2 = m->m13 * m->m13 + m->m11 * m->m11 + m->m12 * m->m12;
+    tmp2 = v->z * v->z + v->x * v->x + v->y * v->y;
     tmp1 = 0.0;
     tmp6 = dest->m13 * dest->m13 + dest->m11 * dest->m11 + dest->m12 * dest->m12;
     tmp7 = dest->m23 * dest->m23 + dest->m21 * dest->m21 + dest->m22 * dest->m22;
 	if (tmp2 != 0.0)
 	{
-        tmp5 = sqrt((dest->m33 * dest->m33 + dest->m31 * dest->m31 + dest->m32 * dest->m32) / tmp2);
+        tmp5 = NuFsqrt((dest->m33 * dest->m33 + dest->m31 * dest->m31 + dest->m32 * dest->m32) / tmp2);
         tmp1 = tmp5;
 	}
-    tmp3 = &dest->m21;
-    tmp4 = &dest->m31;
-	dest->m31 = tmp1 * m->m11;
-	dest->m32 = tmp1 * m->m12;
-	dest->m33 = tmp1 * m->m13;
-	NuVecDot(tmp3, tmp4);
+    tmp3 = (struct nuvec_s*)&dest->m21;
+    tmp4 = (struct nuvec_s*)&dest->m31;
+	dest->m31 = tmp1 * v->x;
+	dest->m32 = tmp1 * v->y;
+	dest->m33 = tmp1 * v->z;
+	tmp5 = NuVecDot(tmp3, tmp4);
     tmp5 = NuFabs(tmp5);
 	if (tmp5 <= 0.8660253882408142)
 	{
-		NuVecCross(dest, tmp3, tmp4);
+		NuVecCross((struct nuvec_s*)dest, tmp3, tmp4);
         tmp1 = 0.0;
         tmp5 = dest->m13 * dest->m13 + dest->m11 * dest->m11 + dest->m12 * dest->m12;
 		if (tmp5 != 0.0)
 		{
-            tmp6 = sqrt(tmp6 / tmp5);
+            tmp6 = NuFsqrt(tmp6 / tmp5);
             tmp1 = tmp6;
 		}
 		dest->m11 = dest->m11 * tmp1;
 		dest->m12 = dest->m12 * tmp1;
 		dest->m13 = dest->m13 * tmp1;
-		NuVecCross(tmp3, tmp4, dest);
+		NuVecCross(tmp3, tmp4, (struct nuvec_s*)dest);
         tmp1 = 0.0;
         tmp6 = dest->m23 * dest->m23 + dest->m21 * dest->m21 + dest->m22 * dest->m22;
 		if (tmp6 != 0.0)
 		{
-            tmp6 = sqrt(tmp7 / tmp6);
+            tmp6 = NuFsqrt(tmp7 / tmp6);
             tmp1 = tmp6;
 		}
 		dest->m21 = dest->m21 * tmp1;
@@ -593,23 +605,23 @@ void NuMtxAlignZ(struct Mtx* dest, struct Mtx* m)
 	}
 	else
 	{
-		NuVecCross(tmp3, tmp4, dest);
+		NuVecCross(tmp3, tmp4, (struct nuvec_s*)dest);
         tmp1 = 0.0;
         tmp5 = dest->m23 * dest->m23 + dest->m21 * dest->m21 + dest->m22 * dest->m22;
 		if (tmp5 != 0.0)
 		{
-            tmp7 = sqrt(tmp7 / tmp5);
+            tmp7 = NuFsqrt(tmp7 / tmp5);
             tmp1 = tmp7;
 		}
 		dest->m21 = dest->m21 * tmp1;
 		dest->m22 = dest->m22 * tmp1;
 		dest->m23 = dest->m23 * tmp1;
-		NuVecCross(dest, tmp3, tmp4);
+		NuVecCross((struct nuvec_s*)dest, tmp3, tmp4);
         tmp1 = 0.0;
         tmp7 = dest->m13 * dest->m13 + dest->m11 * dest->m11 + dest->m12 * dest->m12;
 		if (tmp7 != 0.0)
 		{
-            tmp6 = sqrt(tmp6 / tmp7);
+            tmp6 = NuFsqrt(tmp6 / tmp7);
             tmp1 = tmp6;
 		}
 		dest->m11 = dest->m11 * tmp1;
@@ -630,10 +642,13 @@ void NuMtxLookAtZ(struct Mtx* dest, struct nuvec_s* v)
 
 void NuMtxAddR(struct Mtx* dest, struct Mtx* a, struct Mtx* b)
 {
+	f32 tmp2;
+	f32 tmp1;
+
 	dest->m11 = a->m11 + b->m11;
 	dest->m12 = a->m12 + b->m12;
-	f32 tmp2 = b->m13;
-	f32 tmp1 = a->m13;
+	tmp2 = b->m13;
+	tmp1 = a->m13;
 	dest->m14 = 0.0;
 	dest->m13 = tmp1 + tmp2;
 	dest->m21 = a->m21 + b->m21;
@@ -656,9 +671,11 @@ void NuMtxAddR(struct Mtx* dest, struct Mtx* a, struct Mtx* b)
 
 void NuMtxSkewSymmetric(struct Mtx* m, struct nuvec_s* v)
 {
+	f32 tmp;
+
 	m->m11 = 0.0;
 	m->m12 = -v->z;
-	f32 tmp = v->y;
+	tmp = v->y;
 	m->m14 = 0.0;
 	m->m13 = tmp;
 	tmp = v->z;
@@ -683,18 +700,25 @@ void NuMtxOrth(struct Mtx* m)
 	f32 mag = NuFsqrt(m->m13 * m->m13 + m->m11 * m->m11 + m->m12 * m->m12);
 	f32 t5 = 1.0;
 	f32 t3 = 1.0 / mag;
+	f32 m12;
+	f32 m13;
+	f32 m11;
+	f32 t1;
+	f32 t2;
+	f32 t4;
+
 	m->m13 = m->m13 * t3;
 	m->m11 = m->m11 * t3;
 	m->m12 = m->m12 * t3;
 	mag = NuFsqrt(m->m23 * m->m23 + m->m21 * m->m21 + m->m22 * m->m22);
 	t3 = t5 / mag;
-	f32 m12 = m->m12;
-	f32 m13 = m->m13;
-	f32 m11 = m->m11;
-	f32 t1 = m->m21 * t3;
-	f32 t2 = m->m22 * t3;
+	m12 = m->m12;
+	m13 = m->m13;
+	m11 = m->m11;
+	t1 = m->m21 * t3;
+	t2 = m->m22 * t3;
 	t3 = m->m23 * t3;
-	f32 t4 = m11 * t2 - m12 * t1;
+	t4 = m11 * t2 - m12 * t1;
 	t2 = m12 * t3 - m13 * t2;
 	m->m33 = t4;
 	t3 = m13 * t1 - m11 * t3;
@@ -707,7 +731,9 @@ void NuMtxOrth(struct Mtx* m)
 
 void NuMtxCalcCheapFaceOn(struct Mtx* dest, struct nuvec_s* v)
 {
-	struct Mtx* view = NuCameraGetViewMtx();
+	struct Mtx* view = (struct Mtx*)NuCameraGetViewMtx();
+	f32 tmp;
+
 	dest->m11 = -view->m11;
 	dest->m21 = view->m12;
 	dest->m31 = -view->m13;
@@ -716,7 +742,7 @@ void NuMtxCalcCheapFaceOn(struct Mtx* dest, struct nuvec_s* v)
 	dest->m32 = -view->m23;
 	dest->m13 = -view->m31;
 	dest->m23 = view->m32;
-	f32 tmp = view->m33;
+	tmp = view->m33;
 	dest->m14 = 0.0;
 	dest->m44 = 1.0;
 	dest->m33 = -tmp;
@@ -729,7 +755,9 @@ void NuMtxCalcCheapFaceOn(struct Mtx* dest, struct nuvec_s* v)
 
 void NuMtxCalcDebrisFaceOn(struct Mtx* m)
 {
-  struct Mtx* view = NuCameraGetViewMtx();
+  struct Mtx* view = (struct Mtx*)NuCameraGetViewMtx();
+  f32 tmp;
+
   m->m11 = -view->m11;
   m->m21 = view->m12;
   m->m31 = -view->m13;
@@ -738,7 +766,7 @@ void NuMtxCalcDebrisFaceOn(struct Mtx* m)
   m->m32 = -view->m23;
   m->m13 = -view->m31;
   m->m23 = view->m32;
-  f32 tmp = view->m33;
+  tmp = view->m33;
   m->m44 = 1.0;
   m->m14 = 0.0;
   m->m33 = -tmp;
