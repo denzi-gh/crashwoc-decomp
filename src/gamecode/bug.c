@@ -23,6 +23,8 @@ extern s32 VEHICLECONTROL;
 extern s32 FRAME;
 extern s32 FRAMES;
 
+void GetALONG(struct nuvec_s *pos,struct RPos_s *rpos,s32 iRAIL,s32 iALONG,s32 info);
+
 BUGAREA BugArea[4];
 static f32 BUGFADETIME = 2.0f;
 static f32 mechlight_distance = 2.0f;

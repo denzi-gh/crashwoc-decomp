@@ -71,4 +71,6 @@ struct rail_s
 
 struct rail_s Rail[8];
 
+void GetALONG(struct nuvec_s *pos,struct RPos_s *rpos,s32 iRAIL,s32 iALONG,s32 info);
+
 #endif // !CAMERA_H
