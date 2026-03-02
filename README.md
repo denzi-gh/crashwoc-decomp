@@ -1,84 +1,96 @@
-# opencrashwoc
+Crash Bandicoot: The Wrath of Cortex (GameCube)
+[![Build Status]][actions] [![Discord Badge]][discord]
+=============
 
-this repo is for decomp work on **crash bandicoot: the wrath of cortex** (gamecube, ntsc-u `GCBE7D`).
+[Build Status]: https://github.com/denzi-gh/crashwoc-decomp/actions/workflows/decomp-dev.yml/badge.svg
+[actions]: https://github.com/denzi-gh/crashwoc-decomp/actions/workflows/decomp-dev.yml
+[Discord Badge]: https://img.shields.io/discord/727908905392275526?color=%237289DA&logo=discord&logoColor=%23FFFFFF
+[discord]: https://discord.gg/kmCPpW4KvJ
 
-it uses:
+A work-in-progress decompilation of Crash Bandicoot: The Wrath of Cortex for GameCube.
+
+This repository does **not** contain game assets. You must provide your own dumped game files.
+
+Supported versions:
+
+- `GCBE7D`: Rev 0 (USA)
+
+Dependencies
+============
+
+Windows
+-------
+
+On Windows, native tooling is the intended local setup.
+
+- Install [Python](https://www.python.org/downloads/) and add it to `PATH`.
+- Install [ninja](https://github.com/ninja-build/ninja/releases) and add it to `PATH`.
+  - Quick install: `pip install ninja`
+- Install [Git](https://git-scm.com/downloads).
+
+Most project tools are downloaded automatically on first configure:
+
 - `decomp-toolkit`
-- dtk-template style workflow
-- prodg 3.5 profile (`ngccc` / `ngcld`)
-- checked-in prodg linker script at `config/GCBE7D/ldscript.ld`
+- `objdiff-cli`
+- binutils
+- compiler packages
 
-important: no game assets are included here. you need your own dumped files.
+Linux / macOS
+-------------
 
-## current status
+Local development is primarily tested on Windows. CI uses a private Linux container for protected build assets and compiler execution.
 
-- `ninja` runs progress by default
-- `ninja progress` and `ninja report` work
-- full matching / full rebuild is still wip
+Building
+========
 
-## what you need (windows)
+- Clone the repository:
 
-- python 3.11+ in `PATH`
-- ninja in `PATH`
-- git
+  ```sh
+  git clone https://github.com/denzi-gh/crashwoc-decomp.git
+  cd crashwoc-decomp
+  ```
 
-most tools (`dtk`, `objdiff`, compilers package) get downloaded automatically on first run.
+- Provide the original game executable:
 
-## quick setup
+  ```text
+  orig/GCBE7D/sys/main.dol
+  ```
 
-1. clone:
-```powershell
-git clone https://github.com/denzi-gh/crashwoc-decomp.git
-cd crashwoc-decomp
-```
+  Expected SHA-1:
 
-2. put your original dol here:
-`orig/GCBE7D/sys/main.dol`
+  ```text
+  c9cbd49a9eb0006f55533eb7d0fb5ebe2a73b72f
+  ```
 
-expected sha1:
-`c9cbd49a9eb0006f55533eb7d0fb5ebe2a73b72f`
+- Configure:
 
-3. configure:
-```powershell
-py -3 configure.py --version GCBE7D --toolchain prodg35
-```
+  ```sh
+  python configure.py --version GCBE7D --toolchain prodg35
+  ```
 
-4. run progress:
-```powershell
-ninja progress
-```
+- Build:
 
-you can also just run `ninja` (same default target right now).
+  ```sh
+  ninja
+  ```
 
-## common commands
+Project layout
+==============
 
-reconfigure:
-```powershell
-py -3 configure.py --version GCBE7D --toolchain prodg35
-```
+- `config/GCBE7D/splits.txt`: object and section ownership for the retail DOL
+- `config/GCBE7D/symbols.txt`: validated symbol names
+- `config/GCBE7D/ldscript.ld`: checked-in ProDG linker script
+- `src/`: recovered source tree
+- `orig/GCBE7D/`: required original game files
 
-generate progress report json:
-```powershell
-ninja report
-```
+Diffing
+=======
 
-build all currently configured source units:
-```powershell
-ninja
-```
+Once the initial build succeeds, `objdiff.json` will be generated in the project root.
 
-## symbols + splits workflow
+Download the latest release from [encounter/objdiff](https://github.com/encounter/objdiff). Set the project directory to this repository and the configuration should load automatically.
 
-- `config/GCBE7D/splits.txt` = which address range belongs to which source unit/section
-- `config/GCBE7D/symbols.txt` = validated symbol names at concrete addresses
-- `src/dump_alphaNGCport_DWARF.txt` = strong hint source, but still validate against the retail dol layout
+Crash WOC Modding Discord:
+=========
 
-draft helper:
-```powershell
-py -3 tools/extract_symbol_drafts.py --version GCBE7D
-``
-
-## community
-
-discord: https://discord.gg/kmCPpW4KvJ
-
+Discord: https://discord.gg/kmCPpW4KvJ
