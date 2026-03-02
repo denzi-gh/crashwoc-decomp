@@ -59,7 +59,12 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ matrix.version }}-
 
       - name: Build
+        env:
+          HOME: /tmp/crashwoc-home
+          WINEPREFIX: /tmp/crashwoc-wine
+          WINEDEBUG: -all
         run: |
+          mkdir -p "$HOME" "$WINEPREFIX"
           python configure.py --map --version ${{ matrix.version }} \
               --binutils /binutils --compilers /compilers --wrapper wine
           ninja all_source progress build/${{ matrix.version }}/report.json
