@@ -170,6 +170,8 @@ config.non_matching = args.non_matching
 config.sjiswrap_path = args.sjiswrap
 config.ninja_path = args.ninja
 config.progress = args.progress
+config.objdiff_build_target = True
+config.objdiff_build_base = True
 if not is_windows():
     config.wrapper = args.wrapper
 # Don't build asm unless we're --non-matching

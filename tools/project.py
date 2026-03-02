@@ -224,6 +224,8 @@ class ProjectConfig:
         self.progress_report_args: Optional[List[str]] = (
             None  # Flags to `objdiff-cli report generate`
         )
+        self.objdiff_build_target: bool = False  # Whether objdiff can build target objects directly
+        self.objdiff_build_base: bool = False  # Whether objdiff can build base objects directly
 
         # Progress fancy printing
         self.progress_use_fancy: bool = False
@@ -1729,7 +1731,8 @@ def generate_objdiff_config(
     objdiff_config: Dict[str, Any] = {
         "min_version": "2.0.0-beta.5",
         "custom_make": ninja,
-        "build_target": False,
+        "build_target": config.objdiff_build_target,
+        "build_base": config.objdiff_build_base,
         "watch_patterns": [
             "*.c",
             "*.cc",
