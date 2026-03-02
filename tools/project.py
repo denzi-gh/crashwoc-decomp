@@ -772,8 +772,17 @@ def generate_build_ninja(
     if linker_family == "mw":
         linker_cmd = f"{wrapper_cmd}{linker} $ldflags -o $out @$out.rsp"
     else:
-        # ngcld does not support MW-style rsp usage; pass object inputs directly.
-        linker_cmd = f"{wrapper_cmd}{linker} $ldflags -o $out $in"
+        # ProDG tools expect SN_NGC_PATH to point at the compiler directory.
+        if is_windows():
+            linker_cmd = (
+                f'{CHAIN}set "SN_NGC_PATH=$sn_ngc_path" && '
+                f"{wrapper_cmd}{linker} $ldflags -o $out $in"
+            )
+        else:
+            linker_cmd = (
+                f'SN_NGC_PATH="$sn_ngc_path" '
+                f"{wrapper_cmd}{linker} $ldflags -o $out $in"
+            )
     linker_implicit: List[Optional[Path]] = [compilers_implicit or linker, wrapper_implicit]
 
     # ProDG GCC
@@ -1048,6 +1057,10 @@ def generate_build_ninja(
                         elf_ldflags += f" -e {self.entry}"
                     elf_map = None
                     link_implicit: List[Optional[Path]] = [self.prodg_ldscript, *linker_implicit]
+                    link_variables = {
+                        "ldflags": elf_ldflags,
+                        "sn_ngc_path": compilers / config.linker_version,
+                    }
                 else:
                     elf_ldflags = f"$ldflags -lcf {serialize_path(self.ldscript)}"
                     if config.generate_map:
@@ -1056,13 +1069,14 @@ def generate_build_ninja(
                     else:
                         elf_map = None
                     link_implicit = [self.ldscript, *linker_implicit]
+                    link_variables = {"ldflags": elf_ldflags}
                 n.build(
                     outputs=elf_path,
                     rule="link",
                     inputs=self.inputs,
                     implicit=link_implicit,
                     implicit_outputs=elf_map,
-                    variables={"ldflags": elf_ldflags},
+                    variables=link_variables,
                     order_only="post-compile",
                 )
             else:
