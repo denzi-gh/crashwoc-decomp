@@ -33,3 +33,5 @@ compile_commands.json
 # Miscellaneous
 /*.txt
 *.exe
+config/*/config.generated.yml
+config/*/splits.generated.txt

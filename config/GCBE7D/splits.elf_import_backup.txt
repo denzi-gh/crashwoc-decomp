@@ -688,13 +688,13 @@ strstr.c: (IMPLEMENTIERT)
 mbtowc_r.c: (IMPLEMENTIERT)
 	.text       start:0x800DB73C end:0x800DB854
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s: 
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s: (IMPLEMENTIERT)
 	.text       start:0x800DB854 end:0x800DB894
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s_1:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s_1: (IMPLEMENTIERT)
 	.text       start:0x800DB894 end:0x800DB8D4
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc2162042170782.s_1:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc2162042170782.s_1: (IMPLEMENTIERT)
 	.text       start:0x800DB8D4 end:0x800DBE64
 	.data5      start:0x803D51D8 end:0x803D52D8
 

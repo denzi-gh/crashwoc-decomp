@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
+from tools.normalize_splits import write_generated_config, write_normalized_splits
 from tools.project import (
     Object,
     ProgressCategory,
@@ -170,7 +171,14 @@ config.sjiswrap_tag = "v1.2.2"
 config.wibo_tag = "1.0.0"
 
 # Project
-config.config_path = Path("config") / config.version / "config.yml"
+source_config_path = Path("config") / config.version / "config.yml"
+source_splits_path = Path("config") / config.version / "splits.txt"
+generated_config_path = Path("config") / config.version / "config.generated.yml"
+generated_splits_path = Path("config") / config.version / "splits.generated.txt"
+write_normalized_splits(source_splits_path, generated_splits_path)
+write_generated_config(source_config_path, generated_config_path, generated_splits_path)
+
+config.config_path = generated_config_path
 config.check_sha_path = Path("config") / config.version / "build.sha1"
 config.asflags = [
     "-mgekko",
@@ -194,7 +202,11 @@ if args.map:
     # config.ldflags.append("-listclosure") # For Wii linkers
 
 # Use for any additional files that should cause a re-configure when modified
-config.reconfig_deps = []
+config.reconfig_deps = [
+    source_config_path,
+    source_splits_path,
+    Path("tools") / "normalize_splits.py",
+]
 
 # Optional numeric ID for decomp.me preset
 # Can be overridden in libraries or objects
