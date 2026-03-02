@@ -696,3 +696,13 @@ DOCUME_1_bill_LOCALS_1_Temp_libgcc216200263302.s_1:
 DOCUME_1_bill_LOCALS_1_Temp_libgcc2162042170782.s_1:
 	.text       start:0x800DB8D4 end:0x800DBE64
 	.data5      start:0x803D51D8 end:0x803D52D8
+
+libgcc2.s:
+	.text       start:0x800DBE64 end:0x800DBE6C
+
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216191268532.s:
+	.text       start:0x800DBE6C end:0x800DBEAC
+
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216191268532.s_1:
+	.text       start:0x800DBEAC end:0x800DC3F0
+	.data5      start:0x803D52D8 end:0x803D53D8

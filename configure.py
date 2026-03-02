@@ -17,7 +17,11 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-from tools.normalize_splits import write_generated_config, write_normalized_splits
+from tools.normalize_splits import (
+    sync_generated_splits_back,
+    write_generated_config,
+    write_normalized_splits,
+)
 from tools.project import (
     Object,
     ProgressCategory,
@@ -141,6 +145,16 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+
+def _needs_regen(output_path: Path, *input_paths: Path) -> bool:
+    if not output_path.exists():
+        return True
+    output_mtime = output_path.stat().st_mtime_ns
+    for input_path in input_paths:
+        if input_path.exists() and input_path.stat().st_mtime_ns > output_mtime:
+            return True
+    return False
+
 config = ProjectConfig()
 config.version = str(args.version)
 version_num = VERSIONS.index(config.version)
@@ -175,8 +189,14 @@ source_config_path = Path("config") / config.version / "config.yml"
 source_splits_path = Path("config") / config.version / "splits.txt"
 generated_config_path = Path("config") / config.version / "config.generated.yml"
 generated_splits_path = Path("config") / config.version / "splits.generated.txt"
-write_normalized_splits(source_splits_path, generated_splits_path)
-write_generated_config(source_config_path, generated_config_path, generated_splits_path)
+normalize_tool_path = Path("tools") / "normalize_splits.py"
+if generated_splits_path.exists() and source_splits_path.exists():
+    if generated_splits_path.stat().st_mtime_ns > source_splits_path.stat().st_mtime_ns:
+        sync_generated_splits_back(source_splits_path, generated_splits_path)
+if _needs_regen(generated_splits_path, source_splits_path, normalize_tool_path):
+    write_normalized_splits(source_splits_path, generated_splits_path)
+if _needs_regen(generated_config_path, source_config_path, generated_splits_path, normalize_tool_path):
+    write_generated_config(source_config_path, generated_config_path, generated_splits_path)
 
 config.config_path = generated_config_path
 config.check_sha_path = Path("config") / config.version / "build.sha1"
@@ -205,7 +225,7 @@ if args.map:
 config.reconfig_deps = [
     source_config_path,
     source_splits_path,
-    Path("tools") / "normalize_splits.py",
+    normalize_tool_path,
 ]
 
 # Optional numeric ID for decomp.me preset

@@ -8,6 +8,9 @@ from pathlib import Path
 
 
 _ALT_SUFFIX_RE = re.compile(r"^(?P<stem>.+)\.(?P<ext>[A-Za-z0-9]+)_(?P<index>[0-9]+)$")
+_NORMALIZED_SUFFIX_RE = re.compile(
+    r"^(?P<stem>.+)_(?P<index>[0-9]+)\.(?P<ext>[A-Za-z0-9]+)$"
+)
 
 
 def normalize_unit_name(name: str) -> str:
@@ -22,6 +25,17 @@ def _split_header(line: str) -> tuple[str, str] | None:
         return None
     name, rest = line.split(":", 1)
     return name, rest
+
+
+def denormalize_unit_name(name: str, inverse_map: dict[str, str]) -> str:
+    mapped = inverse_map.get(name)
+    if mapped is not None:
+        return mapped
+
+    match = _NORMALIZED_SUFFIX_RE.match(name)
+    if match is None:
+        return name
+    return f"{match.group('stem')}.{match.group('ext')}_{match.group('index')}"
 
 
 def normalize_splits_text(text: str) -> str:
@@ -95,13 +109,48 @@ def write_generated_config(
     _write_if_different(config_out_path, out_text)
 
 
+def sync_generated_splits_back(source_splits_path: Path, generated_splits_path: Path) -> None:
+    if not source_splits_path.exists() or not generated_splits_path.exists():
+        return
+
+    source_text = source_splits_path.read_text(encoding="utf-8")
+    generated_text = generated_splits_path.read_text(encoding="utf-8")
+
+    inverse_map: dict[str, str] = {}
+    for line in source_text.splitlines():
+        header = _split_header(line)
+        if header is None:
+            continue
+        raw_name, _ = header
+        inverse_map[normalize_unit_name(raw_name)] = raw_name
+
+    out_lines: list[str] = []
+    for line in generated_text.splitlines():
+        header = _split_header(line)
+        if header is None:
+            out_lines.append(line)
+            continue
+        name, rest = header
+        out_lines.append(f"{denormalize_unit_name(name, inverse_map)}:{rest}")
+
+    out_text = "\n".join(out_lines)
+    if generated_text.endswith("\n"):
+        out_text += "\n"
+    _write_if_different(source_splits_path, out_text)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate tool-safe dtk split/config files.")
     parser.add_argument("--splits-in", type=Path, required=True)
     parser.add_argument("--splits-out", type=Path, required=True)
     parser.add_argument("--config-in", type=Path, required=True)
     parser.add_argument("--config-out", type=Path, required=True)
+    parser.add_argument("--sync-back", action="store_true")
     args = parser.parse_args()
+
+    if args.sync_back:
+        sync_generated_splits_back(args.splits_in, args.splits_out)
+        return 0
 
     write_normalized_splits(args.splits_in, args.splits_out)
     write_generated_config(args.config_in, args.config_out, args.splits_out)
