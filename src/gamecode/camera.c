@@ -69,10 +69,9 @@ extern f32 CAMSTOPFAR;
 extern f32 SIDECAMDISTANCE;
 
 void RailInfo(struct RPos_s* RPos, struct nuvec_s* pos, u16* yrot, u16* cam_yrot, u8* mode);
+s32 RotDiff(u16 a0, u16 a1);
 
-/*
-	MoveGameCamera	    77.48%*
-*/
+
 
 //MATCH NGC
 void ResetGameCameras(struct cammtx_s *Gamecam,s32 n) {
