@@ -11,9 +11,16 @@ _ALT_SUFFIX_RE = re.compile(r"^(?P<stem>.+)\.(?P<ext>[A-Za-z0-9]+)_(?P<index>[0-
 _NORMALIZED_SUFFIX_RE = re.compile(
     r"^(?P<stem>.+)_(?P<index>[0-9]+)\.(?P<ext>[A-Za-z0-9]+)$"
 )
+_SPECIAL_NAME_MAP = {
+    "GBA.c": "GBA_1.c",
+}
+_SPECIAL_NAME_MAP_INV = {value: key for key, value in _SPECIAL_NAME_MAP.items()}
 
 
 def normalize_unit_name(name: str) -> str:
+    special = _SPECIAL_NAME_MAP.get(name)
+    if special is not None:
+        return special
     match = _ALT_SUFFIX_RE.match(name)
     if match is None:
         return name
@@ -28,6 +35,9 @@ def _split_header(line: str) -> tuple[str, str] | None:
 
 
 def denormalize_unit_name(name: str, inverse_map: dict[str, str]) -> str:
+    special = _SPECIAL_NAME_MAP_INV.get(name)
+    if special is not None:
+        return special
     mapped = inverse_map.get(name)
     if mapped is not None:
         return mapped

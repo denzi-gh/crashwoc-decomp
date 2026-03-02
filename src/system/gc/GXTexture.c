@@ -1,5 +1,7 @@
 #include "system/gc/GXTexture.h"
 
+extern volatile PPCWGPipe GXFIFO;
+#define GXWGFifo GXFIFO
 
 void GXInvalidateTexAll(GXContext* arg0, s32 arg1, u8* arg2)
 {
