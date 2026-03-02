@@ -63,8 +63,9 @@ jobs:
           HOME: /tmp/crashwoc-home
           WINEPREFIX: /tmp/crashwoc-wine
           WINEDEBUG: -all
+          XDG_RUNTIME_DIR: /tmp/crashwoc-xdg
         run: |
-          mkdir -p "$HOME" "$WINEPREFIX"
+          mkdir -p "$HOME" "$WINEPREFIX" "$XDG_RUNTIME_DIR"
           python configure.py --map --version ${{ matrix.version }} \
               --binutils /binutils --compilers /compilers --wrapper wine
           ninja all_source progress build/${{ matrix.version }}/report.json
@@ -74,6 +75,7 @@ jobs:
         with:
           name: ${{ matrix.version }}_maps
           path: build/${{ matrix.version }}/**/*.MAP
+          if-no-files-found: ignore
 
       - name: Upload report
         uses: actions/upload-artifact@v4
