@@ -44,6 +44,7 @@
 // Prototypes
 /**********************************************************/
 struct numtl_s* NuMtlCreate(s32 mode);
+void NuMtlUpdate(struct numtl_s* mtl);
 static void NuMtlInsert(struct nusysmtl_s* sm);
 void NuMtlUVAnimation(struct nugobj_s* gobj);
 /**********************************************************/
@@ -92,4 +93,4 @@ struct nuwateritem_s wateritem[512];
 extern f32 sinetime_246;
 
 
-#endif // !NUMTL_H
+#endif
