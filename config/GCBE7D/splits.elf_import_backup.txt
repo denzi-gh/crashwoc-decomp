@@ -1068,125 +1068,127 @@ SISamplingRate.c: (IMPLEMENTIERT)
 	.data       start:0x8016AB88 end:0x8016AC20
 	.sbss       start:0x803D42E8 end:0x803D42F8
 
-OSFont_data.c:
+OSFont_data.c: (TODO: DONT WORK AT MAKES PROBLEMS)
 	.data       start:0x8016B008 end:0x8016BB20
 	.bss        start:0x8016BB20 end:0x8016BB60
 	.sdata      start:0x803D3BD0 end:0x803D3BE0
 	.sbss       start:0x803D42F8 end:0x803D4BD4
 
-gs.c:
+gs.c: (IMPLEMENTIERT)
 	.bss        start:0x802149E4 end:0x802149FC
 	.sdata      start:0x803D32F4 end:0x803D33A0
 
-AXAlloc.c:
+AXAlloc.c: (IMPLEMENTIERT)
 	.bss        start:0x8021ADA0 end:0x8021AEA0
 	.sbss       start:0x803D4180 end:0x803D4188
 
-AXAux.c:
+AXAux.c: (IMPLEMENTIERT)
 	.bss        start:0x8021AEA0 end:0x8021DBA0
 	.sbss       start:0x803D4188 end:0x803D41B8
 
-AXCL.c:
+AXCL.c: (IMPLEMENTIERT)
 	.bss        start:0x8021DBA0 end:0x8021E1A0
 	.sbss       start:0x803D41B8 end:0x803D41C8
 
-AXSPB.c:
+AXSPB.c: (IMPLEMENTIERT)
 	.bss        start:0x802229C0 end:0x80222A00
 	.sbss       start:0x803D41E8 end:0x803D4210
 
-gcStats.c:
+gcStats.c: (IMPLEMENTIERT)
+	.bss        start:0x8021E1A0 end:0x802
 	.sdata      start:0x803D32D4 end:0x803D32F4
 	.sbss       start:0x803D3DE0 end:0x803D3E18
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc216171278982.s:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216171278982.s: (IMPLEMENTIERT)
 	.sdata      start:0x803D38A0 end:0x803D38B8
 	.sbss       start:0x803D3ED0 end:0x803D3ED8
 
-OSArena.c:
+OSArena.c: (IMPLEMENTIERT)
 	.sdata      start:0x803D38B8 end:0x803D38C0
 	.sbss       start:0x803D3F20 end:0x803D3F28
 
-mtx.c:
+mtx.c: (IMPLEMENTIERT)
 	.sdata      start:0x803D38D8 end:0x803D38E0
 	.data5      start:0x803D55F8 end:0x803D5638
 
-OSResetSW.c:
+OSResetSW.c: (IMPLEMENTIERT)
 	.sbss       start:0x803D3F48 end:0x803D3F68
 
-arq.c:
+arq.c: (IMPLEMENTIERT)
 	.sbss       start:0x803D4150 end:0x803D4180
 
-AXProf.c:
+AXProf.c: (IMPLEMENTIERT)
 	.sbss       start:0x803D4220 end:0x803D4230
 
-EXIUart.c:
+EXIUart.c: (IMPLEMENTIERT)
 	.sbss       start:0x803D42C8 end:0x803D42D8
 
-vec.c:
+vec.c: (IMPLEMENTIERT)
 	.data5      start:0x803D5670 end:0x803D56B8
 
-GXFrameBuf.c:
+GXFrameBuf.c: (IMPLEMENTIERT)
 	.data5      start:0x803D56E0 end:0x803D5710
 
-GXBump.c:
+GXBump.c: (IMPLEMENTIERT)
 	.data5      start:0x803D5798 end:0x803D57D0
 
-source_crashwoc_code_system_gc_floatlib.s:
+source_crashwoc_code_system_gc_floatlib.s: (IMPLEMENTIERT)
 
-fs.c:
 
-pad.c:
+fs.c: (IMPLEMENTIERT)
 
-syfont.c:
+pad.c: (IMPLEMENTIERT)
+ 
+syfont.c: (IMPLEMENTIERT)
 
-gsbuffer.c:
+gsbuffer.c:(IMPLEMENTIERT)
 
-ctype_.c:
+ctype_.c:(IMPLEMENTIERT)
 
-printf.c:
+printf.c:(IMPLEMENTIERT)
 
-sprintf.c:
+sprintf.c:(IMPLEMENTIERT)
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc2162042170782.s:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc2162042170782.s:(IMPLEMENTIERT)
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc2161772293952.s:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc2161772293952.s:(IMPLEMENTIERT)
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc216181273752.s:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc216181273752.s:(IMPLEMENTIERT)
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc2161872288722.s:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc2161872288722.s:(IMPLEMENTIERT)
 
-DOCUME_1_bill_LOCALS_1_Temp_libgcc2161872288722.s_1:
+DOCUME_1_bill_LOCALS_1_Temp_libgcc2161872288722.s_1:(IMPLEMENTIERT)
 
-PPCArch.c:
+PPCArch.c:(IMPLEMENTIERT)
 
-__ppc_eabi_init.cpp:
+__ppc_eabi_init.cpp:(IMPLEMENTIERT)
 
-OSMutex.c:
+OSMutex.c:(IMPLEMENTIERT)
 
-AX.c:
+AX.c:(IMPLEMENTIERT)
 
-DSPCode.c:
+DSPCode.c:(IMPLEMENTIERT)
 
-dsp_debug.c:
+dsp_debug.c:(IMPLEMENTIERT)
 
-CARDOpen.c:
+CARDOpen.c:(IMPLEMENTIERT)
 
-CARDNet.c:
+CARDNet.c:(IMPLEMENTIERT)
 
-CARDStatEx.c:
+CARDStatEx.c:(IMPLEMENTIERT)
 
-GXGeometry.c:
+GXGeometry.c:(IMPLEMENTIERT)
 
-GXStubs.c:
+GXStubs.c:(IMPLEMENTIERT)
 
-fileCache.c:
+fileCache.c:(IMPLEMENTIERT)
 
-List.c:
+List.c:(IMPLEMENTIERT)
 
-string.c:
+string.c:(IMPLEMENTIERT)
 
-AmcExi2Stubs.c:
+AmcExi2Stubs.c:(IMPLEMENTIERT)
 
-GBAGetProcessStatus.c:
+GBAGetProcessStatus.c:(IMPLEMENTIERT)
 
-DOCUME_1_bill_LOCALS_1_Temp_sf_sin56952317142.s:
+DOCUME_1_bill_LOCALS_1_Temp_sf_sin56952317142.s:(IMPLEMENTIERT)

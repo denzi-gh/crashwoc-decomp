@@ -1,5 +1,8 @@
 #include "system/gc/GXBump.h"
 
+extern volatile PPCWGPipe GXFIFO;
+#define GXWGFifo GXFIFO
+
 void __GXFlushTextureState()
 {
     GXWGFifo.u8 = GX_LOAD_BP_REG; //0x61

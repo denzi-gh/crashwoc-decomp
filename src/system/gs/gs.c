@@ -1,6 +1,27 @@
 #include "gs.h"
 #include "types.h"
 
+#ifndef GX_AOP_OR
+#define GX_AOP_OR 1
+#endif
+#ifndef GX_CLIP_ENABLE
+#define GX_CLIP_ENABLE 0
+#endif
+#ifndef GX_PASSCLR
+#define GX_PASSCLR 4
+#endif
+#ifndef GX_QUADS
+#define GX_QUADS 128
+#endif
+#ifndef GX_FOG_NONE
+#define GX_FOG_NONE 0
+#endif
+#ifndef GX_FOG_LIN
+#define GX_FOG_LIN 2
+#endif
+#ifndef GX_PERSPECTIVE
+#define GX_PERSPECTIVE 0
+#endif
 
 s32 GS_ForceNoAlphaCompareFlag;
 s32 GS_WorldMatIsIdentity;
@@ -25,6 +46,8 @@ struct _GS_VECTOR3* GS_BlendSource;
 float GS_MatProjection[4][4];
 float GS_MatWorld[4][4];
 float GS_MatView[4][4];
+float avfps;
+float cufps;
 struct _GSMATRIX GS_ViewIdentity;
 static struct _GS_VIEWPORT GS_ViewPort;
 

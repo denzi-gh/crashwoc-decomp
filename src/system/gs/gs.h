@@ -1,3 +1,6 @@
+#ifndef SYSTEM_GS_GS_H
+#define SYSTEM_GS_GS_H
+
 #pragma once
 #include "stdio.h"
 #include "nuraster/nurastertypes.h"
@@ -36,6 +39,8 @@
 
 void GS_SetRenderState(int state, int data);
 void GS_SetBlendSrc(int enable,int src,int dest);
+void GS_SetZCompare(int enable,int upd,enum _GXCompare mode);
+void GS_LoadWorldMatrixIdentity(void);
 
 char DebugText[256];
 
@@ -321,3 +326,5 @@ u32 GS_FrameBufferCopySize;
 static struct _GS_TEXTURE* GS_TexList;
 static GXColor GS_BgColour;
 struct _GXColor GS_BgColourBlack;
+
+#endif
