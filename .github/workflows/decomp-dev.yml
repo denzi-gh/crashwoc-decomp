@@ -36,10 +36,17 @@ jobs:
       - name: Restore timestamps
         run: |
           uv run https://raw.githubusercontent.com/MestreLion/git-tools/refs/tags/v2022.12/git-restore-mtime \
+              --i-still-use-this \
               --merge --commit-time
 
       - name: Prepare
         run: cp -a /orig .
+
+      - name: Install Wine
+        run: |
+          ALPINE_VER="$(cut -d. -f1,2 /etc/alpine-release)"
+          echo "https://dl-cdn.alpinelinux.org/alpine/v${ALPINE_VER}/community" >> /etc/apk/repositories
+          apk add --no-cache wine
 
       - name: Cache build
         uses: actions/cache@v4
@@ -54,7 +61,7 @@ jobs:
       - name: Build
         run: |
           python configure.py --map --version ${{ matrix.version }} \
-              --binutils /binutils --compilers /compilers
+              --binutils /binutils --compilers /compilers --wrapper wine
           ninja all_source progress build/${{ matrix.version }}/report.json
 
       - name: Upload map

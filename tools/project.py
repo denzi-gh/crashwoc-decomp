@@ -772,18 +772,14 @@ def generate_build_ninja(
     if linker_family == "mw":
         linker_cmd = f"{wrapper_cmd}{linker} $ldflags -o $out @$out.rsp"
     else:
-        # ProDG tools expect SN_NGC_PATH to point at the compiler directory.
-        if is_windows():
-            linker_cmd = (
-                f'{CHAIN}set "SN_NGC_PATH=$sn_ngc_path" && '
-                f"{wrapper_cmd}{linker} $ldflags -o $out $in"
-            )
-        else:
-            linker_cmd = (
-                f'SN_NGC_PATH="$sn_ngc_path" '
-                f"{wrapper_cmd}{linker} $ldflags -o $out $in"
-            )
+        prodg_link = config.tools_dir / "run_prodg_link.py"
+        linker_cmd = (
+            f'$python {prodg_link} "$linker_path" "$wrapper_path" "$sn_ngc_path" "$out" '
+            f'"$out.rsp" "$ldflags"'
+        )
     linker_implicit: List[Optional[Path]] = [compilers_implicit or linker, wrapper_implicit]
+    if linker_family == "prodg":
+        linker_implicit.append(prodg_link)
 
     # ProDG GCC
     prodg_cc = compiler_path / "ngccc.exe"
@@ -827,6 +823,14 @@ def generate_build_ninja(
 
     n.comment("Link ELF file")
     if linker_family == "mw":
+        n.rule(
+            name="link",
+            command=linker_cmd,
+            description="LINK $out",
+            rspfile="$out.rsp",
+            rspfile_content="$in_newline",
+        )
+    elif linker_family == "prodg":
         n.rule(
             name="link",
             command=linker_cmd,
@@ -1060,6 +1064,8 @@ def generate_build_ninja(
                     link_variables = {
                         "ldflags": elf_ldflags,
                         "sn_ngc_path": compilers / config.linker_version,
+                        "linker_path": serialize_path(linker),
+                        "wrapper_path": serialize_path(wrapper) if wrapper else "",
                     }
                 else:
                     elf_ldflags = f"$ldflags -lcf {serialize_path(self.ldscript)}"
