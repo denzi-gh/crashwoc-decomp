@@ -15,6 +15,32 @@ s32 cut_on;
 u16 best_railangle;
 static struct numtl_s* ctmtl;
 
+struct camera_cursor_s {
+    struct remember remember[48];
+    u32 menu_frame;
+    u32 item_frame;
+    u32 unk68;
+    u32 unk6c;
+    char x;
+    char y;
+    char x_min;
+    char y_min;
+    char x_max;
+    char y_max;
+    char menu;
+    char new_menu;
+    char new_level;
+    u8 wait;
+    u8 wait_frames;
+    char wait_hack;
+    u8 button_lock;
+    char pad1;
+    char pad2;
+    char pad3;
+};
+
+#define CAMERA_CURSOR (*(struct camera_cursor_s*)&Cursor)
+
 extern char* tInPlatRail;
 extern char* tInCamRail;
 extern char* tLeftRail;
@@ -70,6 +96,11 @@ extern f32 SIDECAMDISTANCE;
 
 void RailInfo(struct RPos_s* RPos, struct nuvec_s* pos, u16* yrot, u16* cam_yrot, u8* mode);
 s32 RotDiff(u16 a0, u16 a1);
+struct nugspline_s* NuSplineFind(struct nugscn_s* scene, char* name);
+float SplineDistance(struct nugspline_s* spl);
+float RatioBetweenEdges(struct nuvec_s* pos, struct nuvec_s* pL0, struct nuvec_s* pL1, struct nuvec_s* pR0, struct nuvec_s* pR1);
+float FindNearestCreature(struct nuvec_s* pos, s32 character, struct nuvec_s* dst);
+double sqrt(double);
 
 
 
@@ -476,7 +507,7 @@ Loop:
     if (d > f) {
         d = (d - f);
         *dst = *p1;
-        if (direction != 0) {
+        if (direction == 0) {
             if (rail->circuit != 0) {
                 RPos.iALONG++;
                 if (RPos.iALONG == rail->edges) {
@@ -590,7 +621,8 @@ void RailInfo(struct RPos_s* RPos, struct nuvec_s* pos, u16* yrot, u16* cam_yrot
                     } else if (-0.866f > dp) {
                         *mode = 2;
                     } else if (NuFabs(dp) < 0.5f) {
-                        if (RotDiff(NuAtan2D(dx, dz), *yrot) > 0) {
+                        a = (u16)NuAtan2D(dx, dz);
+                        if (RotDiff(a, *yrot) > 0) {
                             *mode = 4;
                         } else {
                             *mode = 8;
@@ -728,7 +760,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
   s32 unaff_r22;
   s32 iVar30;
   s32 uVar31;
-  s32 vehicle;
+  register s32 vehicle;
   u16 a;
   s32 iVar34;
   struct RPos_s RPos;
@@ -811,14 +843,14 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
         GameCamera->mode = 0xe;
   }
   else if (Level == 0x25) {
-    if (((Cursor.menu != 0x15) &&
-        (((Cursor.wait == 0 || (Cursor.new_menu != 0x15)) && (Cursor.menu != 0x1a)) )
-        && (((Cursor.menu != 0x2f && (Cursor.menu != 0x21)) && (Cursor.menu != 0x20))) &&
-          (Cursor.menu != 0x30) && (Cursor.menu != 0x31) && ((Cursor.menu != 0x16 &&
-            (((Cursor.menu != 0x19 && (Cursor.menu != 0x1d)) && (Cursor.menu != 0x18)))) )
-           && (Cursor.menu != 0x1c) && (Cursor.menu != 0x1b) &&
-        ((Cursor.menu != 0x17 && (((Cursor.menu != 0x1e && (Cursor.menu != 0x20)) &&
-          (Cursor.menu != 0x1f && (Cursor.menu != 0x25) && (Cursor.menu != 0x26))))))) ||
+    if (((CAMERA_CURSOR.menu != 0x15) &&
+        (((CAMERA_CURSOR.wait == 0 || (CAMERA_CURSOR.new_menu != 0x15)) && (CAMERA_CURSOR.menu != 0x1a)) )
+        && (((CAMERA_CURSOR.menu != 0x2f && (CAMERA_CURSOR.menu != 0x21)) && (CAMERA_CURSOR.menu != 0x20))) &&
+          (CAMERA_CURSOR.menu != 0x30) && (CAMERA_CURSOR.menu != 0x31) && ((CAMERA_CURSOR.menu != 0x16 &&
+            (((CAMERA_CURSOR.menu != 0x19 && (CAMERA_CURSOR.menu != 0x1d)) && (CAMERA_CURSOR.menu != 0x18)))) )
+           && (CAMERA_CURSOR.menu != 0x1c) && (CAMERA_CURSOR.menu != 0x1b) &&
+        ((CAMERA_CURSOR.menu != 0x17 && (((CAMERA_CURSOR.menu != 0x1e && (CAMERA_CURSOR.menu != 0x20)) &&
+          (CAMERA_CURSOR.menu != 0x1f && (CAMERA_CURSOR.menu != 0x25) && (CAMERA_CURSOR.menu != 0x26))))))) ||
        (SplTab[65].spl == NULL || (SplTab[66].spl != NULL))) {
       GameCamera->mode = 0x1f;
     } else if (GameMode == 1) {
@@ -835,7 +867,8 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
        || (GemPath == 3)) {
       GameCamera->mode = 6;
     }
-    else if ((!(vtog_duration < vtog_time) || (vtog_blend == 0)) || ((pVTog == NULL || (pVTog->pCAM != NULL)))) {
+    else if (((vtog_time < vtog_duration) && (vtog_blend != 0)) &&
+             ((pVTog != NULL && (pVTog->pCAM != NULL)))) {
       GameCamera->mode = 0x1c;
     }
     else if ((Level == 6) || (Level == 0x22)) {
@@ -843,9 +876,9 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
     } else if ((LBIT & 0x00100210801) != 0) {
         GameCamera->mode = 0x10;
     }
-    else if (((obj->flags & 1) == 0) || (((obj->dead == 4 || obj->dead == 5) || ((char)obj->dead == 8)))) {
+    else if (((obj->flags & 1) != 0) && (((obj->dead == 2 || obj->dead == 3) || ((char)obj->dead == 8)))) {
         GameCamera->mode = 0x1e;
-    } else if ((nRAILS == 0) || (best_cRPos != NULL)) {
+    } else if ((nRAILS != 0) && (best_cRPos != NULL)) {
         GameCamera->mode = 5;
     } else if (SplTab[1].spl == NULL) {
         GameCamera->mode = 4;
@@ -857,10 +890,10 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
   }
   if ((SplTab[8].spl != NULL) && (InSplineArea(&obj->pos,SplTab[8].spl) != 0)) {
     GameCamera->mode = 0x16;
-  } else if ((SplTab[9].spl != NULL) && (InSplineArea(&obj->pos,SplTab[9].spl) == 0)) {
+  } else if ((SplTab[9].spl != NULL) && (InSplineArea(&obj->pos,SplTab[9].spl) != 0)) {
     GameCamera->mode = 0x17;
     unaff_r14 = 0;
-  } else if ((SplTab[10].spl != NULL) && (InSplineArea(&obj->pos,SplTab[10].spl) == 0)) {
+  } else if ((SplTab[10].spl != NULL) && (InSplineArea(&obj->pos,SplTab[10].spl) != 0)) {
     GameCamera->mode = 0x17;
     unaff_r14 = 1;
   } else if ((SplTab[11].spl != NULL) && (InSplineArea(&obj->pos,SplTab[11].spl) != 0)) {
@@ -1254,19 +1287,22 @@ switch(GameCamera->mode) {
               }
             }
     break;
-    case 0x1f:
-        //uVar31 = (s32)Cursor.wait;
-        if (Cursor.wait != 0) {
-          if (Cursor.new_menu == 0x15) {
-            dVar39 = (s32)(Cursor.wait_frames - Cursor.wait);
+    case 0x1f: {
+        struct camera_cursor_s *cursor;
+
+        cursor = (struct camera_cursor_s*)&Cursor;
+        //uVar31 = (s32)cursor->wait;
+        if (cursor->wait != 0) {
+          if (cursor->new_menu == 0x15) {
+            dVar39 = (s32)(cursor->wait_frames - cursor->wait);
           }
           else {
-            dVar39 = Cursor.wait;
+            dVar39 = cursor->wait;
           }
-          dVar39 = (dVar39 / Cursor.wait_frames);
+          dVar39 = (dVar39 / cursor->wait_frames);
         }
         else {
-          if (Cursor.menu != -1) {
+          if (cursor->menu != -1) {
             dVar39 = 1.0f;
           }
           else {
@@ -1283,6 +1319,7 @@ switch(GameCamera->mode) {
         vec.z += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xd5) * 0x10000) * 0x99d722db >> 0x25
                                  ) & 0xFFFF] * 0.1f;
         PointAlongSpline(SplTab[66].spl,dVar39,&local_150,NULL,NULL);
+    }
     break;
     case 6:
           local_140.z = 0.1f;
