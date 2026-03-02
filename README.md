@@ -1,9 +1,12 @@
 Crash Bandicoot: The Wrath of Cortex (GameCube)
-[![Build Status]][actions] [![Discord Badge]][discord]
+[![Build Status]][actions] [![Code Progress]][progress] [![Data Progress]][progress] [![Discord Badge]][discord]
 =============
 
 [Build Status]: https://github.com/denzi-gh/crashwoc-decomp/actions/workflows/decomp-dev.yml/badge.svg
 [actions]: https://github.com/denzi-gh/crashwoc-decomp/actions/workflows/decomp-dev.yml
+[Code Progress]: https://decomp.dev/denzi-gh/crashwoc-decomp.svg?mode=shield&measure=code&label=Code
+[Data Progress]: https://decomp.dev/denzi-gh/crashwoc-decomp.svg?mode=shield&measure=data&label=Data
+[progress]: https://decomp.dev/denzi-gh/crashwoc-decomp
 [Discord Badge]: https://img.shields.io/discord/727908905392275526?color=%237289DA&logo=discord&logoColor=%23FFFFFF
 [discord]: https://discord.gg/kmCPpW4KvJ
 
@@ -90,7 +93,19 @@ Once the initial build succeeds, `objdiff.json` will be generated in the project
 
 Download the latest release from [encounter/objdiff](https://github.com/encounter/objdiff). Set the project directory to this repository and the configuration should load automatically.
 
-Crash WOC Modding Discord:
+Pull Requests
+=============
+
+Pull requests are welcome.
+
+For build or decomp changes, keep them focused and include:
+
+- what changed
+- what was verified locally
+- whether matching, build behavior, or tooling behavior changed
+
+Community
 =========
 
 Discord: https://discord.gg/kmCPpW4KvJ
+ 
