@@ -3,6 +3,7 @@
 #include <string.h>
 
 typedef struct anim_s AnimPacket;
+int strncasecmp(const char* s1, const char* s2, size_t n);
 
 struct chaseevent_s {
     struct nugspline_s* spl;
@@ -58,7 +59,13 @@ s32 LIGHTCHASECHARACTERS;
 
 extern struct RPos_s* best_cRPos;
 extern struct objtab_s ObjTab[201];
+void EvalModelAnim(struct CharacterModel *model, struct anim_s *anim, struct numtx_s *m, struct numtx_s *tmtx, float ***dwa, struct numtx_s *mLOCATOR);
+s32 FurtherBEHIND(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
 void InitChase(struct chase_s* chase);
+s32 LineCrossed(float xold, float zold, float xnew, float znew, float x0, float z0, float x1, float z1);
+s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hgobj, struct numtx_s *wm, int nlayers, short *layers, struct numtx_s *mtx_array, float **dwa);
+s32 NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm);
+s32 NuSpecialFind(struct nugscn_s *scene, struct nuhspecial_s *special, char *name);
 void UpdateChase(struct chase_s* chase, struct obj_s* obj);
 void SetLights(struct nucolour3_s *vCOL0,struct nuvec_s *vDIR0,struct nucolour3_s *vCOL1,struct nuvec_s *vDIR1, struct nucolour3_s *vCOL2,struct nuvec_s *vDIR2,struct nuvec_s *vAMB);
 void SetLevelLights(void);
