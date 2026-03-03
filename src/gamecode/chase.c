@@ -60,6 +60,7 @@ s32 LIGHTCHASECHARACTERS;
 extern struct RPos_s* best_cRPos;
 extern struct objtab_s ObjTab[201];
 void EvalModelAnim(struct CharacterModel *model, struct anim_s *anim, struct numtx_s *m, struct numtx_s *tmtx, float ***dwa, struct numtx_s *mLOCATOR);
+s32 FurtherALONG(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
 s32 FurtherBEHIND(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
 void InitChase(struct chase_s* chase);
 s32 LineCrossed(float xold, float zold, float xnew, float znew, float x0, float z0, float x1, float z1);
