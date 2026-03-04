@@ -781,8 +781,6 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
   float local_d4;
   float local_d0;
   struct nuvec_s local_c8;
-  float local_b8;
-  float local_b0;
   float dVar40;
   struct anim_s *anim;
   struct creature_s *c;
@@ -1065,7 +1063,6 @@ switch(GameCamera->mode) {
             local_f0.x = obj->pos.x;
             local_f0.y = obj->top * obj->SCALE + obj->pos.y + 0.5f;
             local_f0.z = obj->pos.z;
-            dVar40 = 2.0f;
             local_108.x = local_f0.x + (local_d8 * 5.0f) / fVar43;
             local_108.y = local_f0.y + (local_d4 * 5.0f) / fVar43;
             local_108.z = local_f0.z + (local_d0 * 5.0f) / fVar43;
@@ -1073,13 +1070,14 @@ switch(GameCamera->mode) {
             local_d0 = local_108.z - local_c8.z;
             local_d8 = local_108.x - local_c8.x;
             dVar39 = sqrt(local_d8 * local_d8 + local_d0 * local_d0);
-            if (dVar39 > dVar40) {
-              local_b0 = ((local_d0 * (dVar39 - dVar40)) / dVar39);
-              local_b8 = ((local_d8 * (dVar39 - dVar40)) / dVar39);
-              local_f0.x = local_f0.x - local_b8;
-              local_f0.z = local_f0.z - local_b0;
-              local_108.x = local_108.x - local_b8;
-              local_108.z = local_108.z - local_b0;
+            if (dVar39 > 2.0f) {
+              dVar39 = (dVar39 - 2.0f) / dVar39;
+              local_d0 *= dVar39;
+              local_d8 *= dVar39;
+              local_f0.x -= local_d8;
+              local_f0.z -= local_d0;
+              local_108.x -= local_d8;
+              local_108.z -= local_d0;
             }
           }
           if (Blend_183 != 0.0f) {
@@ -1189,7 +1187,7 @@ switch(GameCamera->mode) {
                 iVar30 = 0;
                 iVar13 = 0;
                 for(iVar34 = 1; iVar34 < cRPosCOUNT; iVar34++) {
-                    iVar30 += RotDiff(cRPos[iVar34].cam_angle,cRPos[iVar34].cam_angle);
+                    iVar30 += RotDiff((u16)unaff_r22,cRPos[iVar34].cam_angle);
                     iVar13 += RotDiff(best_railangle,cRPos[iVar34].angle);
                 }
                 best_railangle = best_railangle + (short)(iVar13 / (cRPosCOUNT - 1));
