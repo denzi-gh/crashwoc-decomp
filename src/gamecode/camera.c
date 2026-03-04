@@ -759,6 +759,9 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
   s32 uVar28;
   s32 unaff_r22;
   s32 iVar30;
+  s32 xrot_override;
+  s32 yrot_override;
+  s32 zrot_override;
   s32 uVar31;
   register s32 vehicle;
   u16 a;
@@ -940,6 +943,7 @@ LAB_8000b830:
   //fVar44 = obj->SCALE;
   uVar27 = -1;
   uVar28 = -1;
+  zrot_override = 0;
   local_150.x = obj->pos.x;
   local_150.y = obj->max.y * obj->SCALE * 0.5f + obj->pos.y;
   local_150.z = obj->pos.z;
@@ -1545,13 +1549,15 @@ switch(GameCamera->mode) {
         local_150.z = vec.z;
     break;
 }
+  xrot_override = uVar27;
+  yrot_override = uVar28;
   if ((PLAYERCOUNT != 0) && (obj->finished != 0)) {
     vec = GameCamera->pos;
   }
   //fVar43 = GameCamera->blend_duration;
   if (GameCamera->blend_time < GameCamera->blend_duration) {
     GameCamera->blend_time += 0.01666667f;    
-    if (GameCamera->blend_duration > GameCamera->blend_time) {
+    if (GameCamera->blend_time > GameCamera->blend_duration) {
         GameCamera->blend_time = GameCamera->blend_duration;
     }
   }
@@ -1598,9 +1604,9 @@ switch(GameCamera->mode) {
     }
     if (GameCamera->blend_time < GameCamera->blend_duration) {
       fVar3 = GameCamera->blend_time / GameCamera->blend_duration;
-      vec.x -= (GameCamera->oldpos.x) * fVar3 + GameCamera->oldpos.x;
-      vec.y -= (GameCamera->oldpos.y) * fVar3 + GameCamera->oldpos.y;
-      vec.z -= (GameCamera->oldpos.z) * fVar3 + GameCamera->oldpos.z;
+      vec.x = (vec.x - GameCamera->oldpos.x) * fVar3 + GameCamera->oldpos.x;
+      vec.y = (vec.y - GameCamera->oldpos.y) * fVar3 + GameCamera->oldpos.y;
+      vec.z = (vec.z - GameCamera->oldpos.z) * fVar3 + GameCamera->oldpos.z;
     }
     GameCamera->pos.x = (vec.x - GameCamera->pos.x) * GameCamera->seek.x + GameCamera->pos.x;
     GameCamera->pos.y = (vec.y - GameCamera->pos.y) * GameCamera->seek.y + GameCamera->pos.y;
@@ -1624,9 +1630,9 @@ switch(GameCamera->mode) {
   dVar40 = (local_150.x - GameCamera->pos.x);
   dVar42 = (local_150.y - GameCamera->pos.y);
   dVar39 = (local_150.z - GameCamera->pos.z);
-  uVar31 = uVar27;
+  uVar31 = xrot_override;
   //bVar37 = (uVar27 == -1) ? 0 : 1;
-  if (uVar27 == -1) {
+  if (xrot_override == -1) {
     uVar31 = -(NuAtan2D(dVar42,NuFsqrt((dVar40 * dVar40 + (dVar39 * dVar39)))));
     if (iVar30 != 0) {
       iVar13 = uVar31 * iVar30;
@@ -1644,8 +1650,8 @@ switch(GameCamera->mode) {
   if ((iVar30 != 0) && ((Level == 3 || ((Level == 0x1d && (GameTimer.ftime < 3.0f)))))) {
     iVar30 = 0;
   }
-  uVar14 = uVar28;
-  if (uVar28 == -1) {
+  uVar14 = yrot_override;
+  if (yrot_override == -1) {
     if ((GameCamera->mode == 0x1a) && (iVar30 != 0)) {
       iVar13 = RotDiff(0,(u16)NuAtan2D(dVar40,dVar39));
       iVar13 *= iVar30;
@@ -1702,20 +1708,20 @@ switch(GameCamera->mode) {
     GameCamera->zrot = iVar30;
   }
   else {
-    if (uVar27 != -1) {
-      GameCamera->xrot = uVar27;
+    if (xrot_override != -1) {
+      GameCamera->xrot = xrot_override;
     }
     else {
       GameCamera->xrot = SeekRot(GameCamera->xrot,(u16)uVar31,axSEEK);
     }
-    if (uVar28 != -1) {
-      GameCamera->yrot = uVar28;
+    if (yrot_override != -1) {
+      GameCamera->yrot = yrot_override;
     }
     else {
       GameCamera->yrot = SeekRot(GameCamera->yrot,(u16)uVar14,aySEEK);
     }
-    if (iVar30 != -1) {
-      GameCamera->zrot = 0;
+    if (zrot_override != -1) {
+      GameCamera->zrot = zrot_override;
     }
     else {
       GameCamera->zrot = SeekRot(GameCamera->zrot,(u16)iVar30,5);
