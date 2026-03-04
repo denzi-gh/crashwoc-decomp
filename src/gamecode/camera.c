@@ -741,9 +741,71 @@ s32 InSplineArea(struct nuvec_s *pos, struct nugspline_s *spl) {
 }
 
 //77.48% NGC
-void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
+void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
+{
+  unsigned int new_var61;
+
+  f32 new_var60;
+  float new_var59;
+  struct nuvec_s *new_var58;
+  struct nuvec_s *new_var56;
+  unsigned int new_var57;
+  struct nuvec_s *new_var55;
+  struct nuvec_s *new_var54;
+  void *new_var53;
+  int new_var52;
+  struct nupad_s *new_var51;
+  float new_var50;
+  unsigned char new_var49;
+  int new_var48;
+  int new_var47;
+  int new_var46;
+  unsigned long long new_var45;
+  struct nugspline_s *new_var44;
+  int new_var43;
+  f32 new_var42;
+  struct nuvec_s *new_var41;
+  f32 new_var40;
+  float *new_var39;
+  int new_var38;
+  struct nuvec_s *new_var37;
+  struct nuvec_s *new_var36;
+  struct nuvec_s *new_var35;
+  s32 new_var34;
+  struct nuvec_s *new_var33;
+  volatile int new_var32;
+  struct spltab_s *new_var31;
+  long new_var30;
+  struct CharacterModel *new_var29;
+  struct cursor_s *new_var26;
+  f32 new_var28;
+  struct nugspline_s *new_var27;
+  float new_var25;
+  struct spltab_s *new_var24;
+  f32 new_var23;
+  f32 *new_var22;
+  struct numtx_s *new_var21;
+  u16 new_var20;
+  int new_var19;
+  struct RPos_s *new_var18;
+  struct nuvec_s *new_var17;
+  float new_var16;
+  u16 new_var15;
+  float new_var14;
+  float new_var13;
+  struct nuvec_s *new_var12;
+  struct cammtx_s *new_var11;
+  void *new_var10;
+  struct nuvec_s *new_var9;
+  int new_var8;
+  f32 new_var7;
+  struct nupad_s *new_var6;
+  int new_var5;
+  struct nugspline_s *new_var4;
+  int new_var2;
+  float new_var3;
+  struct spltab_s *new_var;
   static float Blend_183;
-  float fVar3;
   float dVar39;
   s32 old_vertical;
   s32 iVar13;
@@ -757,1003 +819,1370 @@ void MoveGameCamera(struct cammtx_s *GameCamera,struct obj_s *obj) {
   s32 unaff_r14;
   s32 uVar27;
   s32 uVar28;
-  s32 unaff_r22;
+  volatile short unaff_r22;
   s32 iVar30;
+  s32 xrot_override;
+  s32 yrot_override;
+  float fVar3;
+  s32 zrot_override;
   s32 uVar31;
-  register s32 vehicle;
-  u16 a;
+  register char vehicle;
+  int a;
   s32 iVar34;
   struct RPos_s RPos;
   struct nuvec_s vec;
   struct nuvec_s local_150;
   struct nuvec_s local_140;
-  struct nuvec_s dst;
   float fVar43;
   float fVar44;
-  struct nuvec_s local_120;
+  struct nuvec_s local_fc;
   struct nuvec_s local_114;
   struct nuvec_s local_108;
-  struct nuvec_s local_fc;
   struct nuvec_s local_f0;
   struct nuvec_s local_e4;
   s32 oldmode;
+  struct nuvec_s dst;
   float local_d8;
   float local_d4;
-  float local_d0;
   struct nuvec_s local_c8;
-  float local_b8;
-  float local_b0;
+  float local_d0;
+  struct nuvec_s local_120;
   float dVar40;
   struct anim_s *anim;
   struct creature_s *c;
   float dVar41;
   float dVar42;
-  
-  pVIS = NULL;
+  new_var53 = (void *) 0;
   vehicle = -1;
   cut_on = set_cutscenecammtx;
-  if (set_cutscenecammtx != 0) {
+  if (set_cutscenecammtx != 0)
+  {
     GameCamera->m = cutscenecammtx;
     set_cutscenecammtx = 0;
     goto Finish;
   }
-  if (((PLAYERCOUNT != 0) && (VEHICLECONTROL == 1)) && (player->obj.vehicle != -1)) {
+  if (((PLAYERCOUNT != 0) && (VEHICLECONTROL == 1)) && (player->obj.vehicle != (-1)))
+  {
     vehicle = player->obj.vehicle;
+    pVIS = new_var53;
   }
   oldmode = GameCamera->mode;
-  c = NULL;
+  c = new_var53;
   GameCamera->mode = 0;
-  if (Level == 0x23) {
+  if (Level == 0x23)
+  {
     GameCamera->mode = 8;
-    if ((((SplTab[12].spl != NULL) && (SplTab[13].spl != NULL)) &&
-        (CRemap[96] != -1)) && (CModel[CRemap[96]].anmdata[0x2b] != NULL)) {
+    new_var29 = CModel;
+    if ((((SplTab[12].spl != new_var53) && (SplTab[13].spl != new_var53)) && (CRemap[96] != (-1))) && (new_var29[CRemap[96]].anmdata[0x2b] != new_var53))
+    {
       GameCamera->mode = 0x18;
       anim = &TempAnim;
     }
-  } else if (Level == 0x26) {
-    GameCamera->mode = 10;
-    if (SplTab[1].spl == NULL) {
-      GameCamera->mode = 0x19;
-    }
-  } else if (Level == 0x28) {
-      GameCamera->mode = 0x20;
-  } else if (Level == 0x2b) {
-      GameCamera->mode = 0x22;
-  } else if (Level == 0x19) {
-    character = 2;
-    GameCamera->mode = 0x1a;
-    if (CrunchTime_Intro != 0) {
-      character = 0x7f;
-    }
-    if (FindNearestCreature(&vec,character,&dst) < 1000000.0f) {
-        c = &Character[temp_creature_i];
-        if (((CrunchTime_Intro != 0 || (c->obj.anim.newaction == 0x49)) ||
-         (c->obj.anim.newaction == 0x46)) && (SpaceCortex_Defeated == 0)) {
-            GameCamera->mode = 0x1b;
-        }
-    }
-    if ((oldmode != -1) && (GameCamera->mode != oldmode)) {
-      BlendGameCamera(GameCam,1.0f);
-    }
-  } else if (((Level == 0xd) || (Level == 0x12)) || (Level == 0x1a)) {
-        GameCamera->mode = 0xe;
-  } else if ((Level == 0x18) || (Level == 0x24)) {
-        GameCamera->mode = 0xe;
-  } else if ((Level == 0x1e) && (level_part_2 != 0)) {
-        GameCamera->mode = 0xe;
   }
-  else if (Level == 0x25) {
-    if (((CAMERA_CURSOR.menu != 0x15) &&
-        (((CAMERA_CURSOR.wait == 0 || (CAMERA_CURSOR.new_menu != 0x15)) && (CAMERA_CURSOR.menu != 0x1a)) )
-        && (((CAMERA_CURSOR.menu != 0x2f && (CAMERA_CURSOR.menu != 0x21)) && (CAMERA_CURSOR.menu != 0x20))) &&
-          (CAMERA_CURSOR.menu != 0x30) && (CAMERA_CURSOR.menu != 0x31) && ((CAMERA_CURSOR.menu != 0x16 &&
-            (((CAMERA_CURSOR.menu != 0x19 && (CAMERA_CURSOR.menu != 0x1d)) && (CAMERA_CURSOR.menu != 0x18)))) )
-           && (CAMERA_CURSOR.menu != 0x1c) && (CAMERA_CURSOR.menu != 0x1b) &&
-        ((CAMERA_CURSOR.menu != 0x17 && (((CAMERA_CURSOR.menu != 0x1e && (CAMERA_CURSOR.menu != 0x20)) &&
-          (CAMERA_CURSOR.menu != 0x1f && (CAMERA_CURSOR.menu != 0x25) && (CAMERA_CURSOR.menu != 0x26))))))) ||
-       (SplTab[65].spl == NULL || (SplTab[66].spl != NULL))) {
-      GameCamera->mode = 0x1f;
-    } else if (GameMode == 1) {
-        GameCamera->mode = 0x21;
-    } else if ((Death == 1) || (Death == 3)) {
-        GameCamera->mode = 6;
-    } else if ((nRAILS != 0) && (best_cRPos != NULL)) {
-        GameCamera->mode = 5;
-    } else if (Death != 2) {
-          GameCamera->mode = 9;
-    }
-  } else if (PLAYERCOUNT != 0) {
-    if (((((Bonus == 1) || (Bonus == 3)) || (Death == 1)) || ((Death == 3 || (GemPath == 1))))
-       || (GemPath == 3)) {
-      GameCamera->mode = 6;
-    }
-    else if (((vtog_time < vtog_duration) && (vtog_blend != 0)) &&
-             ((pVTog != NULL && (pVTog->pCAM != NULL)))) {
-      GameCamera->mode = 0x1c;
-    }
-    else if ((Level == 6) || (Level == 0x22)) {
-        GameCamera->mode = 5;
-    } else if ((LBIT & 0x00100210801) != 0) {
-        GameCamera->mode = 0x10;
-    }
-    else if (((obj->flags & 1) != 0) && (((obj->dead == 2 || obj->dead == 3) || ((char)obj->dead == 8)))) {
-        GameCamera->mode = 0x1e;
-    } else if ((nRAILS != 0) && (best_cRPos != NULL)) {
-        GameCamera->mode = 5;
-    } else if (SplTab[1].spl == NULL) {
-        GameCamera->mode = 4;
-    } else {
+  else
+  {
+    new_var17 = &vec;
+    if (Level == 0x26)
+    {
+      if (SplTab[1].spl == new_var53)
+      {
         GameCamera->mode = 10;
+        GameCamera->mode = 0x19;
+      }
     }
-  } else {
-      GameCamera->mode = 4;
+    else
+      if (Level == 0x28)
+    {
+      GameCamera->mode = 0x20;
+    }
+    else
+      if (Level == 0x2b)
+    {
+      GameCamera->mode = 0x22;
+    }
+    else
+      if (Level == 0x19)
+    {
+      character = 2;
+      GameCamera->mode = 0x1a;
+      if (CrunchTime_Intro != 0)
+      {
+        character = 0x7f;
+      }
+      ;
+      if (FindNearestCreature(new_var17, character, &dst) < 1000000.0f)
+      {
+        c = &Character[temp_creature_i];
+        if ((((CrunchTime_Intro != 0) || (c->obj.anim.newaction == 0x49)) || (c->obj.anim.newaction == 0x46)) && (SpaceCortex_Defeated == 0))
+        {
+          GameCamera->mode = 0x1b;
+        }
+      }
+      if ((oldmode != (-1)) && (GameCamera->mode != oldmode))
+      {
+        BlendGameCamera(GameCam, 1.0f);
+      }
+    }
+    else
+      if (((Level == 0xd) || (Level == 0x12)) || (Level == 0x1a))
+    {
+      GameCamera->mode = 0xe;
+    }
+    else
+      if ((Level == 0x18) || (Level == 0x24))
+    {
+      GameCamera->mode = 0xe;
+    }
+    else
+      if ((Level == 0x1e) && (level_part_2 != 0))
+    {
+      GameCamera->mode = 0xe;
+    }
+    else
+    {
+      new_var52 = 0;
+      if (Level == 0x25)
+      {
+        new_var61 = (unsigned int) 0x20;
+        new_var8 = (*(&Cursor)).wait == new_var52;
+        if (((((((((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x15) && ((((*((struct camera_cursor_s *) (&Cursor))).wait == 0) || ((*((struct camera_cursor_s *) (&Cursor))).new_menu != 0x15)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1a))) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x2f) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x21)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x20))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x30)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x31)) && (((*((struct camera_cursor_s *) (&Cursor))).menu != 0x16) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x19) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1d)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x18)))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1c)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1b)) && (((*((struct camera_cursor_s *) (&Cursor))).menu != 0x17) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1e) && ((*((struct camera_cursor_s *) (&Cursor))).menu != new_var61)) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1f) && ((long) ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x25))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x26))))) || ((SplTab[65].spl == new_var53) || (SplTab[66].spl != new_var53)))
+        {
+          GameCamera->mode = 0x1f;
+        }
+        else
+          if (GameMode == 1)
+        {
+          GameCamera->mode = 0x21;
+        }
+        else
+          if ((Death == 1) || (Death == 3))
+        {
+          GameCamera->mode = 6;
+        }
+        else
+          if ((nRAILS != 0) && (best_cRPos != new_var53))
+        {
+          GameCamera->mode = 5;
+        }
+        else
+          if (Death != 2)
+        {
+          GameCamera->mode = 9;
+        }
+      }
+      else
+        if (PLAYERCOUNT != 0)
+      {
+        if (((((Bonus == 1) || (Bonus == 3)) || (Death == 1)) || ((Death == 3) || (GemPath == 1))) || (GemPath == 3))
+        {
+          GameCamera->mode = 6;
+        }
+        else
+          if (((vtog_time < vtog_duration) && (vtog_blend != 0)) && ((pVTog != new_var53) && (pVTog->pCAM != new_var53)))
+        {
+          GameCamera->mode = 0x1c;
+          if (1)
+          {
+          }
+        }
+        else
+          if ((Level == 6) || (Level == 0x22))
+        {
+          GameCamera->mode = 5;
+        }
+        else
+          if ((LBIT & 0x00100210801) != 0)
+        {
+          (*GameCamera).mode = 0x10;
+        }
+        else
+          if (((obj->flags & 1) != 0) && (((obj->dead == 2) || (obj->dead == 3)) || (((char) obj->dead) == 8)))
+        {
+          GameCamera->mode = 0x1e;
+        }
+        else
+          if ((nRAILS != 0) && (best_cRPos != new_var53))
+        {
+          GameCamera->mode = 5;
+        }
+        else
+          if (SplTab[1].spl == new_var53)
+        {
+          GameCamera->mode = 4;
+        }
+        else
+        {
+          GameCamera->mode = 10;
+        }
+      }
+      else
+      {
+        GameCamera->mode = 4;
+      }
+    }
   }
-  if ((SplTab[8].spl != NULL) && (InSplineArea(&obj->pos,SplTab[8].spl) != 0)) {
+  if ((SplTab[8].spl != new_var53) && (InSplineArea(&obj->pos, SplTab[8].spl) != 0))
+  {
     GameCamera->mode = 0x16;
-  } else if ((SplTab[9].spl != NULL) && (InSplineArea(&obj->pos,SplTab[9].spl) != 0)) {
+  }
+  else
+    if ((SplTab[9].spl != new_var53) && (InSplineArea(&obj->pos, SplTab[9].spl) != 0))
+  {
     GameCamera->mode = 0x17;
     unaff_r14 = 0;
-  } else if ((SplTab[10].spl != NULL) && (InSplineArea(&obj->pos,SplTab[10].spl) != 0)) {
-    GameCamera->mode = 0x17;
-    unaff_r14 = 1;
-  } else if ((SplTab[11].spl != NULL) && (InSplineArea(&obj->pos,SplTab[11].spl) != 0)) {
-    GameCamera->mode = 0x17;
-    unaff_r14 = 2;
   }
-  if ((Level == 0x17) && (GameCamera->mode == 5)) {
-    if (FindNearestCreature(&vec,0x7f,&dst) < 1000000.0f) {
+  else
+  {
+    new_var24 = &SplTab[10];
+    new_var4 = SplTab[11].spl;
+    if (((*new_var24).spl != new_var53) && (InSplineArea(&obj->pos, (*new_var24).spl) != 0))
+    {
+      GameCamera->mode = 0x17;
+      unaff_r14 = 1;
+    }
+    else
+      if ((SplTab[11].spl != new_var53) && (InSplineArea(&obj->pos, SplTab[11].spl) != 0))
+    {
+      GameCamera->mode = 0x17;
+      unaff_r14 = 2;
+    }
+  }
+  if ((Level == 0x17) && (GameCamera->mode == 5))
+  {
+    if (FindNearestCreature(&vec, 0x7f, &dst) < 1000000.0f)
+    {
       c = &Character[temp_creature_i];
-      if (DrainDamage_Intro != 0) {
+      if (DrainDamage_Intro != 0)
+      {
         GameCamera->mode = 0x1b;
       }
     }
-    if (oldmode == -1) goto LAB_8000b830;
-    if (GameCamera->mode != oldmode) {
-      BlendGameCamera(GameCam,1.0f);
+    if (oldmode == (-1))
+    {
+      goto LAB_8000b830;
       goto LAB_8000b830;
     }
+    if (GameCamera->mode != oldmode)
+    {
+      BlendGameCamera(GameCam, 1.0f);
+    }
   }
-  else {
-LAB_8000b830:
-    if (GameCamera->mode != oldmode) {
-      if ((GameCamera->mode == 0x17) || (oldmode == 0x17)) {
-        BlendGameCamera(GameCamera,0.5f);
-      } else if (((((GameCamera->mode == 0x16) || (oldmode == 0x16)) || (oldmode == 0x1c)) ||
-               (((oldmode == 0x15 && (GameCamera->mode == 5)) ||
-                ((GameCamera->mode == 0x1f && (oldmode == 9)))))) ||
-              ((GameCamera->mode == 9 && (oldmode == 0x1f)))) {
-        BlendGameCamera(GameCamera,1.0f);
+  else
+  {
+    LAB_8000b830:
+    if (GameCamera->mode != oldmode)
+    {
+      if ((GameCamera->mode == 0x17) || (oldmode == 0x17))
+      {
+        BlendGameCamera(GameCamera, 0.5f);
+      }
+      else
+        if (((((GameCamera->mode == 0x16) || (oldmode == 0x16)) || (oldmode == 0x1c)) || (((oldmode == 0x15) && (GameCamera->mode == 5)) || ((GameCamera->mode == 0x1f) && (oldmode == 9)))) || ((GameCamera->mode == 9) && (oldmode == 0x1f)))
+      {
+        BlendGameCamera(GameCamera, 1.0f);
       }
     }
+
   }
   local_140.x = 0.125f;
   local_140.y = 0.125f;
   local_140.z = 0.125f;
-  if (pos_START != NULL) {
+  if (pos_START != new_var53)
+  {
     vec = *pos_START;
-  } else {
+  }
+  else
+  {
     vec = v000;
   }
-  if (GameCamera->mode != oldmode) {
-    GameCamera->iRAIL = -1;
-    GameCamera->iALONG = -1;
+  if (GameCamera->mode != oldmode)
+  {
+    GameCamera->iRAIL = (GameCamera->iALONG = -1);
   }
-  //fVar43 = obj->max.y;
-  //fVar44 = obj->SCALE;
-  uVar27 = -1;
-  uVar28 = -1;
-  local_150.x = obj->pos.x;
-  local_150.y = obj->max.y * obj->SCALE * 0.5f + obj->pos.y;
   local_150.z = obj->pos.z;
+  uVar27 = (uVar28 = -1);
+  new_var19 = 600;
+  zrot_override = 0;
+  local_150.x = obj->pos.x;
+  local_150.y = obj->max.y;
+  local_150.y = ((local_150.y * obj->SCALE) * 0.5f) + obj->pos.y;
   axSEEK = 3;
+  new_var36 = &obj->min;
   aySEEK = 4;
-switch(GameCamera->mode) {
+  switch (GameCamera->mode)
+  {
     case 0x14:
-        local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-        p0 = (struct nuvec_s *)SplTab[8].spl->pts;
-        iVar30 = (s32)SplTab[8].spl->ptsize;
-        p1 = (struct nuvec_s *)(SplTab[8].spl->pts + iVar30);
-        vec.x = local_150.x + (p1->x - p0->x);
-        vec.y = local_150.y + (p1->y - p0->y);
-        vec.z = local_150.z + (p1->z - p0->z);
-    break;
+      local_150.y = (((obj->min.y + obj->max.y) * obj->SCALE) * 0.5f) + obj->pos.y;
+      new_var = &SplTab[8];
+      p0 = (struct nuvec_s *) (*new_var).spl->pts;
+      iVar30 = (s32) (*(new_var31 = &(*new_var))).spl->ptsize;
+      new_var44 = (*new_var31).spl;
+      p1 = (struct nuvec_s *) (new_var44->pts + iVar30);
+      vec.x = local_150.x + (p1->x - p0->x);
+      vec.y = local_150.y;
+      vec.y = vec.y + (p1->y - p0->y);
+      vec.z = p0->z;
+      vec.z = local_150.z + (p1->z - vec.z);
+      break;
+
     case 0x17:
       aySEEK = 3;
-      local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-      p0 = (struct nuvec_s *)(SplTab[unaff_r14 + 9].spl)->pts;
+      local_150.y = (((obj->min.y + obj->max.y) * obj->SCALE) * 0.5f) + obj->pos.y;
+      p0 = (struct nuvec_s *) SplTab[unaff_r14 + 9].spl->pts;
       vec = *p0;
-    break;
+      break;
+      new_var21 = &GameCamera->m;
+
     case 0x10:
-          if (Level == 0x15) {
-            RumbleCam(GameCamera);
-            pNuCam->mtx = GameCamera->m;
-            NuCameraSet(pNuCam);
-            goto Finish;
-          }
-          if (GameTimer.frame < 0x78) {
-            fVar43 = 2.5f;
-          } else {
-            fVar43 = 5.0f;
-          }
-          if (ATLASCAMHEIGHT > fVar43) {
-            ATLASCAMHEIGHT -= 0.03333334f;
-            if (ATLASCAMHEIGHT < fVar43) {
-              ATLASCAMHEIGHT = fVar43;
-            }
-          } else if (ATLASCAMHEIGHT < fVar43) {
-            ATLASCAMHEIGHT += 0.03333334f;
-            if (ATLASCAMHEIGHT > fVar43) {
-              ATLASCAMHEIGHT = fVar43;
-            }
-          }
-          local_150.x = obj->pos.x;
-          local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-          local_150.z = obj->pos.z;
-          vec.y = local_150.y + ATLASCAMHEIGHT;
-          vec.x = local_150.x + ATLASCAMHEIGHT;
-          vec.z = local_150.z - ATLASCAMHEIGHT;
-          if (ResetAtlasCamera != 0) {
-            ResetAtlasCamera = 0;
-            GameCamera->pos = vec;
-            GameCamera->blend_time = GameCamera->blend_duration;
-          }
-    break;
+      if (Level == 0x15)
+    {
+      RumbleCam(GameCamera);
+      pNuCam->mtx = *new_var21;
+      NuCameraSet(pNuCam);
+      goto Finish;
+    }
+      if (GameTimer.frame < 0x78)
+    {
+      fVar43 = 2.5f;
+    }
+    else
+    {
+      fVar43 = 5.0f;
+    }
+      if (ATLASCAMHEIGHT > fVar43)
+    {
+      ATLASCAMHEIGHT = ATLASCAMHEIGHT - 0.03333334f;
+      if (ATLASCAMHEIGHT < fVar43)
+      {
+        ATLASCAMHEIGHT = fVar43;
+      }
+    }
+    else
+      if (ATLASCAMHEIGHT < fVar43)
+    {
+      ATLASCAMHEIGHT += 0.03333334f;
+      if (ATLASCAMHEIGHT > fVar43)
+      {
+        ATLASCAMHEIGHT = fVar43;
+      }
+    }
+      new_var54 = &obj->pos;
+      local_150.x = (*new_var54).x;
+      local_150.y = ((((*new_var36).y + obj->max.y) * obj->SCALE) * 0.5f) + obj->pos.y;
+      local_150.z = obj->pos.z;
+      vec.y = local_150.y + ATLASCAMHEIGHT;
+      vec.x = local_150.x + ATLASCAMHEIGHT;
+      vec.z = local_150.z - ATLASCAMHEIGHT;
+      if (ResetAtlasCamera != 0)
+    {
+      ResetAtlasCamera = 0;
+      GameCamera->pos = vec;
+      new_var3 = GameCamera->blend_duration;
+      GameCamera->blend_time = new_var3;
+    }
+      break;
+
     case 0xe:
-        GliderCam(GameCamera);
-        pNuCam->mtx = GameCamera->m;
-        NuCameraSet(pNuCam);
-        goto Finish;
-    break;
+      GliderCam(GameCamera);
+      pNuCam->mtx = *new_var21;
+      NuCameraSet(pNuCam);
+      goto Finish;
+      break;
+
     case 0x16:
-        JeepCamFollowAng(GameCamera,0);
-        pNuCam->mtx = GameCamera->m;
-        NuCameraSet(pNuCam);
-        goto Finish;
-    break;
+      JeepCamFollowAng(GameCamera, 0);
+      pNuCam->mtx = *new_var21;
+      NuCameraSet(pNuCam);
+      goto Finish;
+      break;
+      ;
+
     case 0x15:
-        JeepCamIntro(GameCamera);
-        pNuCam->mtx = GameCamera->m;
-        NuCameraSet(pNuCam);
-        goto Finish;
-    break;
+      JeepCamIntro(GameCamera);
+      pNuCam->mtx = *new_var21;
+      NuCameraSet(pNuCam);
+      goto Finish;
+      break;
+
     case 0x1d:
+
     case 0xf:
       JeepCam(GameCamera);
-      GameCamera->seek.y = GameCamera->seek.x = GameCamera->seek.z = 1.0f;
-      local_140.x = local_140.z = local_140.y = 1.0f;
+      GameCamera->seek.y = (GameCamera->seek.x = (GameCamera->seek.z = 1.0f));
+      local_140.x = (local_140.z = (local_140.y = 1.0f));
       local_150 = JeepvObj;
-      GameCamera->pos = vec = JeepvPos;
-    break;
-    case 13: // > '\v'
-        uVar31 = RotDiff(-GameCamera->yrot,obj->hdg);
-        if ((s32)(uVar31 >= 0 ? uVar31 : -uVar31) > 0x4000) {
-          //fVar43 = 0.0f;
-            Blend_183 -= 0.025f;
-          if (Blend_183 < 0.0f) {
-             Blend_183 = 0.0f;
-          }
-        }
-        else {
-          //fVar43 = 1.0f;
-          if (Blend_183 > 1.0f) {
-            Blend_183 -= 0.025f;
-            if ((Blend_183 < 1.0f)) {
-              if (Blend_183 < 1.0f) {
-                 Blend_183 = 1.0f; 
-              }   
-            }
-          }
-          else {
-            Blend_183 += 0.025f;
-            if (!(Blend_183 > 1.0f)) {
-             Blend_183 = 1.0f;
-            }
-          }
-        }
-        RPos = obj->RPos;
-        if ((RPos.iRAIL != -1) && (RPos.iALONG != -1)) {
-          //dVar39 = 5.0f;
-          if (Blend_183 != 1.0f) {
-            MoveRailPosition(&local_108,&RPos,3.0f,1);
-            GameCamera->iRAIL = TempRPos.iRAIL;
-            GameCamera->iALONG = TempRPos.iALONG;
-            MoveRailPosition(&local_f0,&RPos,3.0f,0);
-            local_d8 = local_108.x - local_f0.x;
-            local_d4 = local_108.y - local_f0.y;
-            local_d0 = local_108.z - local_f0.z;
-            fVar43 = sqrt(local_d0 * local_d0 + local_d8 * local_d8 + local_d4 * local_d4);
-            local_f0.x = obj->pos.x;
-            local_f0.y = obj->top * obj->SCALE + obj->pos.y + 0.5f;
-            local_f0.z = obj->pos.z;
-            dVar40 = 2.0f;
-            local_108.x = local_f0.x + (local_d8 * 5.0f) / fVar43;
-            local_108.y = local_f0.y + (local_d4 * 5.0f) / fVar43;
-            local_108.z = local_f0.z + (local_d0 * 5.0f) / fVar43;
-            MoveRailPosition(&local_c8,&RPos,3.0f,1);
-            local_d0 = local_108.z - local_c8.z;
-            local_d8 = local_108.x - local_c8.x;
-            dVar39 = sqrt(local_d8 * local_d8 + local_d0 * local_d0);
-            if (dVar39 > dVar40) {
-              local_b0 = ((local_d0 * (dVar39 - dVar40)) / dVar39);
-              local_b8 = ((local_d8 * (dVar39 - dVar40)) / dVar39);
-              local_f0.x = local_f0.x - local_b8;
-              local_f0.z = local_f0.z - local_b0;
-              local_108.x = local_108.x - local_b8;
-              local_108.z = local_108.z - local_b0;
-            }
-          }
-          if (Blend_183 != 0.0f) {
-            local_e4.x = obj->pos.x;
-            local_e4.z = obj->pos.z;
-            local_e4.y = obj->top * obj->SCALE + obj->pos.y + 0.5f;
-            MoveRailPosition(&local_fc,&RPos,7.0f,1);
-            GameCamera->iRAIL = TempRPos.iRAIL;
-            GameCamera->iALONG = TempRPos.iALONG;
-          }
-          local_150.x = (1.0f - Blend_183) * local_f0.x + Blend_183 * local_e4.x;
-          local_150.y = (1.0f - Blend_183) * local_f0.y + Blend_183 * local_e4.y;
-          local_150.z = (1.0f - Blend_183) * local_f0.z + Blend_183 * local_e4.z;
-          vec.x = (1.0f - Blend_183) * local_108.x + Blend_183 * local_fc.x;
-          vec.y = (1.0f - Blend_183) * local_108.y + Blend_183 * local_fc.y;
-          vec.z = (1.0f - Blend_183) * local_108.z + Blend_183 * local_fc.z;
-        }
-        else {
-          vec = GameCamera->pos;
-        }
-    break;
-    case 17:
-        vec.x = local_150.x;
-        vec.y = local_150.y + 10.0f;
-        vec.z = local_150.z + 1.0f;
-    break;
-    case 0x1e:
-        local_150.y = (obj->bot + obj->top) * obj->SCALE * 0.5f + obj->pos.y;
-        NuVecSub(&dst,&GameCamera->pos,&local_150);
-        NuVecNorm(&dst,&dst);
-        vec.x = dst.x * 3.0f + local_150.x;
-        vec.y = dst.y * 3.0f + local_150.y;
-        vec.z = dst.z * 3.0f + local_150.z;
-        if (obj->dead == 3) {
-          local_150.y += 1.0f;
-        }
-    break;
-    case 5:
-    //case 6:
-    //case 7:
-    //case 8:
-    case 9:
-            if ((best_cRPos != NULL) && (cRPosCOUNT != 0)) {
-              old_vertical = GameCamera->vertical;
-              GameCamera->vertical = best_cRPos->vertical;
-              if (GameCamera->vertical != old_vertical) {
-                BlendGameCamera(GameCamera,1.0f);
-              }
-              if (((Level == 0x25) || (Level == 6)) || (Level == 0x22)) {
-                GameCamera->distance = 0.0f;
-              }
-              else {
-                c = (struct creature_s *)obj->parent;
-                if (((c != player) || (c->slam != 2)) || (c->slam_wait != 0 )) {
-                  if (best_cRPos->vertical == 0) {
-                    fVar43 = LookUpDownRail(obj,best_cRPos->angle,(s32)best_cRPos->mode);
-                  } else {
-                    fVar43 = 0.0f;
-                  }
-                  if ((Level == 8) && (fVar43 < -2.0f)) {
-                    fVar43 = -2.0f;
-                  }
-                  //fVar44 = GameCamera->distance;
-                  if (GameCamera->distance > fVar43) {
-                    GameCamera->distance -= 0.03333334f;
-                    if (GameCamera->distance < fVar43) {
-                      GameCamera->distance = fVar43;
-                    }
-                  } else if (GameCamera->distance < fVar43) {
-                        GameCamera->distance += 0.03333334f;
-                      if (GameCamera->distance > fVar43) {
-                        GameCamera->distance = fVar43;
-                      }
-                  }
-                }
-              }
-              iVar30 = 0;
-              vec = v000;
-              for(iVar30 = 0; iVar30 < cRPosCOUNT; iVar30++) {
-                  dVar40 = NuFabs(GameCamera->distance);
-                  MoveRailPosition(&dst,&cRPos[iVar30],dVar40,(GameCamera->distance >= 0.0f) ? 0 : 1);
-                  if (best_cRPos == &cRPos[iVar30]) {
-                    pVIS = Rail[cRPos[iVar30].iRAIL].pCAM;
-                    iVIS = (s32)TempRPos.iALONG;
-                  }
-                  if (cRPos[iVar30].vertical != 0) {
-                    iVar13 = (s32)(Rail[cRPos[iVar30].iRAIL].pCAM)->ptsize;
-                    p0 = (struct nuvec_s *)((Rail[cRPos[iVar30].iRAIL].pCAM)->pts + cRPos[iVar30].i1 * iVar13);
-                    p1 = (struct nuvec_s *)((Rail[cRPos[iVar30].iRAIL].pCAM)->pts + cRPos[iVar30].i2 * iVar13);
-                    dst.y = obj->max.y * obj->SCALE + obj->pos.y;
-                    if ((dst.y < p1->y) || (dst.y > p1->y)) {
-                      dst.y = p1->y;
-                    }
-                  }
-                  NuVecAdd(&vec,&vec,&dst);
-              }
-              //fVar43 = 1.0f / (cRPosCOUNT);
-              unaff_r22 = (s32)cRPos[0].cam_angle;
-              best_railangle = cRPos[0].angle;
-              vec.x *= (1.0f / (cRPosCOUNT));
-              vec.y *= (1.0f / (cRPosCOUNT));
-              vec.z *= (1.0f / (cRPosCOUNT));
-              if (cRPosCOUNT > 1) {
-                iVar30 = 0;
-                iVar13 = 0;
-                for(iVar34 = 1; iVar34 < cRPosCOUNT; iVar34++) {
-                    iVar30 += RotDiff(cRPos[iVar34].cam_angle,cRPos[iVar34].cam_angle);
-                    iVar13 += RotDiff(best_railangle,cRPos[iVar34].angle);
-                }
-                best_railangle = best_railangle + (short)(iVar13 / (cRPosCOUNT - 1));
-                unaff_r22 += iVar30 / (cRPosCOUNT - 1) & 0xffff;
-              }
-            }
-            else {
-              vec = GameCamera->pos;
-            }
-            local_150.x = obj->pos.x;
-            local_150.z = obj->pos.z;
-            local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-            dVar40 = 0.0f;
-            dVar39 = 0.033333335f;
-            if ((VEHICLECONTROL != 2) &&
-               ((((VEHICLECONTROL != 1 || (obj->vehicle != 0x20)) && (best_cRPos != NULL))
-                && ((best_cRPos->mode & 0xc) != 0)))) {
-              if (Level == 0x17) {
-                dVar40 = -2.0f;
-              } else {
-                iVar30 = RotDiff(obj->hdg,best_cRPos->angle);
-                dVar40 = NuTrigTable[(iVar30 + 0x4000) & 0xFFFF];
-              }
-              dVar39 = (NuFabs(dVar40) * 0.016666668f);
-            }
-            if (GameCamera->ahead > dVar40) {
-              GameCamera->ahead -= dVar39;
-              if (GameCamera->ahead < dVar40) {
-                GameCamera->ahead = dVar40;
-              }
-            }
-            else if (GameCamera->ahead < dVar40) {
-                GameCamera->ahead += dVar39;
-                if (GameCamera->ahead > dVar40) {
-                    GameCamera->ahead = dVar40;
-                }
-            }
-            if (GameCamera->ahead != 0.0f) {
-              fVar44 = NuTrigTable[(best_cRPos->angle + 0x4000) & 0xFFFF]  * GameCamera->ahead;
-              dVar42 = NuTrigTable[best_cRPos->angle] * GameCamera->ahead;
-              vec.x += dVar42;
-              vec.z += fVar44;
-              local_150.x += dVar42;
-              local_150.z += fVar44;
-            }
-            if (vehicle == 0xa1) {
-              aySEEK = 3;
-              axSEEK = 2;
-            }
-            if (((Level == 0x1d) && (SplTab[68].spl != NULL)) &&
-               (SplTab[69].spl != NULL)) {
-              if (GameTimer.ftime < 3.0f) {
-                dVar39 = (GameTimer.ftime / 3.0f);
-                PointAlongSpline(SplTab[68].spl,GameTimer.ftime / 3.0f,&local_120,NULL,NULL);
-                PointAlongSpline(SplTab[69].spl,dVar39,&local_114,NULL,NULL);
-                dVar40 = (1.0f - dVar39);
-                NuVecScale(dVar40,&local_120,&local_120);
-                NuVecScale(dVar40,&local_114,&local_114);
-                NuVecScaleAccum(dVar39,&local_120,&vec);
-                NuVecScaleAccum(dVar39,&local_114,&local_150);
-                vec = local_120;
-                local_150 = local_114;
-              }
-            }
-            else if (((Level == 3) && (SplTab[68].spl != NULL)) &&
-                    (SplTab[69].spl != NULL)) {
-              dVar40 = 6.0f;
-              if (WesternCountdown < 1.0f) {
-                dVar39 = 1.0f;
-              } else if (WesternCountdown > 6.0f) {
-                  dVar39 = 0.0f;
-              }
-              else {
-                  dVar39 = ((5.0f - (WesternCountdown - 1.0f)) / 5.0f);
-              }
-              if (dVar39 > 0.94999999f) {
-                dVar39 = 0.94999999f;
-              }
-              PointAlongSpline(SplTab[68].spl,dVar39,&local_120,NULL,NULL );
-              PointAlongSpline(SplTab[69].spl,dVar39,&local_114,NULL,NULL );
-              if (WesternCountdown < 1.0f) {
-                fVar43 = 1.0f;
-              } else if (WesternCountdown > dVar40) {
-                  fVar43 = 0.0f;
-              } else {
-                  fVar43 = ((dVar40 - 1.0f) - (WesternCountdown - 1.0f)) /
-                           (dVar40 - 1.0f);
-              }
-              if (fVar43 != 0.0f) {
-                dVar39 = (fVar43 * fVar43);
-                dVar40 = (1.0f - dVar39);
-                NuVecScale((1.0f - dVar39),&local_120,&local_120);
-                NuVecScale(dVar40,&local_114,&local_114);
-                NuVecScaleAccum(dVar39,&local_120,&vec);
-                NuVecScaleAccum(dVar39,&local_114,&local_150);
-                vec = local_120;
-                local_150 = local_114;
-              }
-            }
-    break;
-    case 0x1f: {
-        struct camera_cursor_s *cursor;
+      GameCamera->pos = (vec = JeepvPos);
+      break;
 
-        cursor = (struct camera_cursor_s*)&Cursor;
-        //uVar31 = (s32)cursor->wait;
-        if (cursor->wait != 0) {
-          if (cursor->new_menu == 0x15) {
-            dVar39 = (s32)(cursor->wait_frames - cursor->wait);
-          }
-          else {
-            dVar39 = cursor->wait;
-          }
-          dVar39 = (dVar39 / cursor->wait_frames);
-        }
-        else {
-          if (cursor->menu != -1) {
-            dVar39 = 1.0f;
-          }
-          else {
-            dVar39 = 0.0f;
-          }
-        }
-        PointAlongSpline(SplTab[65].spl,dVar39,&vec,NULL,NULL);
-        pVIS = death_pCAM;
-        iVIS = iTEMP;
-        vec.x += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xf7) * 0x10000) * 0x10953f391 >>
-                                 0x26) & 0xFFFF] * 0.1f;
-        vec.y += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xbf) * 0x10000) * 0xab8f69e3 >> 0x25
-                                 ) & 0xFFFF] * 0.1f;
-        vec.z += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xd5) * 0x10000) * 0x99d722db >> 0x25
-                                 ) & 0xFFFF] * 0.1f;
-        PointAlongSpline(SplTab[66].spl,dVar39,&local_150,NULL,NULL);
+    case 13:
+      uVar31 = RotDiff(-GameCamera->yrot, obj->hdg);
+      if (((s32) ((uVar31 >= 0) ? (uVar31) : (-uVar31))) > 0x4000)
+    {
+      Blend_183 -= 0.025f;
+      if (Blend_183 < 0.0f)
+      {
+        Blend_183 = 0.0f;
+      }
     }
-    break;
+    else
+      if (Blend_183 > 1.0f)
+    {
+      Blend_183 -= 0.025f;
+      if (Blend_183 < 1.0f)
+      {
+        if (Blend_183 < 1.0f)
+        {
+          Blend_183 = 1.0f;
+        }
+      }
+    }
+    else
+    {
+      Blend_183 += 0.025f;
+      if (!(Blend_183 > 1.0f))
+      {
+        Blend_183 = 1.0f;
+      }
+    }
+      new_var39 = &obj->SCALE;
+      RPos = obj->RPos;
+      if ((RPos.iRAIL != (-1)) && (RPos.iALONG != (-1)))
+    {
+      if (Blend_183 != 1.0f)
+      {
+        MoveRailPosition(&local_108, &RPos, 3.0f, 1);
+        GameCamera->iRAIL = TempRPos.iRAIL;
+        GameCamera->iALONG = TempRPos.iALONG;
+        MoveRailPosition(&local_f0, &RPos, 3.0f, 0);
+        local_d8 = local_108.x - local_f0.x;
+        local_d4 = local_108.y - local_f0.y;
+        local_d0 = local_108.z - local_f0.z;
+        fVar43 = sqrt(((local_d0 * local_d0) + (local_d8 * local_d8)) + (local_d4 * local_d4));
+        new_var7 = local_f0.x;
+        local_f0.x = obj->pos.x;
+        local_f0.y = ((obj->top * (*new_var39)) + obj->pos.y) + 0.5f;
+        local_f0.z = obj->pos.z;
+        local_108.x = new_var7 + ((local_d8 * 5.0f) / fVar43);
+        local_108.y = local_f0.y + ((local_d4 * 5.0f) / fVar43);
+        local_108.z = local_f0.z + ((local_d0 * 5.0f) / fVar43);
+        MoveRailPosition(&local_c8, &RPos, 3.0f, 1);
+        local_d0 = local_108.z - local_c8.z;
+        new_var40 = local_c8.x;
+        local_d8 = local_108.x - new_var40;
+        new_var16 = 2.0f;
+        dVar39 = sqrt((local_d8 * local_d8) + (local_d0 * local_d0));
+        if (dVar39 > new_var16)
+        {
+          dVar39 = (dVar39 - 2.0f) / dVar39;
+          local_d0 *= dVar39;
+          local_d8 = (local_f0.x = dVar39);
+          local_f0.z -= local_d0;
+          local_108.x -= local_d8;
+          local_108.z -= local_d0;
+        }
+      }
+      if (Blend_183 != 0.0f)
+      {
+        local_e4.x = obj->pos.x;
+        local_e4.y = ((obj->top * obj->SCALE) + obj->pos.y) + 0.5f;
+        local_e4.z = obj->pos.z;
+        MoveRailPosition(&local_fc, &RPos, 7.0f, 1);
+        GameCamera->iRAIL = TempRPos.iRAIL;
+        GameCamera->iALONG = TempRPos.iALONG;
+      }
+      local_150.x = ((1.0f - Blend_183) * local_f0.x) + (Blend_183 * local_e4.x);
+      local_150.y = ((1.0f - Blend_183) * local_f0.y) + (Blend_183 * local_e4.y);
+      local_150.z = ((1.0f - Blend_183) * local_f0.z) + (Blend_183 * local_e4.z);
+      vec.x = ((1.0f - Blend_183) * local_108.x) + (Blend_183 * local_fc.x);
+      new_var3 = (vec.z = ((1.0f - Blend_183) * local_108.z) + (Blend_183 * local_fc.z));
+      vec.y = ((1.0f - Blend_183) * local_108.y) + (Blend_183 * local_fc.y);
+    }
+    else
+    {
+      vec = GameCamera->pos;
+    }
+      break;
+      new_var20 = cRPos[0].angle;
+
+    case 17:
+      vec.x = local_150.x;
+      vec.y = local_150.y;
+      vec.y = vec.y + 10.0f;
+      vec.z = local_150.z + 1.0f;
+      break;
+      new_var6 = Pad[0];
+      local_d0 = GameCamera->ahead;
+      new_var41 = &obj->pos;
+
+    case 0x1e:
+      local_150.y = (((obj->bot + obj->top) * obj->SCALE) * 0.5f) + (*new_var41).y;
+      NuVecSub(&dst, &GameCamera->pos, &local_150);
+      NuVecNorm(&dst, &dst);
+      vec.x = (dst.x * 3.0f) + local_150.x;
+      vec.y = (dst.y * 3.0f) + local_150.y;
+      vec.z = (dst.z * 3.0f) + local_150.z;
+      if (obj->dead == 3)
+    {
+      local_150.y += 1.0f;
+    }
+      break;
+
+    case 5:
+
+    case 9:
+    {
+      float ahead_target;
+      float ahead_step;
+      if ((best_cRPos != new_var53) && (cRPosCOUNT != 0))
+      {
+        old_vertical = GameCamera->vertical;
+        GameCamera->vertical = best_cRPos->vertical;
+        if (GameCamera->vertical != old_vertical)
+        {
+          do
+          {
+          }
+          while (0);
+          BlendGameCamera(GameCamera, 1.0f);
+        }
+        if (((Level == 0x25) || (Level == 6)) || (Level == 0x22))
+        {
+          GameCamera->distance = 0.0f;
+        }
+        else
+        {
+          c = (struct creature_s *) obj->parent;
+          if (((c != player) || (c->slam != 2)) || (c->slam_wait != 0))
+          {
+            if (best_cRPos->vertical == 0)
+            {
+              fVar43 = LookUpDownRail(obj, best_cRPos->angle, (s32) best_cRPos->mode);
+            }
+            else
+            {
+              fVar43 = 0.0f;
+            }
+            if ((Level == 8) && (fVar43 < (-2.0f)))
+            {
+              fVar43 = -2.0f;
+            }
+            if (GameCamera->distance > fVar43)
+            {
+              GameCamera->distance -= 0.03333334f;
+              if (GameCamera->distance < fVar43)
+              {
+                GameCamera->distance = fVar43;
+              }
+            }
+            else
+              if (GameCamera->distance < fVar43)
+            {
+              GameCamera->distance += 0.03333334f;
+              if (GameCamera->distance > fVar43)
+              {
+                GameCamera->distance = fVar43;
+              }
+            }
+          }
+        }
+        iVar30 = local_150.x * 0;
+        vec = v000;
+        fVar3 = obj->SCALE;
+        for (iVar30 = 0; iVar30 < cRPosCOUNT; iVar30++)
+        {
+          MoveRailPosition(&dst, &cRPos[iVar30], NuFabs(GameCamera->distance), (GameCamera->distance >= 0.0f) ? (0) : (1));
+          if (best_cRPos == (&cRPos[iVar30]))
+          {
+            pVIS = Rail[cRPos[iVar30].iRAIL].pCAM;
+            new_var57 = (iVar34 = TempRPos.iALONG);
+            iVIS = (s32) new_var57;
+          }
+          if (cRPos[iVar30].vertical != 0)
+          {
+            iVar13 = (s32) Rail[cRPos[iVar30].iRAIL].pCAM->ptsize;
+            p0 = (struct nuvec_s *) (Rail[cRPos[iVar30].iRAIL].pCAM->pts + ((unsigned long) (cRPos[iVar30].i1 * iVar13)));
+            new_var35 = (struct nuvec_s *) (Rail[cRPos[iVar30].iRAIL].pCAM->pts + (cRPos[iVar30].i2 * iVar13));
+            ;
+            ;
+            dst.y = (obj->max.y * fVar3) + obj->pos.y;
+            if ((((struct nuvec_s *) (Rail[cRPos[iVar30].iRAIL].pCAM->pts + (cRPos[iVar30].i2 * iVar13)))->y > dst.y) || (dst.y > new_var35->y))
+            {
+              dst.y = *(&((struct nuvec_s *) (Rail[cRPos[iVar30].iRAIL].pCAM->pts + (cRPos[iVar30].i2 * iVar13)))->y);
+            }
+          }
+          NuVecAdd(&vec, &vec, &dst);
+        }
+
+        unaff_r22 = (s32) cRPos[0].cam_angle;
+        best_railangle = new_var20;
+        vec.x *= 1.0f / cRPosCOUNT;
+        vec.y *= 1.0f / cRPosCOUNT;
+        vec.z *= 1.0f / cRPosCOUNT;
+        if (cRPosCOUNT > 1)
+        {
+          iVar30 = (iVar13 = 0);
+          new_var15 = (u16) unaff_r22;
+          for (iVar34 = 1; iVar34 < cRPosCOUNT; iVar34++)
+          {
+            iVar30 += RotDiff(new_var15, cRPos[iVar34].cam_angle);
+            iVar13 += RotDiff(best_railangle, cRPos[iVar34].angle);
+          }
+
+          best_railangle = (short) (iVar13 / (cRPosCOUNT - 1));
+          best_railangle = best_railangle + best_railangle;
+          unaff_r22 += (iVar30 / (cRPosCOUNT - 1)) & 0xffff;
+        }
+      }
+      else
+      {
+        vec = GameCamera->pos;
+      }
+      local_150.x = obj->pos.x;
+      local_150.z = obj->pos.z;
+      new_var5 = 2;
+      local_150.y = (((obj->min.y + obj->max.y) * obj->SCALE) * 0.5f) + obj->pos.y;
+      ahead_target = 0.0f;
+      ahead_step = 0.033333335f;
+      if ((VEHICLECONTROL != new_var5) && ((((VEHICLECONTROL != 1) || (obj->vehicle != 0x20)) && (best_cRPos != new_var53)) && ((best_cRPos->mode & 0xc) != 0)))
+      {
+        if (Level == 0x17)
+        {
+          ahead_target = -2.0f;
+        }
+        else
+        {
+          do
+          {
+          }
+          while (0);
+          iVar30 = RotDiff(obj->hdg, best_cRPos->angle);
+          ahead_target = NuTrigTable[(iVar30 + 0x4000) & 0xFFFF];
+        }
+        ahead_step = NuFabs(ahead_target) * 0.016666668f;
+      }
+      if (GameCamera->ahead > ahead_target)
+      {
+        GameCamera->ahead -= ahead_step;
+        if (GameCamera->ahead < ahead_target)
+        {
+          GameCamera->ahead = ahead_target;
+        }
+      }
+      else
+        if (GameCamera->ahead < ahead_target)
+      {
+        GameCamera->ahead += ahead_step;
+        if (GameCamera->ahead > ahead_target)
+        {
+          GameCamera->ahead = ahead_target;
+        }
+        axSEEK = new_var5;
+      }
+      if (GameCamera->ahead != 0.0f)
+      {
+        fVar44 = NuTrigTable[(best_cRPos->angle + 0x4000) & 0xFFFF] * GameCamera->ahead;
+        dVar42 = NuTrigTable[best_cRPos->angle] * local_d0;
+        vec.x += dVar42;
+        vec.z += fVar44;
+        local_150.x += dVar42;
+        local_150.z += fVar44;
+      }
+      if (vehicle == 0xa1)
+      {
+      }
+      if (((Level == 0x1d) && (SplTab[68].spl != new_var53)) && (SplTab[69].spl != new_var53))
+      {
+        if (GameTimer.ftime < 3.0f)
+        {
+          aySEEK = 3;
+          dVar39 = GameTimer.ftime;
+          dVar39 = dVar39 / 3.0f;
+          PointAlongSpline(SplTab[68].spl, GameTimer.ftime / 3.0f, &local_120, new_var53, new_var53);
+          PointAlongSpline(SplTab[69].spl, dVar39, &local_114, new_var53, new_var53);
+          dVar40 = 1.0f - dVar39;
+          NuVecScale(dVar40, &local_120, &local_120);
+          NuVecScale(dVar40, &local_114, &local_114);
+          NuVecScaleAccum(dVar39, &local_120, &vec);
+          NuVecScaleAccum(dVar39, &local_114, &local_150);
+          vec = local_120;
+          local_150 = local_114;
+        }
+      }
+      else
+        if (((Level == 3) && (SplTab[68].spl != 0)) && (SplTab[69].spl != new_var53))
+      {
+        dVar40 = 6.0f;
+        new_var23 = WesternCountdown;
+        if (new_var23 < 1.0f)
+        {
+          dVar39 = 1.0f;
+        }
+        else
+          if (new_var23 > 6.0f)
+        {
+          dVar39 = 0.0f;
+        }
+        else
+        {
+          dVar39 = (5.0f - (new_var23 - 1.0f)) / 5.0f;
+        }
+        if (dVar39 > 0.94999999f)
+        {
+          dVar39 = 0.94999999f;
+        }
+        PointAlongSpline(SplTab[68].spl, dVar39, &local_120, new_var53, new_var53);
+        PointAlongSpline(SplTab[69].spl, dVar39, &local_114, new_var53, new_var53);
+        if (new_var23 < 1.0f)
+        {
+          fVar43 = 1.0f;
+        }
+        else
+          if (new_var23 > dVar40)
+        {
+          fVar43 = 0.0f;
+        }
+        else
+        {
+          fVar43 = ((dVar40 - 1.0f) - (new_var23 - 1.0f)) / (dVar40 - 1.0f);
+        }
+        if (fVar43 != 0.0f)
+        {
+          dVar39 = fVar43 * fVar43;
+          ;
+          NuVecScale(1.0f - dVar39, &local_120, &local_120);
+          NuVecScale(1.0f - dVar39, &local_114, &local_114);
+          new_var9 = &local_120;
+          NuVecScaleAccum(dVar39, new_var9, &vec);
+          NuVecScaleAccum(dVar39, &local_114, &local_150);
+          vec = local_120;
+          local_150 = local_114;
+        }
+      }
+    }
+      break;
+      new_var30 = ((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xbf) * 0x10000)) * 0xab8f69e3) >> 0x25)) & 0xFFFF;
+
+    case 0x1f:
+    {
+      struct camera_cursor_s *cursor;
+      cursor = (struct camera_cursor_s *) (new_var26 = &Cursor);
+      if (cursor->wait != 0)
+      {
+        if (cursor->new_menu == 0x15)
+        {
+          dVar39 = (s32) (cursor->wait_frames - cursor->wait);
+        }
+        else
+        {
+          dVar39 = cursor->wait;
+        }
+        dVar39 = dVar39 / cursor->wait_frames;
+      }
+      else
+        if (cursor->menu != (-1))
+      {
+        dVar39 = 1.0f;
+      }
+      else
+      {
+        dVar39 = 0.0f;
+        pVIS = death_pCAM;
+      }
+      PointAlongSpline(SplTab[65].spl, dVar39, &vec, new_var53, new_var53);
+      iVIS = iTEMP;
+      vec.x += NuTrigTable[((((unsigned long long) ((GlobalTimer.frame % 0xf7) * 0x10000)) * 0x10953f391) >> 0x26) & 0xFFFF] * 0.1f;
+      vec.y += NuTrigTable[new_var30] * 0.1f;
+      vec.z += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xd5) * 0x10000)) * 0x99d722db) >> 0x25)) & 0xFFFF] * 0.1f;
+    }
+      break;
+      PointAlongSpline(SplTab[66].spl, dVar39, &local_150, new_var53, new_var53);
+
     case 6:
-          local_140.z = 0.1f;
-          local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-          local_140.x = 0.1f;
-          local_140.y = 0.1f;
-          if ((Bonus == 1) || (Bonus == 3)) {
-            uVar31 = (s32)((bonus_time / bonus_duration) * 32768.0f + 16384.0f);
-            PointAlongSpline(bonus_pCAM,(-NuTrigTable[uVar31] + 1.0f) * 0.5f,&vec,NULL,NULL);
-            pVIS = bonus_pCAM;
-          }
-          else if ((Death == 1) || (Death == 3)) {
-            fVar43 = death_time / death_duration;
-            if (Death == 3) {
-              fVar43 = 1.0f - fVar43;
-            }
-            uVar31 = (fVar43 * 32768.0f + 16384.0f);
-            PointAlongSpline(death_pCAM,(-NuTrigTable[uVar31] + 1.0f) * 0.5f,&vec,NULL,NULL);
-            pVIS = death_pCAM;
-          }
-          else {
-            fVar43 = gempath_time / gempath_duration;
-            if (GemPath == 3) {
-              fVar43 = 1.0f - fVar43;
-            }
-            uVar31 = (fVar43 * 32768.0f + 16384.0f);
-            PointAlongSpline(gempath_pCAM,(-NuTrigTable[uVar31] + 1.0f) * 0.5f,&vec,NULL,NULL);
-            pVIS = gempath_pCAM;
-          }
-          iVIS = iTEMP;
-    break;
+      local_140.z = 0.1f;
+      local_150.y = (((obj->min.y + obj->max.y) * obj->SCALE) * 0.5f) + obj->pos.y;
+      local_140.x = 0.1f;
+      local_140.y = 0.1f;
+      if ((Bonus == 1) || (Bonus == 3))
+    {
+      uVar31 = (s32) (((bonus_time / bonus_duration) * 32768.0f) + 16384.0f);
+      PointAlongSpline(bonus_pCAM, ((-NuTrigTable[uVar31]) + 1.0f) * 0.5f, &vec, new_var53, new_var53);
+      pVIS = bonus_pCAM;
+    }
+    else
+      if ((Death == 1) || (Death == 3))
+    {
+      fVar43 = death_time / death_duration;
+      if (Death == 3)
+      {
+        fVar43 = 1.0f - fVar43;
+      }
+      new_var13 = 32768.0f;
+      uVar31 = (fVar43 * new_var13) + 16384.0f;
+      PointAlongSpline(death_pCAM, ((-NuTrigTable[uVar31]) + 1.0f) * 0.5f, &vec, new_var53, new_var53);
+      pVIS = death_pCAM;
+    }
+    else
+    {
+      do
+      {
+        fVar43 = gempath_time / gempath_duration;
+        if (GemPath == 3)
+        {
+          fVar43 = 1.0f - fVar43;
+        }
+        uVar31 = (fVar43 * new_var13) + 16384.0f;
+        PointAlongSpline(gempath_pCAM, ((-NuTrigTable[uVar31]) + 1.0f) * 0.5f, &vec, new_var53, 0);
+        pVIS = gempath_pCAM;
+      }
+      while (0);
+    }
+      iVIS = iTEMP;
+      break;
+
     case 0x1c:
-        dVar39 = (vtog_time / vtog_duration);
-        local_140.z = 0.2f;
-        local_140.x = 0.2f;
-        local_140.y = 0.2f;
-        PointAlongSpline(pVTog->pCAM,vtog_time / vtog_duration,&vec,NULL,NULL);
-        if (pVTog->pLOOK != NULL) {
-           PointAlongSpline(pVTog->pLOOK,dVar39,&local_150,NULL,NULL); 
-        }
-    break;
+      uVar27 = -1;
+      dVar39 = vtog_time / vtog_duration;
+      local_140.y = (local_140.x = (local_140.z = 0.2f));
+      PointAlongSpline(pVTog->pCAM, vtog_time / vtog_duration, &vec, new_var53, (void *) ((int) 0));
+      if (pVTog->pLOOK != new_var53)
+    {
+      PointAlongSpline(pVTog->pLOOK, dVar39, &local_150, new_var53, new_var53);
+      break;
+    }
+      new_var10 = new_var53;
+
     case 0x18:
-        fVar43 = anim->anim_time - 1.0f;
-        if (fVar43 > 30.0f) {
-          fVar43 = 30.0f;
-        }
-        dVar39 = (fVar43 * 0.03333334f);
-        PointAlongSpline(SplTab[12].spl,dVar39,&vec,NULL,NULL);
-        PointAlongSpline(SplTab[13].spl,dVar39,&local_150,NULL,NULL);
-    break;
+      fVar43 = anim->anim_time - 1.0f;
+      if (fVar43 > 30.0f)
+    {
+      fVar43 = 30.0f;
+    }
+      dVar39 = fVar43 * ((float) 0.03333334f);
+      PointAlongSpline(SplTab[12].spl, dVar39, &vec, new_var53, new_var53);
+      PointAlongSpline(SplTab[13].spl, dVar39, &local_150, new_var10, new_var53);
+      break;
+
     case 10:
-        p0 = (struct nuvec_s *)(SplTab[1].spl)->pts;
-        vec = *p0;
-        iVar30 = (s32)(SplTab[1].spl)->ptsize;
-        p1 = (struct nuvec_s *)(SplTab[8].spl->pts + iVar30);
-        local_150 = *p1;
-        if (Level == 0x26) {
-          vec.x += NuTrigTable[((unsigned long long)((GlobalTimer.frame % 0x26e) * 0x10000) * 0x34ae820f
-                                   >> 0x25) & 0xFFFF] * 0.05f;
-          vec.y += NuTrigTable[((unsigned long long)((GlobalTimer.frame % 0x1eb) * 0x10000) * 0x10af2f723
-                                   >> 0x27) & 0xFFFF] * 0.05f;
-          vec.z += NuTrigTable[((GlobalTimer.frame % 0x1dc) * 0x10000) / 0x77 & 0xFFFF] * 0.05f;
-        }
-    break;
+      p0 = (struct nuvec_s *) SplTab[1].spl->pts;
+      vec = *p0;
+      iVar30 = (s32) (*(SplTab + 1)).spl->ptsize;
+      aySEEK = iVar30;
+      new_var56 = (struct nuvec_s *) (new_var44->pts + aySEEK);
+      p1 = new_var56;
+      local_150 = *p1;
+      if (Level == 0x26)
+    {
+      vec.x += NuTrigTable[((((unsigned long long) ((GlobalTimer.frame % 0x26e) * 0x10000)) * 0x34ae820f) >> 0x25) & 0xFFFF] * 0.05f;
+      vec.z += NuTrigTable[(((GlobalTimer.frame % 0x1dc) * 0x10000) / 0x77) & 0xFFFF] * 0.05f;
+      vec.y += NuTrigTable[((uVar28 = ((unsigned long long) ((new_var46 = GlobalTimer.frame % 0x1eb) * 0x10000)) * 0x10af2f723) >> 0x27) & 0xFFFF] * 0.05f;
+    }
+      break;
+      new_var32 = 600;
+
     case 0x20:
-        oldmode = -1;
-        vec = campos_SPACE;
-        local_150 = v000;
-    break;
+      oldmode = -1;
+      vec = campos_SPACE;
+      local_150 = v000;
+      break;
+
     case 0x22:
-        oldmode = -1;
-        vec.x = NuTrigTable[32768] * 3.0f + 0.0f;
-        vec.y = (CData[187].min.y + CData[187].max.y) * 0.5f;
-        vec.z = NuTrigTable[49152] * 3.0f + 0.0f;
-        local_150.x = 0.0f;
-        local_150.y = vec.y;
-        local_150.z = 0.0f;
-    break;
+      oldmode = -1;
+      new_var43 = 32768;
+      new_var50 = 0.0f;
+      vec.x = (NuTrigTable[new_var43] * 3.0f) + 0.0f;
+      iVar30 = 49152;
+      vec.y = (local_150.y = (CData[187].min.y + CData[187].max.y) * 0.5f);
+      vec.z = (NuTrigTable[iVar30] * 3.0f) + new_var50;
+      local_150.x = (local_150.z = 0.0f);
+      break;
+
     case 0x21:
-        vec = cutcamlook_FRONTEND;
-        vec.x += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xf7) * 0x10000) * 0x10953f391 >>
-                                 0x26) & 0xFFFF] * 0.1f;
-        vec.y += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xbf) * 0x10000) * 0xab8f69e3 >> 0x25
-                                 ) & 0xFFFF] * 0.1f;
-        vec.z += NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xd5) * 0x10000) * 0x99d722db >> 0x25
-                                 ) & 0xFFFF] * 0.1f;
-    break;
+      vec = cutcamlook_FRONTEND;
+      vec.x += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xf7) * 0x10000)) * 0x10953f391) >> 0x26)) & 0xFFFF] * 0.1f;
+      vec.y += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xbf) * 0x10000)) * 0xab8f69e3) >> 0x25)) & 0xFFFF] * 0.1f;
+      vec.z += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xd5) * 0x10000)) * 0x99d722db) >> 0x25)) & 0xFFFF] * 0.1f;
+      break;
+
     case 0x1a:
-        vec = BOSSCAMPOS;
-        local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-    break;
+      new_var14 = 0.5f;
+      vec = BOSSCAMPOS;
+      local_150.y = ((((*new_var36).y + obj->max.y) * obj->SCALE) * new_var14) + obj->pos.y;
+      break;
+
     case 0x1b:
-        if (Level == 0x17) {
-          vec = BOSSCAMPOS2;
-        }
-        else {
-          vec = BOSSCAMPOS;
-        }
-        //dVar39 = 0.5f;
-        local_150.x = obj->pos.x;
-        local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y + 0.666f;
-        local_150.z = obj->pos.z;
-        dst.x = c->obj.pos.x;
-        dst.y = (c->obj.min.y + c->obj.max.y) * c->obj.SCALE * 0.5f +
-                c->obj.pos.y + 0.666f;
-        dst.z = c->obj.pos.z;
-        NuVecAdd(&local_150,&local_150,&dst);
-        NuVecScale(0.5f,&local_150,&local_150);
-        if (Level == 0x19) {
-          NuVecSub(&dst,&local_150,&vec);
-          NuVecNorm(&dst,&dst);
-          NuVecScale(3.0f,&dst,&dst);
-          NuVecAdd(&vec,&vec,&dst);
-        }
-    break;
-    case 11: // else
-          dVar40 = (0.0f - local_150.x);
-          dVar39 = (0.0f - local_150.z);
-          vec.x = 0.0f;
-          vec.y = 9.3f;
-          vec.z = 0.0f;
-          local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-          fVar43 = NuFsqrt((dVar40 * dVar40 + (dVar39 * dVar39))) + 0.1f;
-          if (fVar43 < 1.0f) {
-            uVar31 = (s32)GameCamera->angle;
-          }
-          else {
-            uVar31 = NuAtan2D(dVar40,dVar39) & 0xffff;
-          }
-          if (GameCamera->mode == oldmode) {
-            uVar31 = TurnRot(GameCamera->angle,(u16)uVar31,0x444);
-          }
-          GameCamera->angle = (u16)uVar31;
-          dVar40 = 4.0f;
-          vec.x = NuTrigTable[uVar31] * 4.0f + 0.0f;
-          vec.z = NuTrigTable[(uVar31 + 0x4000) & 0xFFFF] * 4.0f + 0.0f;
-          dVar39 = (local_150.z - vec.z);
-          dVar42 = (local_150.x - vec.x);
-          dVar41 = (NuFsqrt((dVar42 * dVar42 + (dVar39 * dVar39))) + 0.1f);
-          if (dVar41 != dVar40) {
-            dVar40 = (-(dVar40 - dVar41) / dVar41);
-            vec.z = (dVar39 * dVar40 + vec.z);
-            vec.x = (dVar42 * dVar40 + vec.x);
-          }
-          aySEEK = 2;
-    break;
+      if (Level == 0x17)
+    {
+      vec = BOSSCAMPOS2;
+    }
+    else
+    {
+      vec = BOSSCAMPOS;
+    }
+      local_150.x = obj->pos.x;
+      local_150.y = ((((obj->min.y + obj->max.y) * obj->SCALE) * 0.5f) + obj->pos.y) + 0.666f;
+      local_150.z = obj->pos.z;
+      dst.x = c->obj.pos.x;
+      dst.y = c->obj.min.y;
+      dst.y = ((((dst.y + c->obj.max.y) * c->obj.SCALE) * new_var14) + c->obj.pos.y) + 0.666f;
+      dst.z = c->obj.pos.z;
+      NuVecAdd(&local_150, &local_150, &dst);
+      NuVecScale(0.5f, &local_150, &local_150);
+      if (Level == 0x19)
+    {
+      NuVecSub(&dst, &local_150, &vec);
+      NuVecNorm(&dst, &dst);
+      NuVecScale(3.0f, &dst, &dst);
+      NuVecAdd(&vec, &vec, &dst);
+    }
+      break;
+      new_var51 = new_var6;
+
+    case 11:
+      dVar40 = 0.0f - local_150.x;
+      dVar39 = 0.0f - local_150.z;
+      vec.x = 0.0f;
+      vec.y = 9.3f;
+      vec.z = 0.0f;
+      new_var37 = new_var36;
+      local_150.y = ((((*new_var37).y + obj->max.y) * obj->SCALE) * new_var14) + obj->pos.y;
+      new_var25 = dVar39 * dVar39;
+      fVar43 = NuFsqrt((dVar40 * dVar40) + new_var25) + 0.1f;
+      if (fVar43 < 1.0f)
+    {
+      uVar31 = (s32) GameCamera->angle;
+    }
+    else
+    {
+      uVar31 = NuAtan2D(dVar40, dVar39);
+      uVar31 = uVar31 & 0xffff;
+    }
+    {
+      uVar31 = TurnRot(GameCamera->angle, uVar31, 0x444);
+    }
+      GameCamera->angle = (u16) uVar31;
+      dVar40 = 4.0f;
+      vec.x = (NuTrigTable[uVar31] * 4.0f) + 0.0f;
+      vec.z = (NuTrigTable[0xFFFF & (uVar31 + 0x4000)] * 4.0f) + 0.0f;
+      dVar39 = local_150.z - vec.z;
+      dVar42 = local_150.x - vec.x;
+      dVar41 = NuFsqrt((dVar42 * dVar42) + (dVar39 * dVar39)) + 0.1f;
+      if (dVar41 != dVar40)
+    {
+      dVar40 = (-(dVar40 - dVar41)) / dVar41;
+      vec.z = (dVar39 * dVar40) + vec.z;
+      vec.x = (dVar42 * dVar40) + vec.x;
+    }
+      aySEEK = new_var5;
+      break;
+
     case 8:
-          uVar27 = 0x4000;
-          uVar28 = 0;
-          vec.x = LOGOCAMX;
-          vec.y = LOGOCAMY;
-          vec.z = LOGOCAMZ;
-    break;
+      uVar27 = 0x4000;
+      uVar28 = 0;
+      vec.x = LOGOCAMX;
+      vec.y = LOGOCAMY;
+      vec.z = LOGOCAMZ;
+      break;
+
     case 0x19:
-        uVar27 = 0;
-        vec.y = NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xbf) * 0x10000) * 0xab8f69e3 >>
-                                 0x25) & 0xFFFF] * 0.1f + 0.5f;
-        vec.z = NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xd5) * 0x10000) * 0x99d722db >>
-                                 0x25) & 0xFFFF] * 0.1f - 1.0f;
-        vec.x = NuTrigTable[(s32)((unsigned long long)((GlobalTimer.frame % 0xf7) * 0x10000) * 0x10953f391 >>
-                                 0x26) & 0xFFFF] * 0.1f + 1.0f;
-        uVar28 = 0;
-    break;
+      new_var38 = ((GlobalTimer.frame % 0xbf) * 0x10000) * 0xab8f69e3;
+      uVar27 = (uVar28 = 0);
+      vec.y = (NuTrigTable[((s32) (new_var38 >> 0x25)) & 0xFFFF] * 0.1f) + 0.5f;
+      vec.z = -1.0f;
+      vec.z = (NuTrigTable[((((unsigned long long) ((GlobalTimer.frame % 0xd5) * 0x10000)) * 0x99d722db) >> 0x25) & 0xFFFF] * 0.1f) + vec.z;
+      vec.x = (NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xf7) * 0x10000)) * 0x10953f391) >> 0x26)) & 0xFFFF] * 0.1f) + 1.0f;
+      break;
+      new_var55 = &GameCamera->pos;
+
     case 4:
-        if (oldmode == GameCamera->mode) {
-          dVar40 = (GameCamera->pos.z - local_150.z);
-          dVar42 = (GameCamera->pos.x - local_150.x);
-          dVar39 = NuFsqrt((dVar42 * dVar42 + (dVar40 * dVar40)));
-          uVar31 = NuAtan2D(dVar42,dVar40) & 0xffff;
-          if (dVar39 > CAMSTOPNEAR) {
-            local_140.x = local_140.x * (CAMSTOPNEAR - dVar39);
-            local_140.z = local_140.z * (CAMSTOPNEAR - dVar39);
-            local_140.x = ((local_140.x + local_140.x) / CAMSTOPNEAR);
-            local_140.z = ((local_140.z + local_140.z) / CAMSTOPNEAR);
-          } else if (dVar39 < CAMSTOPFAR) {
-              local_140.x = (local_140.x * (dVar39 - CAMSTOPNEAR)) / (CAMSTOPFAR - CAMSTOPNEAR);
-              local_140.z = (local_140.z * (dVar39 - CAMSTOPNEAR)) / (CAMSTOPFAR - CAMSTOPNEAR);
+      if (GameCamera->mode == oldmode)
+    {
+      dVar40 = (*new_var55).z - local_150.z;
+      dVar42 = (new_var28 = GameCamera->pos.x) - local_150.x;
+      dVar39 = NuFsqrt((dVar42 * dVar42) + (dVar40 * dVar40));
+      uVar31 = 0xffff;
+      uVar31 = NuAtan2D(dVar42, dVar40) & uVar31;
+      if (CAMSTOPNEAR < dVar39)
+      {
+        local_140.x = local_140.x * (CAMSTOPNEAR - dVar39);
+        local_140.z = local_140.z * (CAMSTOPNEAR - dVar39);
+        local_140.x = (local_140.x + local_140.x) / CAMSTOPNEAR;
+        local_140.z = (Blend_183 = (local_140.z + local_140.z) / CAMSTOPNEAR);
+      }
+      else
+      {
+        do
+        {
+          if (dVar39 < CAMSTOPFAR)
+          {
+            new_var59 = local_140.z * (dVar39 - CAMSTOPNEAR);
+            local_140.x = (local_140.x * (dVar39 - CAMSTOPNEAR)) / (CAMSTOPFAR - CAMSTOPNEAR);
+            local_140.z = new_var59 / (CAMSTOPFAR - CAMSTOPNEAR);
           }
-        } else {
-          uVar31 = obj->hdg - 0x8000 & 0xffff;
+          dst.x = new_var28;
         }
-        vec.x = NuTrigTable[uVar31] * CAMSTOPNEAR + obj->pos.x;
-        vec.y = obj->max.y * obj->SCALE + obj->pos.y;
-        vec.z = NuTrigTable[(uVar31 + 0x4000) * 4 & 0xFFFF] * CAMSTOPNEAR  +
-                obj->pos.z;
-        if (GameCamera->mode == oldmode) {
-          dst.x = GameCamera->pos.x;
-          dst.y = GameCamera->pos.y;
-          dst.z = GameCamera->pos.z;
-        } else {
-          dst = vec;
-        }
-        fVar44 = NewShadowMask(&dst,0.0f,-1);
-        if (fVar44 == 2000000.0f) {
-            fVar43 = vec.y;
-        } else {
-            fVar43 = obj->max.y * obj->SCALE + fVar44;
-        }
-        if (vec.y < fVar43) {
-            vec.y = fVar43;
-        }
-    break;
+        while (0);
+      }
+    }
+    else
+    {
+      uVar31 = (obj->hdg - 0x8000) & 0xffff;
+    }
+      vec.x = (NuTrigTable[uVar31] * CAMSTOPNEAR) + obj->pos.x;
+      vec.y = (obj->max.y * obj->SCALE) + obj->pos.y;
+      vec.z = (NuTrigTable[((uVar31 + 0x4000) * 4) & 0xFFFF] * CAMSTOPNEAR) + obj->pos.z;
+      new_var3 = vec.y;
+      if (GameCamera->mode == oldmode)
+    {
+      dst.y = GameCamera->pos.y;
+      new_var28 = GameCamera->pos.z;
+      dst.z = new_var28;
+    }
+    else
+    {
+      dst = vec;
+    }
+      fVar44 = NewShadowMask(&dst, 0.0f, -1);
+      if (fVar44 == 2000000.0f)
+    {
+      fVar43 = new_var3;
+    }
+    else
+    {
+      fVar43 = (obj->max.y * obj->SCALE) + fVar44;
+    }
+      if (vec.y < fVar43)
+    {
+      vec.y = fVar43;
+    }
+      break;
+
     case 12:
-        //dVar39 = 0.5f;
-        uVar31 = ((GameTimer.frame % 600 << 0x10) / 600 + 0x4000) * 4 & 0xFFFF;
-        PointAlongSpline(Rail[1].pINCAM,NuTrigTable[uVar31] * 0.5f + 0.5f,&vec,NULL,NULL);
-        dVar39 = (NuTrigTable[uVar31] * 0.5f + 0.5f);
-        PointAlongSpline(Rail[1].pINPLAT,dVar39,&local_150,NULL,NULL);
-    break;
-    case 7: // < 9
-        if ((Pad[0] != NULL) && ((Pad[0]->rdy & 4) != 0)) {
-          SIDECAMDISTANCE = 6.0f;
-        }
-        vec.x = local_150.x + SIDECAMDISTANCE;
-        vec.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-        vec.z = obj->pos.z;
-        uVar27 = 0;
-        uVar28 = 0xc000;
-        local_150.x = obj->pos.x;
-        local_150.y = vec.y;
-        local_150.z = vec.z;
-    break;
-}
-  if ((PLAYERCOUNT != 0) && (obj->finished != 0)) {
+      do
+    {
+      uVar31 = ((((GameTimer.frame % new_var19) << 0x10) / new_var32) + 0x4000) * 4;
+      PointAlongSpline(Rail[1].pINCAM, (NuTrigTable[uVar31] * new_var14) + 0.5f, &vec, new_var53, new_var53);
+      ;
+      PointAlongSpline(Rail[1].pINPLAT, (NuTrigTable[uVar31] * 0.5f) + 0.5f, &local_150, new_var53, new_var53);
+    }
+    while (0);
+      break;
+
+    case 7:
+      if ((new_var6 != new_var53) && ((new_var51->rdy & 4) != 0))
+    {
+      SIDECAMDISTANCE = 6.0f;
+    }
+      vec.x = local_150.x + SIDECAMDISTANCE;
+      new_var56 = &obj->max;
+      vec.y = (((obj->min.y + (*new_var56).y) * obj->SCALE) * 0.5f) + obj->pos.y;
+      vec.z = obj->pos.z;
+      uVar27 = 0;
+      uVar28 = 0xc000;
+      do
+    {
+      local_150.x = obj->pos.x;
+    }
+    while (0);
+      local_150.y = vec.y;
+      local_150.z = vec.z;
+      break;
+
+  }
+
+  xrot_override = uVar27;
+  yrot_override = uVar28;
+  if ((PLAYERCOUNT != 0) && (obj->finished != 0))
+  {
     vec = GameCamera->pos;
   }
-  //fVar43 = GameCamera->blend_duration;
-  if (GameCamera->blend_time < GameCamera->blend_duration) {
-    GameCamera->blend_time += 0.01666667f;    
-    if (GameCamera->blend_duration > GameCamera->blend_time) {
-        GameCamera->blend_time = GameCamera->blend_duration;
+  if (GameCamera->blend_time < GameCamera->blend_duration)
+  {
+    GameCamera->blend_time += 0.01666667f;
+    if (GameCamera->blend_time > GameCamera->blend_duration)
+    {
+      GameCamera->blend_time = GameCamera->blend_duration;
     }
   }
-  if ((GameCamera->mode != oldmode) && (GameCamera->blend_time >= GameCamera->blend_duration)) {
+  if ((GameCamera->mode != oldmode) && (GameCamera->blend_time >= GameCamera->blend_duration))
+  {
     GameCamera->pos = vec;
     GameCamera->seek = local_140;
   }
-  else {
-    if (GameCamera->blend_time < GameCamera->blend_duration) {
+  else
+  {
+    if (GameCamera->blend_time < GameCamera->blend_duration)
+    {
       local_140.y = local_140.y * 0.25f;
     }
-    if (GameCamera->seek.x > local_140.x) {
+    if (GameCamera->seek.x > local_140.x)
+    {
       GameCamera->seek.x -= 0.0009999999f;
-      if (GameCamera->seek.x < local_140.x) {
+      if (GameCamera->seek.x < local_140.x)
+      {
         GameCamera->seek.x = local_140.x;
       }
-    } else if (GameCamera->seek.x < local_140.x) {
-            GameCamera->seek.x += 0.0009999999f;
-            if (GameCamera->seek.x > local_140.x) {
-                GameCamera->seek.x = local_140.x;
-            }
     }
-    if (GameCamera->seek.y > local_140.y) {
+    else
+      if (GameCamera->seek.x < local_140.x)
+    {
+      GameCamera->seek.x += 0.0009999999f;
+      if (GameCamera->seek.x > local_140.x)
+      {
+        GameCamera->seek.x = local_140.x;
+      }
+    }
+    if (GameCamera->seek.y > local_140.y)
+    {
       GameCamera->seek.y -= 0.0009999999f;
-      if (GameCamera->seek.y < local_140.y) {
+      if (GameCamera->seek.y < local_140.y)
+      {
         GameCamera->seek.y = local_140.y;
       }
-    } else if (GameCamera->seek.y < local_140.y) {
-            GameCamera->seek.y += 0.0009999999f;
-            if (GameCamera->seek.y > local_140.y) {
-                GameCamera->seek.y = local_140.y;
-            }
     }
-    if (GameCamera->seek.z > local_140.z) {
+    else
+      if (GameCamera->seek.y < local_140.y)
+    {
+      GameCamera->seek.y += 0.0009999999f;
+      if (GameCamera->seek.y > local_140.y)
+      {
+        GameCamera->seek.y = local_140.y;
+      }
+    }
+    if (GameCamera->seek.z > local_140.z)
+    {
       GameCamera->seek.z -= 0.0009999999f;
-      if (GameCamera->seek.z < local_140.z) {
+      if (GameCamera->seek.z < local_140.z)
+      {
         GameCamera->seek.z = local_140.z;
       }
-    } else if (GameCamera->seek.z < local_140.z) {
-            GameCamera->seek.z += 0.0009999999f;
-            if (GameCamera->seek.z > local_140.z) {
-               GameCamera->seek.z = local_140.z;
-            }
     }
-    if (GameCamera->blend_time < GameCamera->blend_duration) {
+    else
+      if (GameCamera->seek.z < local_140.z)
+    {
+      GameCamera->seek.z += 0.0009999999f;
+      if (GameCamera->seek.z > local_140.z)
+      {
+        GameCamera->seek.z = local_140.z;
+      }
+    }
+    if (GameCamera->blend_time < GameCamera->blend_duration)
+    {
       fVar3 = GameCamera->blend_time / GameCamera->blend_duration;
-      vec.x -= (GameCamera->oldpos.x) * fVar3 + GameCamera->oldpos.x;
-      vec.y -= (GameCamera->oldpos.y) * fVar3 + GameCamera->oldpos.y;
-      vec.z -= (GameCamera->oldpos.z) * fVar3 + GameCamera->oldpos.z;
+      new_var60 = vec.x;
+      new_var58 = &GameCamera->oldpos;
+      vec.x = new_var60;
+      new_var42 = (*(new_var12 = &GameCamera->oldpos)).x;
+      vec.x = ((vec.x - (*new_var58).x) * fVar3) + new_var42;
+      vec.y = ((vec.y - (*new_var58).y) * fVar3) + (*new_var12).y;
+      new_var11 = GameCamera;
+      vec.z = ((vec.z - new_var11->oldpos.z) * fVar3) + new_var11->oldpos.z;
     }
-    GameCamera->pos.x = (vec.x - GameCamera->pos.x) * GameCamera->seek.x + GameCamera->pos.x;
-    GameCamera->pos.y = (vec.y - GameCamera->pos.y) * GameCamera->seek.y + GameCamera->pos.y;
-    GameCamera->pos.z = (vec.z - GameCamera->pos.z) * GameCamera->seek.z + GameCamera->pos.z;
+    new_var11->pos.x = ((vec.x - new_var11->pos.x) * new_var11->seek.x) + new_var11->pos.x;
+    new_var11->pos.y = ((vec.y - new_var11->pos.y) * new_var11->seek.y) + new_var11->pos.y;
+    new_var11->pos.z = ((vec.z - new_var11->pos.z) * new_var11->seek.z) + new_var11->pos.z;
   }
-  GameCamera->newpos = vec;
-  if ((((GameCamera->mode == 5) || (GameCamera->mode == 9)) || (GameCamera->mode == 6)) ||
-     ((GameCamera->mode == 0x1a || (GameCamera->mode == 0x17)))) {
+  new_var11->newpos = vec;
+  if ((((new_var11->mode == 5) || (new_var11->mode == 9)) || (new_var11->mode == 6)) || ((new_var11->mode == 0x1a) || (new_var11->mode == 0x17)))
+  {
     iVar30 = 4;
-  } else {
+  }
+  else
+  {
     iVar30 = 0;
   }
-  if (iVar30 != 0) {
-    if (((Level == 0x10) || (Level == 0)) || ((Level == 0xb || (Level == 9)))) {
+  if (iVar30 != 0)
+  {
+    if (((Level == 0x10) || (Level == 0)) || ((Level == 0xb) || (Level == 9)))
+    {
       iVar30 = 0;
     }
-    if ((iVar30 != 0) && (vehicle == 0xa1)) {
+    fVar3 = iVar30 != 0;
+    if (fVar3 && (vehicle == 0xa1))
+    {
       iVar30 = 6;
     }
   }
-  dVar40 = (local_150.x - GameCamera->pos.x);
-  dVar42 = (local_150.y - GameCamera->pos.y);
-  dVar39 = (local_150.z - GameCamera->pos.z);
-  uVar31 = uVar27;
-  //bVar37 = (uVar27 == -1) ? 0 : 1;
-  if (uVar27 == -1) {
-    uVar31 = -(NuAtan2D(dVar42,NuFsqrt((dVar40 * dVar40 + (dVar39 * dVar39)))));
-    if (iVar30 != 0) {
+  dVar40 = local_150.x - new_var11->pos.x;
+  dVar42 = local_150.y;
+  dVar42 = dVar42 - new_var11->pos.y;
+  new_var33 = &new_var11->pos;
+  dVar39 = local_150.z - new_var11->pos.z;
+  uVar31 = xrot_override;
+  if (xrot_override == (-1))
+  {
+    uVar31 = -NuAtan2D(dVar42, NuFsqrt((dVar40 * dVar40) + (dVar39 * dVar39)));
+    if (iVar30 != 0)
+    {
       iVar13 = uVar31 * iVar30;
-      if (iVar13 < 0) {
+      if (iVar13 < 0)
+      {
         iVar13 = iVar13 + 7;
       }
       uVar31 = iVar13 >> 3;
     }
     uVar31 = uVar31 & 0xffff;
   }
-  if (GameCamera->blend_time < GameCamera->blend_duration) {
-    uVar31 = (s32)GameCamera->old_xrot + (s32)((RotDiff(GameCamera->old_xrot,(u16)uVar31)) * (GameCamera->blend_time / GameCamera->blend_duration));
+  if (new_var11->blend_time < new_var11->blend_duration)
+  {
+    uVar31 = ((s32) new_var11->old_xrot) + ((s32) (RotDiff(new_var11->old_xrot, (u16) uVar31) * (new_var11->blend_time / new_var11->blend_duration)));
   }
-  GameCamera->new_xrot = (u16)uVar31;
-  if ((iVar30 != 0) && ((Level == 3 || ((Level == 0x1d && (GameTimer.ftime < 3.0f)))))) {
+  new_var11->new_xrot = (u16) uVar31;
+  if ((iVar30 != 0) && ((Level == 3) || ((Level == 0x1d) && (GameTimer.ftime < 3.0f))))
+  {
     iVar30 = 0;
   }
-  uVar14 = uVar28;
-  if (uVar28 == -1) {
-    if ((GameCamera->mode == 0x1a) && (iVar30 != 0)) {
-      iVar13 = RotDiff(0,(u16)NuAtan2D(dVar40,dVar39));
+  new_var47 = 0;
+  uVar14 = yrot_override;
+  if (yrot_override == (-1))
+  {
+    if ((new_var11->mode == 0x1a) && (iVar30 != 0))
+    {
+      iVar13 = RotDiff(new_var47, new_var49 = (u16) NuAtan2D(dVar40, dVar39));
       iVar13 *= iVar30;
-      if (iVar13 < 0) {
+      if (iVar13 < new_var47)
+      {
         iVar13 = iVar13 + 7;
       }
       uVar14 = iVar13 >> 3;
     }
-    else if ((GameCamera->mode == 0x17) && (iVar30 != 0)) {
-      iVar34 = 0;
-      iVar13 = NuAtan2D(dVar40,dVar39);
+    else
+      if ((new_var11->mode == 0x17) && (iVar30 != new_var47))
+    {
+      iVar34 = new_var47;
+      iVar13 = NuAtan2D(dVar40, dVar39);
       dst = v000;
-      for(uVar14 = (s32)(SplTab[unaff_r14 + 9].spl)->len; iVar34 < uVar14; iVar34++) {
-          iVar17 = iVar34 * (SplTab[unaff_r14 + 9].spl)->ptsize;
-          p0 = (struct nuvec_s *)((SplTab[unaff_r14 + 9].spl)->pts + iVar17);
-          NuVecAdd(&dst,&dst,p0);
+      for (uVar14 = (s32) SplTab[unaff_r14 + 9].spl->len; iVar34 < uVar14; iVar34++)
+      {
+        iVar17 = iVar34 * SplTab[(new_var34 = unaff_r14) + 9].spl->ptsize;
+        new_var27 = SplTab[unaff_r14 + 9].spl;
+        p0 = (struct nuvec_s *) (new_var27->pts + iVar17);
+        NuVecAdd(&dst, &dst, p0);
       }
-      NuVecScale((1.0f / (uVar14)),&dst,&dst);
-      iVar34 = NuAtan2D(dst.x - GameCamera->pos.x,dst.z - GameCamera->pos.z);
-      iVar13 = RotDiff(iVar34,iVar13) * iVar30;
-      if (iVar13 < 0) {
+
+      NuVecScale(1.0f / uVar14, &dst, &dst);
+      iVar34 = NuAtan2D(dst.x - (*new_var33).x, dst.z - new_var11->pos.z);
+      iVar13 = RotDiff(iVar34, iVar13) * iVar30;
+      if (iVar13 < new_var47)
+      {
+        if (1)
+        {
+        }
         iVar13 += 7;
       }
       uVar14 = iVar34 + (iVar13 >> 3);
     }
-    else if (((GameCamera->mode == 5) && (iVar30 != 0)) && (cRPosCOUNT == 1)) {
-      uVar14 = NuAtan2D(dVar40,dVar39) & 0xffff;
-      if (unaff_r22 != -1) {
-        iVar13 = RotDiff((u16)unaff_r22,uVar14) * iVar30;
-        if (iVar13 < 0) {
-          iVar13 += 7;
+    else
+      if (((new_var11->mode == 5) && (iVar30 != new_var47)) && (cRPosCOUNT == 1))
+    {
+      uVar14 = 0xffff;
+      uVar14 = NuAtan2D(dVar40, dVar39) & uVar14;
+      new_var48 = -1;
+      a = unaff_r22;
+      {
+        iVar13 = RotDiff((u16) a, uVar14) * iVar30;
+        new_var11->new_yrot = (u16) uVar14;
+        if (iVar13 < new_var47)
+        {
+          iVar13 = iVar13 + 7;
         }
-        uVar14 = unaff_r22 + (iVar13 >> 3);
+        uVar14 = (iVar13 >> 3) + a;
       }
     }
-    else {
-      uVar14 = NuAtan2D(dVar40,dVar39);
+    else
+    {
+      uVar14 = NuAtan2D(dVar40, dVar39);
     }
   }
-  if (GameCamera->blend_time < GameCamera->blend_duration) {
-    iVar30 = ((s32)(RotDiff(GameCamera->old_yrot,(u16)uVar14)) * (GameCamera->blend_time / GameCamera->blend_duration));
-    uVar14 = GameCamera->old_yrot + iVar30;
+  if (new_var11->blend_time < new_var11->blend_duration)
+  {
+    iVar30 = new_var47;
+    iVar30 = ((s32) RotDiff(new_var11->old_yrot, (u16) uVar14)) * (new_var11->blend_time / new_var11->blend_duration);
+    uVar14 = new_var11->old_yrot + iVar30;
   }
-  GameCamera->new_yrot = (u16)uVar14;
-  iVar30 = 0;
-  if (GameCamera->blend_time < GameCamera->blend_duration) {
-    iVar30 = ((s32)(RotDiff(GameCamera->old_zrot,0)) * (GameCamera->blend_time / GameCamera->blend_duration));
-    iVar30 = GameCamera->old_zrot + iVar30;
+  if (new_var11->blend_time < new_var11->blend_duration)
+  {
+    new_var45 = new_var11->old_zrot;
+    iVar30 = ((s32) RotDiff(new_var45, new_var47)) * (new_var11->blend_time / new_var11->blend_duration);
+    iVar30 = new_var11->old_zrot + iVar30;
   }
-  GameCamera->new_zrot = (u16)iVar30;
-  if ((GameCamera->mode != oldmode) && (GameCamera->blend_time >= GameCamera->blend_duration)) {
-    GameCamera->xrot = uVar31;
-    GameCamera->yrot = uVar14;
-    GameCamera->zrot = iVar30;
+  new_var11->new_zrot = (u16) iVar30;
+  if ((new_var11->mode != oldmode) && (new_var11->blend_time >= new_var11->blend_duration))
+  {
+    new_var11->xrot = uVar31;
+    new_var11->yrot = uVar14;
+    new_var11->zrot = iVar30;
   }
-  else {
-    if (uVar27 != -1) {
-      GameCamera->xrot = uVar27;
+  else
+  {
+    if (xrot_override != new_var48)
+    {
+      new_var11->xrot = xrot_override;
     }
-    else {
-      GameCamera->xrot = SeekRot(GameCamera->xrot,(u16)uVar31,axSEEK);
+    else
+    {
+      new_var11->xrot = SeekRot(new_var11->xrot, (u16) uVar31, axSEEK);
     }
-    if (uVar28 != -1) {
-      GameCamera->yrot = uVar28;
+    if (yrot_override != new_var48)
+    {
+      new_var11->yrot = yrot_override;
+      iVar13 = -iVar13;
     }
-    else {
-      GameCamera->yrot = SeekRot(GameCamera->yrot,(u16)uVar14,aySEEK);
+    else
+    {
+      new_var11->yrot = SeekRot(new_var11->yrot, (u16) uVar14, aySEEK);
     }
-    if (iVar30 != -1) {
-      GameCamera->zrot = 0;
+    if (zrot_override != new_var48)
+    {
+      new_var11->zrot = zrot_override;
     }
-    else {
-      GameCamera->zrot = SeekRot(GameCamera->zrot,(u16)iVar30,5);
+    else
+    {
+      new_var11->zrot = SeekRot(new_var11->zrot, (u16) iVar30, 5);
     }
   }
-  a = GameCamera->xrot;
-  iVar30 = GameCamera->yrot;
-  if (GameCamera->judder > 0.0f) {
-    GameCamera->judder -= 0.01666667f;
-    if (GameCamera->judder > 0.0f) {
-      iVar13 = (s32)((GameCamera->judder + GameCamera->judder) * 256.0f);
-      if (gcc2_compiled__N102(GameCamera->judder,0.06666667f) < 0.03333334f) {
-        iVar13 = -iVar13;
+  a = new_var11->xrot;
+  iVar30 = new_var11->yrot;
+  if (new_var11->judder > 0.0f)
+  {
+    new_var11->judder -= 0.01666667f;
+    if (new_var11->judder > 0.0f)
+    {
+      iVar13 = (s32) ((new_var11->judder + new_var11->judder) * 256.0f);
+      if (gcc2_compiled__N102(new_var11->judder, 0.06666667f) < 0.03333334f)
+      {
       }
       a += iVar13;
-    } else {
-      GameCamera->judder = 0.0f;
+    }
+    else
+    {
+      new_var11->judder = 0.0f;
     }
   }
-  NuMtxSetIdentity(&GameCamera->m);
-  NuMtxTranslate(&GameCamera->m,&GameCamera->pos);
-  NuMtxPreRotateY(&GameCamera->m,iVar30);
-  NuMtxPreRotateX(&GameCamera->m,a);
-  NuMtxPreRotateZ(&GameCamera->m,GameCamera->zrot);
-Finish:
-  GameCamera->vX.x = GameCamera->m._00;
-  GameCamera->vX.y = GameCamera->m._01;
-  GameCamera->vX.z = GameCamera->m._02;
-  GameCamera->vY.x = GameCamera->m._10;
-  GameCamera->vY.y = GameCamera->m._11;
-  GameCamera->vY.z = GameCamera->m._12;
-  GameCamera->vZ.x = GameCamera->m._20;
-  GameCamera->vZ.y = GameCamera->m._21;
-  GameCamera->vZ.z = GameCamera->m._22;
-  pNuCam->mtx = GameCamera->m;
+  NuMtxSetIdentity((struct Mtx *) (&new_var11->m));
+  NuMtxTranslate((struct Mtx *) (&new_var11->m), &new_var11->pos);
+  NuMtxPreRotateY((struct Mtx *) (&new_var11->m), iVar30);
+  NuMtxPreRotateX((struct Mtx *) (&new_var11->m), a);
+  NuMtxPreRotateZ((struct Mtx *) (&new_var11->m), new_var11->zrot);
+  Finish:
+  new_var11->vX.x = new_var11->m._00;
+
+  new_var11->vX.y = new_var11->m._01;
+  new_var11->vX.z = new_var11->m._02;
+  new_var11->vY.x = new_var11->m._10;
+  new_var11->vY.y = new_var11->m._11;
+  new_var11->vY.z = new_var11->m._12;
+  new_var11->vZ.x = new_var11->m._20;
+  new_var11->vZ.y = new_var11->m._21;
+  new_var11->vZ.z = new_var11->m._22;
+  pNuCam->mtx = new_var11->m;
   NuCameraSet(pNuCam);
-  if (player->used != 0) {
-    GameCamera->hdg_to_player = NuAtan2D(player->obj.pos.x - GameCamera->pos.x,player->obj.pos.z - GameCamera->pos.z);
+  if (player->used != new_var47)
+  {
+    new_var11->hdg_to_player = NuAtan2D(player->obj.pos.x - (*new_var33).x, player->obj.pos.z - (*(&new_var11->pos)).z);
   }
+
 }
+
 
 //MATCH NGC
 void GetALONG(struct nuvec_s *pos,struct RPos_s *rpos,s32 iRAIL,s32 iALONG,s32 info) {
@@ -1811,6 +2240,7 @@ s32 FurtherBEHIND(s32 iRAIL0,s32 iALONG0,float fALONG0,s32 iRAIL1,s32 iALONG1,fl
     } 
   return 1;
 }
+
 
 //NGC MATCH
 void InitCameraTargetMaterial() {
