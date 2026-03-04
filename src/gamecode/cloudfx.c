@@ -1,6 +1,12 @@
 #include "main.h"
+#include "nu3dx/nugobj.h"
+#include "nu3dx/nutex.h"
 #include <stddef.h>
 #include <stdlib.h>
+
+s32 NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm, f32 **blendvals);
+int rand(void);
+void srand(unsigned int seed);
 
 float CLOUDRNG;
 float MAXCLOUDSIZE;
@@ -18,6 +24,7 @@ struct nuvec_s grvel;
 void cloudInit(union variptr_u *buffer,union variptr_u *buffend) {
   s32 i = 0;
   s32 stride;
+  char *ptr;
   struct nuvtx_ps_s *vtx;
   struct nutex_s *cloudtex;
   float rndm;
@@ -67,10 +74,12 @@ void cloudInit(union variptr_u *buffer,union variptr_u *buffend) {
   stride = NuVtxStride(cloudGobj->geom->vtxtype);
   vtx = (struct nuvtx_ps_s *)cloudGobj->geom->hVB;
   if (vtx == NULL) {
-    NuErrorProlog("C:/source/crashwoc/code/gamecode/cloudfx.c",0x4a)("cloudInit : Lock VB failed!");
+    ((error_func *(*)(char *, s32))NuErrorProlog)("C:/source/crashwoc/code/gamecode/cloudfx.c",0x4a)("cloudInit : Lock VB failed!");
   }
-  
-  for(i = 0; i < MAXCLOUDSIZE; i++, (s32)vtx += stride) {
+
+  ptr = (char *)vtx;
+  for(i = 0; i < MAXCLOUDSIZE; i++, ptr += stride) {
+      vtx = (struct nuvtx_ps_s *)ptr;
       rndm = NuRandFloat();
       (vtx->pnt).x = (rndm * CLOUDRNG + rndm * CLOUDRNG) - CLOUDRNG;
       rndm = NuRandFloat();
