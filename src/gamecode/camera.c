@@ -1121,7 +1121,10 @@ switch(GameCamera->mode) {
     //case 6:
     //case 7:
     //case 8:
-    case 9:
+    case 9: {
+            float ahead_target;
+            float ahead_step;
+
             if ((best_cRPos != NULL) && (cRPosCOUNT != 0)) {
               old_vertical = GameCamera->vertical;
               GameCamera->vertical = best_cRPos->vertical;
@@ -1159,8 +1162,8 @@ switch(GameCamera->mode) {
               iVar30 = 0;
               vec = v000;
               for(iVar30 = 0; iVar30 < cRPosCOUNT; iVar30++) {
-                  dVar40 = NuFabs(GameCamera->distance);
-                  MoveRailPosition(&dst,&cRPos[iVar30],dVar40,(GameCamera->distance >= 0.0f) ? 0 : 1);
+                  MoveRailPosition(&dst,&cRPos[iVar30],NuFabs(GameCamera->distance),
+                                   (GameCamera->distance >= 0.0f) ? 0 : 1);
                   if (best_cRPos == &cRPos[iVar30]) {
                     pVIS = Rail[cRPos[iVar30].iRAIL].pCAM;
                     iVIS = (s32)TempRPos.iALONG;
@@ -1199,29 +1202,29 @@ switch(GameCamera->mode) {
             local_150.x = obj->pos.x;
             local_150.z = obj->pos.z;
             local_150.y = (obj->min.y + obj->max.y) * obj->SCALE * 0.5f + obj->pos.y;
-            dVar40 = 0.0f;
-            dVar39 = 0.033333335f;
+            ahead_target = 0.0f;
+            ahead_step = 0.033333335f;
             if ((VEHICLECONTROL != 2) &&
                ((((VEHICLECONTROL != 1 || (obj->vehicle != 0x20)) && (best_cRPos != NULL))
                 && ((best_cRPos->mode & 0xc) != 0)))) {
               if (Level == 0x17) {
-                dVar40 = -2.0f;
+                ahead_target = -2.0f;
               } else {
                 iVar30 = RotDiff(obj->hdg,best_cRPos->angle);
-                dVar40 = NuTrigTable[(iVar30 + 0x4000) & 0xFFFF];
+                ahead_target = NuTrigTable[(iVar30 + 0x4000) & 0xFFFF];
               }
-              dVar39 = (NuFabs(dVar40) * 0.016666668f);
+              ahead_step = NuFabs(ahead_target) * 0.016666668f;
             }
-            if (GameCamera->ahead > dVar40) {
-              GameCamera->ahead -= dVar39;
-              if (GameCamera->ahead < dVar40) {
-                GameCamera->ahead = dVar40;
+            if (GameCamera->ahead > ahead_target) {
+              GameCamera->ahead -= ahead_step;
+              if (GameCamera->ahead < ahead_target) {
+                GameCamera->ahead = ahead_target;
               }
             }
-            else if (GameCamera->ahead < dVar40) {
-                GameCamera->ahead += dVar39;
-                if (GameCamera->ahead > dVar40) {
-                    GameCamera->ahead = dVar40;
+            else if (GameCamera->ahead < ahead_target) {
+                GameCamera->ahead += ahead_step;
+                if (GameCamera->ahead > ahead_target) {
+                    GameCamera->ahead = ahead_target;
                 }
             }
             if (GameCamera->ahead != 0.0f) {
@@ -1286,6 +1289,7 @@ switch(GameCamera->mode) {
                 local_150 = local_114;
               }
             }
+    }
     break;
     case 0x1f: {
         struct camera_cursor_s *cursor;
@@ -1733,11 +1737,11 @@ switch(GameCamera->mode) {
       GameCamera->judder = 0.0f;
     }
   }
-  NuMtxSetIdentity(&GameCamera->m);
-  NuMtxTranslate(&GameCamera->m,&GameCamera->pos);
-  NuMtxPreRotateY(&GameCamera->m,iVar30);
-  NuMtxPreRotateX(&GameCamera->m,a);
-  NuMtxPreRotateZ(&GameCamera->m,GameCamera->zrot);
+  NuMtxSetIdentity((struct Mtx *)&GameCamera->m);
+  NuMtxTranslate((struct Mtx *)&GameCamera->m,&GameCamera->pos);
+  NuMtxPreRotateY((struct Mtx *)&GameCamera->m,iVar30);
+  NuMtxPreRotateX((struct Mtx *)&GameCamera->m,a);
+  NuMtxPreRotateZ((struct Mtx *)&GameCamera->m,GameCamera->zrot);
 Finish:
   GameCamera->vX.x = GameCamera->m._00;
   GameCamera->vX.y = GameCamera->m._01;
