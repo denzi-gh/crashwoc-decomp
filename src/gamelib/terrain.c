@@ -6,6 +6,8 @@
 #define FLOAT_INTMAX 2147483647.0f
 #define POW2(x) ((x) * (x))
 
+char* strcat(char* dest, const char* src);
+
 //NGC MATCH
 s32 ReadTerrain(u8* name2, s32 situ, short** store, TERRSET* Tempterr) {
     OffFileType* sceneptr;
@@ -21,7 +23,6 @@ s32 ReadTerrain(u8* name2, s32 situ, short** store, TERRSET* Tempterr) {
     s32 a;
     s32 b;
     s32 fsize;
-
     strcpy(LevName, name2);
     strcat(LevName, ".ter");
     fsize = NuFileLoadBuffer(LevName, *store, 0x7fffffff);
