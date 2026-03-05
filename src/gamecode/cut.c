@@ -554,7 +554,7 @@ void AppCutSceneCharacterRender
 }
 
 //PS2
-static inline struct NUHGOBJ_s* FindCutChar(char* name)
+static struct NUHGOBJ_s* FindCutChar(char* name)
 {
     struct csc_s *chr;
     
@@ -583,11 +583,7 @@ static void AppCutSceneFindCharacters(struct NUGCUTSCENE_s *cutscene)
     {
         cutchar = &charSys->chars[i];
         cutchar->character = FindCutChar(cutchar->name);
-        if (cutchar->character == NULL) {
-            NuDebugMsgProlog(".\\cut.c", 0x292)
-                ("AppCutSceneFindCharacters: cannot fixup cutscene character <%s>", cutchar->name);
-        }
-        
+
         if ((cutchar->nlocators != 0) && ((s32)cutchar->locators < 0xff ))
         {
             cutchar->first_locator = (u8)cutchar->locators;

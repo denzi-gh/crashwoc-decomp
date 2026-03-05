@@ -155,6 +155,7 @@ void GS_TexSwizzleRGB5A3(s32 nWidth,s32 nHeight,s32 *TxtBuf,char *DstBuf) {
 
 //NGC MATCH
 void GS_TexCreateNU(enum nutextype_e Format,u32 width,u32 height,u8 *bits,u32 MipLevels,u32 RTFlag, s32 theirid) {
+    void *malloc();
     char *newbits;
     s32 i;
     struct _GS_TEXTURE* pTex;

@@ -1040,6 +1040,8 @@ float randyfloat(void)
 
 //NGC MATCH
 void NuRndrRectUV2di(s32 x,s32 y,s32 w,s32 h,float tx,float ty,float tw,float th,s32 col,struct numtl_s *mtl) {
+    void NuTexSetTexture();
+    void NuMtlSetRenderStates();
 
     struct nuvtx_tltc1_s vtx [7];
 

@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+void exit(int);
+
 s32 NuFileOpen(char* filename, s32 mode);
 void NuFileClose(fileHandle handle);
 s32 NuFileSeek(fileHandle handle, s32 offset, s32 origin);

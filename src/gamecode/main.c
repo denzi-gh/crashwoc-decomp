@@ -152,7 +152,7 @@ void InitTexAnimScripts(void)	//PS2
         if ((list->levbits & LBIT) != 0){
             prog = NuTexAnimProgReadScript(&ptr, list->path);
             if (prog == NULL) {
-                NuDebugMsgProlog(".\\main.c", 0x4ed)("", list->path);
+                NuDebugMsgProlog(".\\main.c", 0x4ed);
             }
         }
         list = list + 1;
