@@ -1,5 +1,6 @@
 // This file is original in C++, but I'll try and make it in C for consistency.
 #include "dxframe.h"
+#include <string.h>
 
 // If the backbuffer has been grabbed this frame.
 s32 backbuffer_grabbed_this_frame = 0;

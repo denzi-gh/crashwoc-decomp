@@ -44,9 +44,26 @@
 // Prototypes
 /**********************************************************/
 struct numtl_s* NuMtlCreate(s32 mode);
+void NuMtlInit(void);
+void NuMtlClose(void);
+struct numtl_s *NuMtlRead(s32 fh);
+void NuMtlDestroy(struct numtl_s* mtl);
+s32 NuMtlNum(void);
+struct numtl_s* NuMtlGet(s32 id);
+void NuMtlRemove(struct nusysmtl_s *sm);
+void NuMtlSetRenderStates(struct numtl_s *mtl);
 void NuMtlUpdate(struct numtl_s* mtl);
+void NuMtlAddRndrItem(struct numtl_s *mtl, struct nurndritem_s *item);
+void NuMtlAddFaceonItem(struct numtl_s *mtl,struct nurndritem_s *item);
+void NuMtlGet2dBuffer(struct numtl_s *mtl, enum nuprimtype_e pt, struct nugeom_s **geomptr, struct nuprim_s **primptr, union variptr_u *ptr, union variptr_u *end);
+void NuMtlGet3dBuffer(struct numtl_s *mtl, enum nuprimtype_e pt, struct nugeom_s **geomptr, struct nuprim_s **primptr, union variptr_u *ptr, union variptr_u *end);
+void NuMtlRender(void);
 static void NuMtlInsert(struct nusysmtl_s* sm);
 void NuMtlUVAnimation(struct nugobj_s* gobj);
+void NuTexSetTextureStates(struct numtl_s *mtl);
+void NuTexSetTexture(u32 stage,s32 tid);
+s32 NudxFw_SetRenderState(enum _D3DRENDERSTATETYPE state, u32 data);
+s32 NudxFw_SetTextureState(u32 stage, enum _D3DTEXTURESTAGESTATETYPE state, u32 data);
 /**********************************************************/
 
 // Size: 0x10
@@ -80,6 +97,8 @@ enum nustencilmode_e
     NUSTENCIL_REPLACE_NODRAW = 1,
     NUSTENCIL_NOSTENCIL = 0
 };
+
+void NuMtlSetStencilRender(enum nustencilmode_e mode);
 
 
 

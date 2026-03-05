@@ -8,7 +8,7 @@
 extern const struct numtx_s numtx_identity;
 extern s32 set_cutscenecammtx;
 extern struct numtx_s cutscenecammtx;
-error_func *NuDebugMsgProlog(char *file, s32 line, ...);
+error_func *NuDebugMsgProlog(char *file, s32 line);
 
 typedef void (*NuCutScnCharacterCreateDataFn)(struct NUGCUTCHAR_s *, struct instNUGCUTCHAR_s *, union variptr_u *);
 typedef void (*NuCutScnCharacterRndr)(struct instNUGCUTSCENE_s *, struct NUGCUTSCENE_s *, struct instNUGCUTCHAR_s *, struct NUGCUTCHAR_s *, float);

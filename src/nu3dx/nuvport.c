@@ -1,4 +1,6 @@
 #include "nuvport.h"
+
+void NuVpUpdate(void);
 #include "../system.h"
 
 static struct nuviewport_s vpDevice;

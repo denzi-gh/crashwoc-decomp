@@ -18,4 +18,12 @@
   800cc0f0 000004 800cc0f0  4 GS_SetTextureStageState 	Global
 */
 
+void GS_ChangeTextureStates(int id);
+void GS_TexSetWrapModes(int id,enum _GXTexWrapMode mode);
+void GS_TexSetWrapModet(int id,enum _GXTexWrapMode mode);
+void GS_TexSelect(enum _GXTevStageID stage,s32 NUID);
+void GS_SetTevBlend(enum _GXTevStageID id);
+void GS_SetTevModulate(enum _GXTevStageID id);
+void GS_SetTextureStageState(void);
+
 #endif

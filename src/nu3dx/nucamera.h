@@ -83,7 +83,7 @@ struct nucamera_s* NuCameraCreate();
 
 // NuCameraCalcFrustrumPlanes
 
-// NuCameraSet
+void NuCameraSet(struct nucamera_s *camera);
 
 // Get the camera matrix.
 struct numtx_s* NuCameraGetMtx();
@@ -100,12 +100,13 @@ struct numtx_s* NuCameraGetVPCSMtx();
 // NuCameraTransformView
 
 // NuCameraTransformClip
+void NuCameraTransformClip(struct nuvec_s *dest, struct nuvec_s *src, int n, const struct numtx_s *w);
 
-// NuCameraClipTestExtents
+s32 NuCameraClipTestExtents(struct nuvec_s* min, struct nuvec_s* max, const struct numtx_s* wm);
 
-// NuCameraClipTestBoundingSphere
+s32 NuCameraClipTestBoundingSphere(struct nuvec_s *v, float *radius, struct numtx_s *m);
 
-// NuCameraClipTestPoints
+s32 NuCameraClipTestPoints(struct nuvec_s *pnts, s32 n, struct numtx_s *wm);
 
 // Get the squared distance from the camera to the point.
 f32 NuCameraDistSqr(struct nuvec_s* point);
@@ -118,6 +119,6 @@ static void SetProjectionMatrix(struct numtx_s* mtx, float fFOV, float fAspect, 
 // Enable or disable camera clipping.
 void NuCameraEnableClipping(s32 enable);
 
-// NuCameraTransformScreenClip
+void NuCameraTransformScreenClip(struct nuvec_s *dest, struct nuvec_s *src, s32 n, struct numtx_s *w);
 
 #endif // !NUCAMERA_H

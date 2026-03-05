@@ -40,5 +40,6 @@ void NuSoundPlayChan(u32 track, u8 leftVol, u8 rightVol, u32 pitch, s32 channel)
 
 // If the given channel is currently playing.
 u32 NuSoundKeyStatus(s32 channel);
+s32 NuSoundStopStream(s32 SPUChannel);
 
 #endif // !NUSOUND_H

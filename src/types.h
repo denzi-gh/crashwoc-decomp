@@ -51,6 +51,10 @@ typedef signed int fxi;
 // Error function.
 typedef void error_func(char *msg,...);
 
+error_func* NuErrorProlog(char* file, s32 line);
+error_func* NuDebugMsgProlog(char* file, s32 line);
+void* memset(void* s, int c, unsigned int n);
+
 // File handle.
 typedef s32 fileHandle;
 

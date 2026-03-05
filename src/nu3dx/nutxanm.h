@@ -5,6 +5,10 @@
 #include "nu3dxtypes.h"
 #include "nucore/nucoretypes.h"
 
+struct nutexanim_s;
+struct nutexanimenv_s;
+struct nutexanimprog_s;
+
 /*
   800ba124 000064 800ba124  4 NuTexAnimProgSysInit 	Global
   800ba188 000054 800ba188  4 NuTexAnimProgFind 	Global
@@ -42,6 +46,13 @@
   800bb830 000074 800bb830  4 NuTexAnimRemoveList 	Global
   800bb8a4 000044 800bb8a4  4 NuTexAnimProcess 	Global
 */
+
+struct nutexanimprog_s* NuTexAnimProgFind(char *name);
+struct nutexanimenv_s* NuTexAnimEnvCreate(union variptr_u *buff, struct numtl_s *mtl, s16 *tids, struct nutexanimprog_s *p);
+struct nutexanimprog_s *NuTexAnimProgReadScript(union variptr_u *buff, char *fname);
+void NuTexAnimSetSignals(u32 sig);
+void NuTexAnimAddList(struct nutexanim_s *nta);
+void NuTexAnimRemoveList(struct nutexanim_s *nta);
 
 
 static u32 nta_sig_on;

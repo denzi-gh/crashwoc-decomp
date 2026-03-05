@@ -3,6 +3,8 @@
 #include "nulight.h"
 #include "../numath.h"
 #include "../system.h"
+#include "../nuraster/dxframe.h"
+#include <string.h>
 
 #define PI 3.1415927f
 #define MAX_FIXED_POINT 65536
@@ -161,7 +163,7 @@ s32 NuRndrGobj(struct nugobj_s* gobj, struct numtx_s* wm, f32** blendvals) {
         if (outcode != 0)  {
             rndrmtx_cnt--;
             if (rndrmtx_cnt < 0) {
-                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x282,"NuRndrGobj : No free matrix slots!");
+                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x282)("NuRndrGobj : No free matrix slots!");
             }
 
             mtx = rndrmtx;
@@ -208,7 +210,7 @@ s32 NuRndrGobj(struct nugobj_s* gobj, struct numtx_s* wm, f32** blendvals) {
                     }
                 }
                 else {
-                    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x2ba,"NuRndrGobj : No free geom item slots!");
+                    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x2ba)("NuRndrGobj : No free geom item slots!");
                 }
             }
 
@@ -229,7 +231,7 @@ s32 NuRndrGobj(struct nugobj_s* gobj, struct numtx_s* wm, f32** blendvals) {
                     NuMtlAddFaceonItem(facegeom->mtl, &item->hdr);
                 }
                 else {
-                    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x2dc,"NuRndrGobj : No free geom item slots!");
+                    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x2dc)("NuRndrGobj : No free geom item slots!");
                 }
             }
         }
@@ -283,7 +285,7 @@ s32 NuRndrGrassGobj(struct nugobj_s *gobj,struct numtx_s *wm,float **blendvals) 
             if (outcode != 0) {
                     rndrmtx_cnt--;
                     if (rndrmtx_cnt < 0) {
-                        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x316,"NuRndrGobj : No free matrix slots!");
+                        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x316)("NuRndrGobj : No free matrix slots!");
                     }
 
                     mtx = &rndrmtx[rndrmtx_cnt];
@@ -321,7 +323,7 @@ s32 NuRndrGrassGobj(struct nugobj_s *gobj,struct numtx_s *wm,float **blendvals) 
                                 }
                             }
                             else {
-                                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x344,"NuRndrGobj : No free geom item slots!");
+                                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x344)("NuRndrGobj : No free geom item slots!");
                             }
                         }
                     }
@@ -350,7 +352,7 @@ s32 NuRndrGobjSkin2(struct nugobj_s *gobj, int nummtx, struct numtx_s *wm, float
     if (outcode != 0) {
         rndrmtx_cnt = rndrmtx_cnt - nummtx;
         if (rndrmtx_cnt < 0) {
-            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x3c3,"NuRndrGobjSkin : No free matrix slots!");
+            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x3c3)("NuRndrGobjSkin : No free matrix slots!");
         }
         mtx = &rndrmtx[rndrmtx_cnt];
 
@@ -389,7 +391,7 @@ s32 NuRndrGobjSkin2(struct nugobj_s *gobj, int nummtx, struct numtx_s *wm, float
                 }
             }
             else {
-                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x3f3,"NuRndrGobjSkin : No free geom item slots!");
+                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x3f3)("NuRndrGobjSkin : No free geom item slots!");
             }
         }
     }
@@ -407,16 +409,16 @@ s32 NuRndrTri2d(struct nuvtx_tltc1_s *vtx,struct numtl_s *mtl)
 
   NuMtlGet2dBuffer(mtl,NUPT_NDXTRI,&geom,&prim,&superbuffer_ptr,&superbuffer_end);
   if (geom->vtxmax - geom->vtxcnt < 3) {
-    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5c0, "NuRndrTri2d : Vertex buffer full!");
+    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5c0)("NuRndrTri2d : Vertex buffer full!");
   }
 
   if ((s32)((u32)prim->max - (u32)prim->cnt) < 3) {
-    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5c2, "NuRndrTri2d : Primitive buffer full!");
+    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5c2)("NuRndrTri2d : Primitive buffer full!");
   }
   stride = NuVtxStride(geom->vtxtype);
   vb = (struct nuvtx_tltc1_s *)geom->hVB;
   if (vb == NULL) {
-    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5c9, "NuRndrTri2d : Lock VB failed!");
+    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5c9)("NuRndrTri2d : Lock VB failed!");
   }
 
   vb = (struct nuvtx_tltc1_s *)((s32)vb + stride * geom->vtxcnt);
@@ -447,15 +449,15 @@ s32 NuRndrTri3d(struct nuvtx_tc1_s *vtx,struct numtl_s *mtl,struct numtx_s *wm) 
 
     NuMtlGet3dBuffer(mtl,NUPT_TRI,&geom,&prim,&superbuffer_ptr,&superbuffer_end);
     if (geom->vtxmax - geom->vtxcnt < 3) {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f0, "NuRndrTri3d : Vertex buffer full!");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f0)("NuRndrTri3d : Vertex buffer full!");
     }
     if ((s32)((u32)prim->max - (u32)prim->cnt) < 3) {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f2, "NuRndrTri3d : Primitive buffer full!");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f2)("NuRndrTri3d : Primitive buffer full!");
     }
     stride = NuVtxStride(geom->vtxtype);
     vb = (struct nuvtx_tc1_s *)geom->hVB;
     if (vb == 0) {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f9, "NuRndrTri3d : Lock VB failed!");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x5f9)("NuRndrTri3d : Lock VB failed!");
     }
     vb = (struct nuvtx_tc1_s *)((s32)vb + stride * geom->vtxcnt);
     for(i = 0; i < 3; vtx++ , i++) {
@@ -507,12 +509,12 @@ s32 NuRndrStrip3d(struct nuvtx_tc1_s **vtx,struct numtl_s *mtl,struct numtx_s* w
     realpts = ix * 3;
     NuMtlGet3dBuffer(mtl, NUPT_TRI, &geom, &prim, &superbuffer_ptr, &superbuffer_end);
     if ((geom->vtxmax - geom->vtxcnt) < realpts) {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x643,"NuRndrStrip3d : Vertex buffer full!");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x643)("NuRndrStrip3d : Vertex buffer full!");
     }
     stride = NuVtxStride(geom->vtxtype);
     vb = (struct nuvtx_tc1_s *)geom->hVB;
     if (vb == 0) {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x64c,"NuRndrTri3d : Lock VB failed!");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c", 0x64c)("NuRndrTri3d : Lock VB failed!");
     }
     
     vb = (struct nuvtx_tc1_s *) ((s32)vb + stride * geom->vtxcnt);
@@ -736,7 +738,7 @@ static void NuRndrBlendedSkinItem(struct nugeomitem_s* item) {
       SkinnedShaderBlend(prim->cnt,prim->idxbuff);
     }
     else {
-      NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x1087,"NuRndrGeomItem : Unknown primitive type!");
+      NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x1087)("NuRndrGeomItem : Unknown primitive type!");
     }
   }
   DBTimerEnd(4);
@@ -761,7 +763,7 @@ void NuRndrSkinItem2(struct nugeomitem_s *item) {
             SkinnedShader((u32)prim->cnt,(short *)prim->idxbuff);
         }
         else if (prim->type != NUPT_NDXTRISTRIP) {
-            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0xf4e,"NuRndrGeomItem : Unknown primitive type!");
+            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0xf4e)("NuRndrGeomItem : Unknown primitive type!");
         }
     }
     DBTimerEnd(5);
@@ -806,7 +808,7 @@ void NuRndrItem(struct nurndritem_s *item) {
                         DBTimerEnd(0x22);
                         break;
                     default:
-                            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0xbff,"NuRndrItem : Unknown render item type!");
+                            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0xbff)("NuRndrItem : Unknown render item type!");
                         break;
         }
     return;
@@ -932,7 +934,7 @@ float * NuRndrCreateBlendShapeDeformerWeightsArray(s32 nweights) {
 
   rndr_blend_shape_deformer_wt_cnt -= nweights;
   if (rndr_blend_shape_deformer_wt_cnt < 0) {
-    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x11f4,"No free blend shape deformer weights");
+    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x11f4)("No free blend shape deformer weights");
   }
   else {
     return &rndr_blend_shape_deformer_wts[rndr_blend_shape_deformer_wt_cnt];
@@ -945,7 +947,7 @@ float ** NuRndrCreateBlendShapeDWAPointers(s32 size) {
 
   rndr_blend_shape_deformer_wt_ptrs_cnt -= size;
   if (rndr_blend_shape_deformer_wt_cnt < 0) {
-    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x1206,"No free blend shape deformer weights");
+    NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x1206)("No free blend shape deformer weights");
   }
   else {
     return &rndr_blend_shape_deformer_wt_ptrs[rndr_blend_shape_deformer_wt_ptrs_cnt];
@@ -1311,7 +1313,7 @@ int NuHGobjRndr(struct NUHGOBJ_s *hgobj,struct numtx_s *wm,int nlayers,short *la
 
     layer = nlayers + -1;
     if (layer >= hgobj->num_layers) {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x8a8,"assert");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nurndr.c",0x8a8)("assert");
     }
 
     for (i = 0; i < hgobj->num_joints; i++) {

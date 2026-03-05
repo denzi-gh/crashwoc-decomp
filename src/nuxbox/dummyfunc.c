@@ -45,6 +45,8 @@ s32 PadDemoEnd;
 f32 gravdiv = 1.0f;
 
 void *renderpsdma(s32 count, struct rdata_s *rdata, struct PartHeader_testretail *setup, struct numtl_s *mtl, float time, struct numtx_s *wm);
+void reverseendian32(char *value);
+void reverseendian16(short *value);
 
 int maxblend_cntcnt;
 int maxblend_cnt;

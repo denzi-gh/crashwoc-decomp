@@ -584,9 +584,8 @@ static void AppCutSceneFindCharacters(struct NUGCUTSCENE_s *cutscene)
         cutchar = &charSys->chars[i];
         cutchar->character = FindCutChar(cutchar->name);
         if (cutchar->character == NULL) {
-            NuDebugMsgProlog(".\\cut.c", 0x292,
-                             "AppCutSceneFindCharacters: cannot fixup cutscene character <%s>",
-                             cutchar->name);
+            NuDebugMsgProlog(".\\cut.c", 0x292)
+                ("AppCutSceneFindCharacters: cannot fixup cutscene character <%s>", cutchar->name);
         }
         
         if ((cutchar->nlocators != 0) && ((s32)cutchar->locators < 0xff ))

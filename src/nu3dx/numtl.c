@@ -1,4 +1,6 @@
 #include "numtl.h"
+#include "../numath.h"
+#include "../nuraster/dxframe.h"
 
 struct nusysmtl_s* smlist;
 struct numtl_s* numtl_white;
@@ -289,7 +291,7 @@ void NuMtlAddRndrItem(struct numtl_s *mtl,struct nurndritem_s *item) {
                             wateri->mtl = mtl;
                           }
                           else {
-                            NuErrorProlog("C:/source/crashwoc/code/nu3dx/numtl.c",0x2a7,
+                            NuErrorProlog("C:/source/crashwoc/code/nu3dx/numtl.c",0x2a7)(
                             "NuMtlAddRndrItem: Exceeded maximum number of water items in render queue!");
                           }
                           if (wateritem_cnt != 0) {

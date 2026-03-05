@@ -4,6 +4,13 @@
 #include "../types.h"
 #include "nu3dxtypes.h"
 
+struct nuanimcurve_s;
+struct nuanimcurveset_s;
+struct nuanimcurve2_s;
+struct nuanimtime_s;
+struct NUJOINTDATA_s;
+struct NUJOINTANIM_s;
+
 /*
   800a970c 00005c 800a970c  4 buildBitCountTable 	Global
   800a9768 0002c0 800a9768  4 NuAnimDataRead 	Global
@@ -34,6 +41,13 @@
 
 
 struct nuanimdata_s* NuAnimDataRead(s32 fh);
+struct nuanimdata2_s* NuAnimData2FixPtrs(struct nuanimdata2_s* animdata, s32 address_offset);
+f32 NuAnimCurveCalcVal2(struct nuanimcurve_s* animcurve, struct nuanimtime_s* atime);
+void NuAnimDataDestroy(struct nuanimdata_s *animdata);
+void NuAnimCurveSetApplyToJoint2(struct nuanimcurveset_s *animcurveset, struct nuanimtime_s *atime, struct NUJOINTDATA_s *jointdata, struct nuvec_s *scale, struct nuvec_s *parentscale, struct numtx_s *T, struct NUJOINTANIM_s *offset);
+void NuAnimCurveSetApplyToJointBasic(struct nuanimcurveset_s *animcurveset, struct nuanimtime_s *atime, struct NUJOINTDATA_s *jointdata, struct nuvec_s *scale, struct nuvec_s *parentscale, struct numtx_s *T, struct NUJOINTANIM_s *offset);
+void NuAnimCurve2SetApplyToJoint(struct nuanimcurve2_s* animcurveset, char* curveflags, char curvesetflags, struct nuanimtime_s* atime, struct NUJOINTDATA_s* jointdata, struct nuvec_s* scale, struct nuvec_s* parentscale, struct numtx_s* T, struct NUJOINTANIM_s* offset);
+void NuAnimCurve2SetApplyToJointBasic(struct nuanimcurve2_s *animcurveset, char* curveflags, char curvesetflags, struct nuanimtime_s *atime, struct NUJOINTDATA_s *jointdata, struct nuvec_s *scale, struct nuvec_s *parentscale, struct numtx_s* T, struct NUJOINTANIM_s* offset);
 
 
 // Size: 0x10
@@ -206,5 +220,7 @@ struct nuanimtime_s
     u32 time_mask;
     u32 time_byte;
 };
+
+float NuAnimCurve2CalcVal(struct nuanimcurve2_s* animcurve, struct nuanimtime_s* atime, enum NUANIMKEYTYPES_e keytype);
 
 #endif // !NUANIM_H

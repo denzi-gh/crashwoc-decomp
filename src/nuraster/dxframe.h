@@ -64,6 +64,14 @@ s32 CreateEnvironment(struct HWND__ *hwnd);
 s32 GetFullscreenBuffers(struct D3DDevice *lpdev);
 s32 CreateDirect3D(struct HWND__ *hwnd);
 s32 SetRenderTarget(u32 hRT);
+s32 NudxFw_SetRenderTargetSurface(struct D3DSurface *RenderTarget,struct D3DSurface *Zbuffer);
+s32 NudxFw_BeginScene(s32 hRT);
+s32 NudxFw_Clear(s32 flags,s32 colour,float depth);
+int NudxFw_FlipScreen(int hRT,int ss);
+s32 NudxFw_SetRenderState(enum _D3DRENDERSTATETYPE state, u32 data);
+s32 NudxFw_SetTextureState(u32 stage, enum _D3DTEXTURESTAGESTATETYPE state, u32 data);
+struct D3DSurface * NudxFw_GetBackBuffer(void);
+struct D3DSurface * NudxFw_GetZBuffer(void);
 
 // TODO FUNCTIONS!!!
 

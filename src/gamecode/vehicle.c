@@ -855,7 +855,7 @@ void MoveVehicle(struct creature_s *Cre, struct nupad_s *Pad) {
     MoveGlider();
     return;
   case 0x53:
-    MoveAtlas();
+    MoveAtlas(Cre, Pad);
     return;
   case 0x63:
     MovePlayerJeep();

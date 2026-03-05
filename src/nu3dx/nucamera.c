@@ -380,13 +380,13 @@ static void SetProjectionMatrix(struct numtx_s* mtx, float fFOV, float fAspect, 
     // Probably an assert macro
     if (NuFabs(h) > 0.01f) {
     } else {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nucamera.c",0x2a2, "assert");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nucamera.c",0x2a2)("assert");
 
     }
     w = fFOV * 0.5f;
     if (NuFabs(sin(w)) > 0.01f) {
     } else {
-        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nucamera.c",0x2a3, "assert");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nucamera.c",0x2a3)("assert");
     }
     dVar5 = (fFarPlane / h);
     Q = fAspect * (float)(cos(w) / sin(w));

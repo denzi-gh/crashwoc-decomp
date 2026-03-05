@@ -1,5 +1,7 @@
 #include "nutex.h"
 #include "../system.h"
+#include "../nuraster/dxframe.h"
+#include <string.h>
 
 struct nusystex_s tinfo[0x400];
 

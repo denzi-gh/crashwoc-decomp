@@ -16,5 +16,6 @@ struct __va_list_tag
 char Lockupbuffer1[256];
 char Lockupbuffer2[256];
 char Lockupbuffer3[256];
+void DisplayErrorAndLockup(char *nufile, int line, char *txt);
 
 #endif // !SYSERROR_H

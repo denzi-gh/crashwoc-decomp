@@ -21,6 +21,10 @@ s32 GS_EnableColorVertexFlag;
 s32 GS_EnableSpecularFlag;
 
 void MatReorder(struct _GSMATRIX *MatrixA);
+void GXSetChanAmbColor(enum _GXChannelID chan, struct _GXColor amb_color);
+void GXSetChanMatColor(enum _GXChannelID chan, struct _GXColor mat_color);
+void GXSetNumChans(unsigned char nChans);
+void GXInitLightPos(struct _GXLightObj* lt_obj, float x, float y, float z);
 
 //MATCH NGC
 void GS_SetMaterial(struct _D3DMATERIAL8 *pMaterial) {

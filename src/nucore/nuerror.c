@@ -3,6 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+s32 NuFileOpen(char* filename, s32 mode);
+void NuFileClose(fileHandle handle);
+s32 NuFileSeek(fileHandle handle, s32 offset, s32 origin);
+s32 NuFileWrite(fileHandle handle, const void* data, s32 size);
+
 char txt[0x400];
 char captxt[0x100];
 char* nufile;
@@ -78,7 +83,7 @@ static void NuDebugMsgFunction(char* msg, ...)
 	}
 }
 
-error_func* NuErrorProlog(char* file, s32 line, ...)
+error_func* NuErrorProlog(char* file, s32 line)
 {
 	nufile = file;
 	nuline = line;
@@ -86,7 +91,7 @@ error_func* NuErrorProlog(char* file, s32 line, ...)
 }
 
 // PS2 MATCH 
-error_func* NuDebugMsgProlog(char* file, s32 line, ...)
+error_func* NuDebugMsgProlog(char* file, s32 line)
 {
 	char* c;
 	char* p;
