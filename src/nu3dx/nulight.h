@@ -121,17 +121,17 @@ void GS_SetupFog(int type, float startz, float endz, u32 colour);
 
 // NuLightUpdate
 
-// NuLightGetLight
+struct nulight_s* NuLightGetLight(s32 index);
 
-// NuLightSetAmbientLight
+void NuLightSetAmbientLight(struct nuvec_s *c0);
 
-// NuLightSetDirectionalLights
+void NuLightSetDirectionalLights(struct nuvec_s *d0, struct nucolour3_s *c0, struct nuvec_s *d1, struct nucolour3_s *c1, struct nuvec_s *d2, struct nucolour3_s *c2);
 
-// NuLightStoreCurrentLights
+s32 NuLightStoreCurrentLights(void);
 
-// NuLightSetStoredLights
+void NuLightSetStoredLights(s32 index);
 
-// NuLightClearStoredLights
+void NuLightClearStoredLights(void);
 
 void NuLightFog(f32 pnear, f32 pfar, u32 colour, s32 blur, s32 haze);
 

@@ -246,7 +246,7 @@ void NuGobjCalcDims(struct nugobj_s *gobj) {
             stride = NuVtxStride(geom->vtxtype);
             ptr = (struct nuvtx_tc1_s *)geom->hVB;
             if (ptr == NULL) {
-                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c",0x13b,"NuGobjCalcDims : Lock VB failed!");
+                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c",0x13b)("NuGobjCalcDims : Lock VB failed!");
             }
             end = (char*)ptr + stride * geom->vtxcnt;
             for (; (char*)ptr < end; ptr = (struct nuvtx_tc1_s *)((int)ptr + stride)) {
@@ -286,7 +286,7 @@ void NuGobjCalcDims(struct nugobj_s *gobj) {
             stride = NuVtxStride(geom->vtxtype);
             ptr = (struct nuvtx_tc1_s *)geom->hVB;
             if (ptr == NULL) {
-                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c",0x157,"NuGobjCalcDims : Lock VB failed!");
+                NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c",0x157)("NuGobjCalcDims : Lock VB failed!");
             }
             end = (char*)ptr + stride * geom->vtxcnt;
             for (; (char*)ptr < end; ptr = (struct nuvtx_tc1_s *)((int)ptr + stride)) {
@@ -370,13 +370,13 @@ void NuGeomCreateVB(struct nugeom_s* geom, s32 vtxCount, enum nuvtxtype_e vtxTyp
         break;
     default:
         //"NuGeomCreateVB : Unknown vertex type!"
-        NuErrorProlog("OpenCrashWOC/code/nu3dx/nugobj.c", 441, "assert");
+        NuErrorProlog("OpenCrashWOC/code/nu3dx/nugobj.c", 441)("assert");
     }
 
     if (geom->hVB != 0)
     {
         //NuAssert(geom->vertex_buffer == NULL, "NuGeomCreateVB : geom already has VB");
-        NuErrorProlog("OpenCrashWOC/code/nu3dx/nugobj.c", 448, "assert");
+        NuErrorProlog("OpenCrashWOC/code/nu3dx/nugobj.c", 448)("assert");
     }
 
 

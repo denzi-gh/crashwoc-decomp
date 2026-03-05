@@ -1,5 +1,7 @@
 #include "nucvtskn.h"
 
+void NuPs2CreateSkinNorm(struct nugobj_s *gobj);
+
 
 struct primdef_s* primdefs_sorted;
 struct primdef_s* primdefs;
@@ -237,7 +239,7 @@ void NuPs2CreateSkinNorm(struct nugobj_s *gobj) {
         // Maximum amount of faces is 2200 (0x898)
         if ((p->cnt / 3) > 2200)
         {
-            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nucvtskn.c", 0x35e,"NuPs2CreateSkinNorm: TOO MANY PRIMS!");
+            NuErrorProlog("C:/source/crashwoc/code/nu3dx/nucvtskn.c", 0x35e)("NuPs2CreateSkinNorm: TOO MANY PRIMS!");
         }
 
         for (skinix = 0; skinix < p->cnt; skinix += 3)

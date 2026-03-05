@@ -45,6 +45,8 @@ s32 PadDemoEnd;
 f32 gravdiv = 1.0f;
 
 void *renderpsdma(s32 count, struct rdata_s *rdata, struct PartHeader_testretail *setup, struct numtl_s *mtl, float time, struct numtx_s *wm);
+void reverseendian32(char *value);
+void reverseendian16(short *value);
 
 int maxblend_cntcnt;
 int maxblend_cnt;
@@ -1038,6 +1040,8 @@ float randyfloat(void)
 
 //NGC MATCH
 void NuRndrRectUV2di(s32 x,s32 y,s32 w,s32 h,float tx,float ty,float tw,float th,s32 col,struct numtl_s *mtl) {
+    void NuTexSetTexture();
+    void NuMtlSetRenderStates();
 
     struct nuvtx_tltc1_s vtx [7];
 

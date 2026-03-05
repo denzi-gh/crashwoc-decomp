@@ -752,8 +752,8 @@ extern float WBTARGLIMX;
 extern float WBTARGLIMY;
 extern float WBTARGSCALE;
 extern float WeatherBossTargetAppearTime;
-extern float BEENHITBIGBUZZTIME;
-extern float BEENHITBIGRUMTIME;
+extern s32 BEENHITBIGBUZZTIME;
+extern s32 BEENHITBIGRUMTIME;
 extern float GLIDERHITSOUNDFREQUENCY;
 extern s32 GLIDERHITSOUNDOTHERID;
 extern short CRASHTEROIDSSATELLITEVOL;
@@ -855,7 +855,7 @@ void MoveVehicle(struct creature_s *Cre, struct nupad_s *Pad) {
     MoveGlider();
     return;
   case 0x53:
-    MoveAtlas();
+    MoveAtlas(Cre, Pad);
     return;
   case 0x63:
     MovePlayerJeep();

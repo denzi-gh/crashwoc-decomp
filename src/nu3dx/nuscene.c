@@ -1,6 +1,11 @@
 #include "nuscene.h"
 #include"nu3dxtypes.h"
 #include"types.h"
+#include "nuanim.h"
+#include "numtl.h"
+#include "nutex.h"
+#include "../numath.h"
+#include <string.h>
 
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
@@ -690,7 +695,7 @@ struct nuscene_s * NuSceneLoad(char *filename) {
             }
             else {
               NuMemFree(scene);
-              NuErrorProlog("C:/source/crashwoc/code/nu3dx/nuscene.c",0x718,"Baaaaad file <%s>",filename);
+              NuErrorProlog("C:/source/crashwoc/code/nu3dx/nuscene.c",0x718)("Baaaaad file <%s>",filename);
               return scene = NULL;
             }
               NuFileEndBlkRead(fh);

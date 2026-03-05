@@ -1,5 +1,6 @@
 #include "nuanim.h"
 #include "../system.h"
+#include "../numath.h"
 #include "../nucore/nuerror.h"
 #include "../nucore/nufile.h"
 #include "../nucore/numem.h"

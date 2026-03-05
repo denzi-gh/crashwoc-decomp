@@ -1,4 +1,6 @@
 #include "gstex.h"
+#include <stdlib.h>
+#include <string.h>
 
 #ifndef GX_PASSCLR
 #define GX_PASSCLR 4
@@ -11,6 +13,17 @@
 #ifndef GX_TG_TEX0
 #define GX_TG_TEX0 4
 #endif
+
+void GXInitTexObjWrapMode(struct _GXTexObj *obj, enum _GXTexWrapMode sm, enum _GXTexWrapMode tm);
+void GXLoadTexObj(struct _GXTexObj *obj, enum _GXTexMapID id);
+void GXSetNumTexGens(unsigned char nTexGens);
+void GXSetNumTevStages(unsigned char nStages);
+void GXSetTevOrder(enum _GXTevStageID stage, enum _GXTexCoordID coord, enum _GXTexMapID map, enum _GXChannelID color);
+void GXSetTevOp(enum _GXTevStageID id, int mode);
+void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b, GXTevColorArg c, GXTevColorArg d);
+void GXSetTevColorOp(int stage, int tevop, int tevbias, int tevscale, int clamp, int regid);
+void GXSetTevAlphaOp(int stage, int tevop, int tevbias, int tevscale, int clamp, int regid);
+void GXSetTexCoordGen2(int dst_coord, int func, int src_param, int mtx, int normalize, int postmtx);
 
 static unsigned int GS_TexInitFlag;
 unsigned int GS_TexAllocs;
@@ -26,6 +39,7 @@ extern s32 ShadowMatBodge;
 
 //NGC MATCH
 void GS_TexInit(void) {
+    void *malloc();
     s32 i;
 
     if (GS_TexInitFlag == 0) {
@@ -44,6 +58,7 @@ void GS_TexInit(void) {
 
 // Re-initialize textures.	//NGC MATCH
 void GS_TexReInit(void) {
+    void free();
     s32 i;
     struct _GS_TEXTURE *GSTex;
 
@@ -140,6 +155,7 @@ void GS_TexSwizzleRGB5A3(s32 nWidth,s32 nHeight,s32 *TxtBuf,char *DstBuf) {
 
 //NGC MATCH
 void GS_TexCreateNU(enum nutextype_e Format,u32 width,u32 height,u8 *bits,u32 MipLevels,u32 RTFlag, s32 theirid) {
+    void *malloc();
     char *newbits;
     s32 i;
     struct _GS_TEXTURE* pTex;

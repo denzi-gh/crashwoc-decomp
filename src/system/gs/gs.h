@@ -41,6 +41,15 @@ void GS_SetRenderState(int state, int data);
 void GS_SetBlendSrc(int enable,int src,int dest);
 void GS_SetZCompare(int enable,int upd,enum _GXCompare mode);
 void GS_LoadWorldMatrixIdentity(void);
+void GS_SetAlphaCompare(int Func, int Ref);
+void DisplayErrorAndLockup(char *nufile, int line, char *txt);
+void DEMOInitCaption(int font_type, int width, int height);
+void GXBegin(int type, enum _GXVtxFmt vtxfmt, u16 nverts);
+void GXColor4u8(u8 r, u8 g, u8 b, u8 a);
+void GXSetVtxDesc(enum _GXAttr attr, enum _GXAttrType type);
+void GXSetChanCtrl(enum _GXChannelID chan, unsigned char enable, enum _GXColorSrc amb_src, enum _GXColorSrc mat_src, unsigned long light_mask, enum _GXDiffuseFn diff_fn, enum _GXAttnFn attn_fn);
+void GXInitLightColor(struct _GXLightObj* lt_obj, struct _GXColor color);
+void GXLoadLightObjImm(struct _GXLightObj* lt_obj, enum _GXLightID light);
 
 char DebugText[256];
 

@@ -1,6 +1,9 @@
 #include "system/port.h"
 #include "gamecode/main.h"
 
+void ResetShaders(void);
+void SetupShaders(struct nugeomitem_s* geomitem);
+
 const struct nucolour3_s lbl_80123138 = {
     0.2f,
     0.2f,

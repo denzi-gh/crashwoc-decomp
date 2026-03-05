@@ -294,9 +294,8 @@ void DrawBug(void)
   ushort xrot;
   
   if ((Level == 0x1b) && (CRemap[174] != -1)) {
-    Draw3DCharacter(&bug_pos,xrot,(ushort *)(uint)bug_xrot,(ushort *)(bug_yrot - 0x8000 & 0xffff),
-                    1.25,(CharacterModel *)0x0,(int)(CModel + CRemap[174]),BugAnim.anim_time,
-                    (int)BugAnim.action);
+    Draw3DCharacter(&bug_pos, xrot, bug_xrot, (bug_yrot - 0x8000) & 0xffff,
+                    &CModel[CRemap[174]], BugAnim.action, 1.25f, BugAnim.anim_time, 0);
   }
   return;
 }

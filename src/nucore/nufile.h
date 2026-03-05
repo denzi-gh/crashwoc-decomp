@@ -134,7 +134,7 @@ s32 NuFileRead(fileHandle handle, void* data, s32 size);
 void NuStartLoadScreen(s32 screen);
 
 // Stop the loading screen.
-void NuStopLoadScreen();
+void NuStopLoadScreen(void);
 
 // Read a float from a file.
 f32 NuFileReadFloat(fileHandle handle);
@@ -156,5 +156,6 @@ s32 NuFileEndBlkRead(fileHandle handle);
 
 // Close a dat file.
 void NuDatClose(struct nudathdr_s* ndh);
+struct nudathdr_s* NuDatOpenMem(char* fname, union variptr_u* buff, s32* req);
 
 #endif // !NUFILE_H

@@ -276,4 +276,7 @@ extern s32 render_debris_enabled;
 extern s32 globalframes;
 extern float globaltime;
 
+void AddFiniteShotDebrisEffect(s32 *key,s32 type,struct nuvec_s *pos,s32 repeats);
+void AddVariableShotDebrisEffect(s32 type,struct nuvec_s *pos,s32 numdeb,short emitrotz,short emitroty);
+
 #endif // !DEBRIS_H

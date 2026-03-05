@@ -1,5 +1,7 @@
 #include "gs.h"
 #include "types.h"
+#include <stdlib.h>
+#include <string.h>
 
 #ifndef GX_AOP_OR
 #define GX_AOP_OR 1
@@ -22,6 +24,33 @@
 #ifndef GX_PERSPECTIVE
 #define GX_PERSPECTIVE 0
 #endif
+
+void GXSetAlphaCompare(enum _GXCompare comp0, u8 ref0, int op, enum _GXCompare comp1, u8 ref1);
+void GXSetCopyClear(struct _GXColor clearColor, u32 clearZ);
+void DEMOInitCaption(int font_type, int width, int height);
+void DEMOPrintf(short x, short y, short z, char *fmt);
+void GXSetNumChans(unsigned char nChans);
+void GXSetTevOrder(enum _GXTevStageID stage, enum _GXTexCoordID coord, enum _GXTexMapID map, enum _GXChannelID color);
+void GXSetTevOp(enum _GXTevStageID id, int mode);
+void GXSetNumTexGens(unsigned char nTexGens);
+void GXSetNumTevStages(unsigned char nStages);
+void GXSetScissor(u32 left, u32 top, u32 wd, u32 ht);
+void GXSetClipMode(int mode);
+void GXSetZCompLoc(u8 beforeTex);
+void GXSetAlphaUpdate(u8 update);
+void GXSetCullMode(int mode);
+void GXSetCurrentMtx(u32 mtx);
+void GXSetProjection(float **mtx, int type);
+void GXSetTexCopySrc(u16 left, u16 top, u16 width, u16 height);
+void GXSetTexCopyDst(u16 width, u16 height, int format, u8 mipmap);
+u32 GXGetTexBufferSize(u16 width, u16 height, int format, u8 mipmap, u8 maxlod);
+void GXCopyTex(void* dest, u8 clear);
+void GXLoadPosMtxImm(struct _GSMATRIX *mtx, u32 id);
+void PSMTXInverse(void *src, void *dst);
+void PSMTXTranspose(void *src, void *dst);
+void SetIdentity(struct _GSMATRIX *d);
+void MatMult(struct _GSMATRIX *MatrixA, struct _GSMATRIX *MatrixB);
+void MatReorder(struct _GSMATRIX *MatrixA);
 
 s32 GS_ForceNoAlphaCompareFlag;
 s32 GS_WorldMatIsIdentity;
@@ -168,7 +197,7 @@ void GS_RenderClear(unsigned long Flags,unsigned long Color,float Z,unsigned lon
       GS_BgColour.b = (Color);
     }
     bgcol = GS_BgColour;
-    GXSetCopyClear(&bgcol,0xffffff);
+    GXSetCopyClear(bgcol,0xffffff);
   }
   return;
 }
@@ -178,7 +207,7 @@ void GS_RenderClearBlack(void) {
   struct _GXColor clr_col;
   
   clr_col = GS_BgColourBlack;
-  GXSetCopyClear(&clr_col,0xffffff);
+  GXSetCopyClear(clr_col,0xffffff);
   return;
 }
 

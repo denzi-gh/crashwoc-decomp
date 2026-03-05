@@ -48,7 +48,7 @@ void* NuMemAlloc(s32 size) {
         // Attempt to allocate
         ret = malloc(size);
         if (ret == NULL) {
-            NuErrorProlog("OpenCrashWOC/code/nucore/numem.c", 57,"NuMemAlloc : Failed to alloc %d bytes!", size);
+            NuErrorProlog("OpenCrashWOC/code/nucore/numem.c", 57)("NuMemAlloc : Failed to alloc %d bytes!", size);
         }
 
         // Clear buffer

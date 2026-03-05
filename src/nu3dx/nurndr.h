@@ -147,6 +147,19 @@ struct setup_s
 /************************************************************/
 
 void NuRndrFlush(void);
+s32 NuRndrBeginScene(s32 hRT);
+void NuRndrSwapScreen(s32 hRT);
+void NuRndrItem(struct nurndritem_s *item);
+s32 NuRndrGobj(struct nugobj_s* gobj, struct numtx_s* wm, f32** blendvals);
+s32 NuRndrTri2d(struct nuvtx_tltc1_s *vtx, struct numtl_s *mtl);
+s32 NuRndrTri3d(struct nuvtx_tc1_s *vtx, struct numtl_s *mtl, struct numtx_s *wm);
+s32 NuRndrStrip3d(struct nuvtx_tc1_s **vtx, struct numtl_s *mtl, struct numtx_s* wm, s32 pts);
+void NuHGobjEval(struct NUHGOBJ_s *hgobj, s32 njanims, struct NUJOINTANIM_s *janim, struct numtx_s *mtx_array);
+s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hgobj,struct numtx_s *wm,int nlayers,short *layers,struct numtx_s *mtx_array,float **dwa);
+s32 NuHGobjRndrMtx(struct NUHGOBJ_s *hgobj,struct numtx_s *wm,s32 nlayers,short *layers,struct numtx_s *mtx_array);
+s32 NuRndrGScnObj(struct nugobj_s *gobj,struct numtx_s *wm);
+float * NuRndrCreateBlendShapeDeformerWeightsArray(s32 nweights);
+float ** NuRndrCreateBlendShapeDWAPointers(s32 size);
 
 
 struct numtl_s* nurndr_forced_mtl;

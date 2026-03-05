@@ -152,7 +152,7 @@ void InitTexAnimScripts(void)	//PS2
         if ((list->levbits & LBIT) != 0){
             prog = NuTexAnimProgReadScript(&ptr, list->path);
             if (prog == NULL) {
-                NuDebugMsgProlog(".\\main.c", 0x4ed, "", list->path);
+                NuDebugMsgProlog(".\\main.c", 0x4ed);
             }
         }
         list = list + 1;
@@ -598,7 +598,7 @@ void LoadLevel(void) {
     InitCreatures();
     ParticleReset();
     InitParticleSystem();
-    NuStopLoadScreen(0);
+    NuStopLoadScreen();
     if (Level == 7) {
         YTOL = 0.01166667f;
     } else {

@@ -1,5 +1,7 @@
 #include "nutex.h"
 #include "../system.h"
+#include "../nuraster/dxframe.h"
+#include <string.h>
 
 struct nusystex_s tinfo[0x400];
 
@@ -343,6 +345,8 @@ s32 NuTexReadBitmapMM(char *filename,s32 mmlevel,struct nutex_s *tex) {
 
 //MATCH GCN
 void NuTexSetTexture(u32 stage,s32 tid) {
+  void GS_TexSelect();
+
   if (tid > 0) {
     GS_TexSelect(stage,tid);
   }

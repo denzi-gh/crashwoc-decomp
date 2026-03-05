@@ -2,6 +2,7 @@
 #include "../system.h"
 
 struct numtl_s* DebMat[8]; //debris.c
+void NuDynamicWaterUpdate(s32 forceupdate);
 
 //NGC MATCH
 static s32 Powr2(s32 v) {

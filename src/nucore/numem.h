@@ -27,6 +27,7 @@ void NuMemSetExternal(union variptr_u* ptr, union variptr_u* end);
 
 // Allocate memory.
 void* NuMemAlloc(s32 size);
+void* NuScratchAlloc32(s32 size);
 
 // Free memory.
 void NuMemFree(void* data);

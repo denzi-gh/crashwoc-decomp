@@ -1,4 +1,8 @@
 #include "numtl.h"
+#include "../numath.h"
+#include "../nuraster/dxframe.h"
+
+u32 NuTexUnRef(s32 id);
 
 struct nusysmtl_s* smlist;
 struct numtl_s* numtl_white;
@@ -134,6 +138,7 @@ struct numtl_s* NuMtlCreate(s32 mode) {
 
 //NGC MATCH
 void NuMtlDestroy(struct numtl_s* mtl) {
+    void free_x();
     struct nusysmtl_s* sm = (struct nusysmtl_s*)mtl; // r31
     struct nusysmtl_s* next; //unused?
 
@@ -289,7 +294,7 @@ void NuMtlAddRndrItem(struct numtl_s *mtl,struct nurndritem_s *item) {
                             wateri->mtl = mtl;
                           }
                           else {
-                            NuErrorProlog("C:/source/crashwoc/code/nu3dx/numtl.c",0x2a7,
+                            NuErrorProlog("C:/source/crashwoc/code/nu3dx/numtl.c",0x2a7)(
                             "NuMtlAddRndrItem: Exceeded maximum number of water items in render queue!");
                           }
                           if (wateritem_cnt != 0) {
@@ -781,6 +786,7 @@ void NuMtlRender(void) {
 
 //NGC MATCH
 void NuMtlSetRenderStates(struct numtl_s *mtl) {
+    s32 NudxFw_SetRenderState();
     struct _D3DMATERIAL8 d3dmtl;
 
     d3dmtl.Diffuse.r = (mtl->diffuse).r;

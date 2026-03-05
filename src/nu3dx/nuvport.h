@@ -16,4 +16,6 @@
   800bbd54 00000c 800bbd54  4 NuVpGetCurrentViewport 	Global
 */
 
+void NuVpSetSize(float w, float h);
+
 #endif // !NUVPORT_H

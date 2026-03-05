@@ -172,6 +172,9 @@ struct cratesarray_s {
     f32 fALONG;
 };
 
+void NewMenu(struct cursor_s* cur, s32 menu, s32 y, s32 level);
+s32 NewCrateAnimation(CrateCube* crate, s32 type, s32 action, s32 random);
+
 extern char Chase[];
 extern s32 Hub;
 extern s32 HubLevel;
