@@ -39,6 +39,7 @@ extern s32 ShadowMatBodge;
 
 //NGC MATCH
 void GS_TexInit(void) {
+    void *malloc();
     s32 i;
 
     if (GS_TexInitFlag == 0) {
@@ -57,6 +58,7 @@ void GS_TexInit(void) {
 
 // Re-initialize textures.	//NGC MATCH
 void GS_TexReInit(void) {
+    void free();
     s32 i;
     struct _GS_TEXTURE *GSTex;
 
