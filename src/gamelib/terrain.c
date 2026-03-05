@@ -6,6 +6,8 @@
 #define FLOAT_INTMAX 2147483647.0f
 #define POW2(x) ((x) * (x))
 
+char* strcat(char* dest, const char* src);
+
 //NGC MATCH
 s32 ReadTerrain(u8* name2, s32 situ, short** store, TERRSET* Tempterr) {
     OffFileType* sceneptr;
@@ -21,7 +23,6 @@ s32 ReadTerrain(u8* name2, s32 situ, short** store, TERRSET* Tempterr) {
     s32 a;
     s32 b;
     s32 fsize;
-
     strcpy(LevName, name2);
     strcat(LevName, ".ter");
     fsize = NuFileLoadBuffer(LevName, *store, 0x7fffffff);
@@ -3297,6 +3298,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
     float ty;
     struct nuvec4_s pnts[4];
     struct nuvec4_s norm[2];
+    void *NuScratchAlloc32(s32 size);
 
     curscltemp = 0;
     platid = (s32)CurTerr->terr[TerI->hitterrno].info;
@@ -3305,7 +3307,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
              && (CurTerr->platdata[platid].oldmtx._31 == (CurTerr->platdata[platid].curmtx)->_31))
             && (CurTerr->platdata[platid].oldmtx._32 == (CurTerr->platdata[platid].curmtx)->_32))
         {
-            if ((s32)CurTerr->platdata[platid].status.rotate == 0) {
+            if ((s32)CurTerr->platdata[platid].status.hit == 0) {
                 return 1;
             }
             else if (((((CurTerr->platdata[platid].oldmtx._00 == (CurTerr->platdata[platid].curmtx)->_00)
@@ -3349,7 +3351,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
         TerI->curvel.y = (CurTerr->platdata[platid].oldmtx._31 - (CurTerr->platdata[platid].curmtx)->_31) * 1.3f
             * TerI->inyscale;
         TerI->curvel.z = (CurTerr->platdata[platid].oldmtx._32 - (CurTerr->platdata[platid].curmtx)->_32) * 1.3f;
-        if (CurTerr->platdata[platid].status.rotate != 0) {
+        if ((s32)CurTerr->platdata[platid].status.hit != 0) {
             tertempmat = CurTerr->platdata[platid].oldmtx;
             tertempvec4.x = TerITemp->curpos.x;
             tertempvec4.y = TerITemp->curpos.y * TerI->yscale;
@@ -3381,7 +3383,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
                 }
                 modp = (short *)ter;
             }
-        } else if ((s32)CurTerr->platdata[platid].status.rotate != 0) {
+        } else if ((s32)CurTerr->platdata[platid].status.hit != 0) {
             while (*(short*)modp >= 0) {
                 for (c = (s32) * ((short*)modp + 1), ter = (tertype*)(modp + 10); c > 0; c--) {
                     pnts[0].x = ter->pnts[0].x;
@@ -3637,6 +3639,7 @@ s32 PlatformChecks(s32 itterationcnt, struct nuvec_s* vvel) {
     float dist;
     float dist2;
     char flags[2];
+    void *NuScratchAlloc32(s32 size);
 
     if (TerI->PlatScanStart == NULL) {
         return itterationcnt;
@@ -3852,6 +3855,7 @@ s32 ShadowRoofInfo(void) {
 //NGC MATCH
 float NewShadow(struct nuvec_s *ppos,float size) {
   struct nuvec_s pos;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 2000000.0f;
@@ -3867,6 +3871,7 @@ float NewShadow(struct nuvec_s *ppos,float size) {
 //NGC MATCH
 float NewShadowMask(struct nuvec_s *ppos,float size,int extramask) {
   struct nuvec_s pos;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 2000000.0f;
@@ -3882,6 +3887,7 @@ float NewShadowMask(struct nuvec_s *ppos,float size,int extramask) {
 //NGC MATCH
 float NewShadowPlat(struct nuvec_s *ppos,float size) {
   struct nuvec_s pos;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 2000000.0f;
@@ -3897,6 +3903,7 @@ float NewShadowPlat(struct nuvec_s *ppos,float size) {
 //NGC MATCH
 float NewShadowMaskPlat(struct nuvec_s *ppos,float size,int extramask) {
   struct nuvec_s pos;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 2000000.0f;
@@ -3912,6 +3919,7 @@ float NewShadowMaskPlat(struct nuvec_s *ppos,float size,int extramask) {
 //NGC MATCH
 float NewShadowMaskPlatRot(struct nuvec_s *ppos,float size,int extramask) {
   struct nuvec_s v;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 2000000.0f;
@@ -4065,6 +4073,7 @@ void NewTerrainScaleY(
     s32 cnt;
     s32 normhit;
     s32 plathitcnt;
+    void *NuScratchAlloc32(s32 size);
 
     if (CurTerr == NULL) {
         return;
@@ -4195,6 +4204,7 @@ void RayImpact(struct nuvec_s *vvel)
 //NGC MATCH
 s32 NewRayCast(struct nuvec_s *vpos,struct nuvec_s *vvel,float size) {
   s32 hit;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 0;
@@ -4233,6 +4243,7 @@ s32 NewRayCast(struct nuvec_s *vpos,struct nuvec_s *vvel,float size) {
 //NGC MATCH
 s32 NewRayCastMask(struct nuvec_s* vpos, struct nuvec_s* vvel, float size, s32 mask) {
     s32 hit;
+    void *NuScratchAlloc32(s32 size);
 
     if (CurTerr == NULL) {
         return 0;
@@ -5286,6 +5297,7 @@ void ScanTerrainHandel(s32 extramask, short* Handel) {
 //NGC MATCH
 s32 NewRayCastSetHandel(struct nuvec_s *vpos,struct nuvec_s *vvel,float size,float timeadj,float impactadj,short *Handel) {
   s32 hit;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 0;
@@ -5663,6 +5675,7 @@ void ScanTerrainPlatform(s32 msituid, s32 extramask) {
 //NGC MATCH
 s32 NewRayCastPlatForm(struct nuvec_s *vpos,struct nuvec_s *vvel,float size,float timeadj,s32 platformid) {
   s32 hit;
+  void *NuScratchAlloc32(s32 size);
   
   if (CurTerr == NULL) {
     return 0;
