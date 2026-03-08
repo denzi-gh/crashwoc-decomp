@@ -486,8 +486,8 @@ void GS_TexSelect(enum _GXTevStageID stage,s32 NUID) {
 void GS_SetTevBlend(enum _GXTevStageID id)
 
 {
-  //GXSetTevColorIn(id,8,0xf,0xf,10);
-  //GXSetTevColorOp(id,0,0,0,1,0);
+  GXSetTevColorIn(id,8,0xf,0xf,10);
+  GXSetTevColorOp(id,0,0,0,1,0);
   return;
 }
 
