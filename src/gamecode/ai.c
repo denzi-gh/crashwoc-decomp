@@ -132,6 +132,14 @@ static s32 SpaceCrunch_Punch;
 static s32 SpaceCortex_Back;
 
 float FindNearestCreature(struct nuvec_s *pos, s32 character, struct nuvec_s *dst);
+void SetNewMaskStuff(s32 Indx, struct nuvec_s *Centre, struct nuvec_s *Off,
+                     float Rad, float AngInc, float TweenInc, s32 FixedNUVEC,
+                     s32 KillAtEnd, float Scale, float TiltX);
+void NuLgtArcLaser(s32 type, struct nuvec_s *start, struct nuvec_s *target,
+                   struct nuvec_s *lasdir, float sizew, float sizel,
+                   float sizewob, float arcsize, s32 col);
+void UpdateAnimPacket(struct CharacterModel *mod, struct anim_s *anim, float dt,
+                      float xz_distance);
 
 //NGC MATCH
 void ResetAI(void) {
@@ -269,6 +277,7 @@ void ResetDRAINDAMAGE(void) {
 //NGC MATCH
 void UpdateDRAINDAMAGE(void) {
   struct creature_s *crunch;
+  s32 a;
   u16 xrot;
   u16 yrot;
   struct nuvec_s pos;
@@ -301,8 +310,10 @@ void UpdateDRAINDAMAGE(void) {
         pos.z = crunch->obj.pos.z - (NuTrigTable[(crunch->obj.hdg + 0x4000) & 0xFFFF] * 3.0f);
       }
       NuVecSub(&v,&GameCam[0].pos,&drain_wawa_pos);
-      xrot = NuAtan2D(v.y,NuFsqrt(v.x * v.x + v.z * v.z));
-      yrot = NuAtan2D(v.x,v.z);
+      a = NuAtan2D(v.y,NuFsqrt(v.x * v.x + v.z * v.z));
+      xrot = (u16)a;
+      a = NuAtan2D(v.x,v.z);
+      yrot = (u16)a;
       if (drain_wawa_ok == 0) {
         drain_wawa_ok = 1;
         drain_wawa_pos = pos;
@@ -394,16 +405,16 @@ void ResetCRUNCHTIME(void) {
 
 //NGC 81.73%
 s32 UpdateCRUNCHTIME(void) {
-  struct creature_s *cortex;
-  struct creature_s *crunch;
   s32 extra_time;
   s32 i;
+  s32 j;
   s32 k;
   s32 active;
-  s32 uVar9;
-  s32 iVar13;
-  s32 iVar14;
+  s32 kill;
+  s32 jf;
   s32 old;
+  struct creature_s *cortex;
+  struct creature_s *crunch;
   struct nuvec_s *p0;
   struct nuvec_s *p1;
   struct nuvec_s *p2;
@@ -413,8 +424,11 @@ s32 UpdateCRUNCHTIME(void) {
   struct nuvec_s plrmid;
   unsigned short yrot;
   struct nuangvec_s ang;
+  float *p0zf;
+  float *p1zf;
   float fVar20;
-  
+  float fVar21;
+  float fVar22;
   jcrunch = 0;
   FindNearestCreature(&player->obj.pos,0x7f,NULL);
   if (temp_creature_i != -1) {
@@ -455,20 +469,20 @@ s32 UpdateCRUNCHTIME(void) {
   else {
     jcrunch = 0;
   }
-  i = -1;
+  j = -1;
   if (crunch != NULL) {
-    for(iVar14 = 0; iVar14 < 4; iVar14++) {
-      if (NuVecDistSqr(&crunch->obj.pos,&AITab[crunch->i_aitab].pos[iVar14 + 1],NULL) < 0.5f) {
-        i = iVar14;
-        iVar14 = 4;
+    for(i = 0; i < 4; i++) {
+      if (NuVecDistSqr(&crunch->obj.pos,&AITab[crunch->i_aitab].pos[i + 1],NULL) < 0.5f) {
+        j = i;
+        i = 4;
       }
     }
   }
-  for(iVar14 = 0; iVar14 < 4; iVar14++) {
-    if (ObjTab[iVar14 + 181].obj.special != NULL) {
-      *(struct nuvec_s *) &ObjTab[iVar14 + 181].obj.special->instance->mtx._30 = space_buttonpos[iVar14];
-      if (iVar14 == i) {
-        ObjTab[iVar14 + 181].obj.special->instance->mtx._31 -= 0.125f;
+  for(i = 0; i < 4; i++) {
+    if (ObjTab[i + 181].obj.special != NULL) {
+      *(struct nuvec_s *) &ObjTab[i + 181].obj.special->instance->mtx._30 = space_buttonpos[i];
+      if (i == j) {
+        ObjTab[i + 181].obj.special->instance->mtx._31 -= 0.125f;
       }
     }
   }
@@ -530,33 +544,36 @@ s32 UpdateCRUNCHTIME(void) {
     GameSfx(0x85,NULL);
   }
   if (fire_attack_wait != 0) {
-    i = fire_attack_on;
+    p2 = &fire_backpos[fire_attack_on];
+    p3 = &fire_backpos[fire_attack_on + 1];
+    p1 = &fire_frontpos[fire_attack_on];
+    p0 = &fire_frontpos[fire_attack_on + 1];
     fVar20 = qrand() * 0.000015259022f;
-    p1 = &fire_frontpos[i];
-    p2 = &fire_backpos[i];
-    p0 = &fire_frontpos[i + 1];
-    p3 = &fire_backpos[i + 1];
-    pos[0].x = p1->x + (p1->x - p1->x) * fVar20;
-    pos[0].y = p1->z + (p1->y - p1->y) * fVar20;
-    pos[0].z = p1->y + (p1->z - p1->z) * fVar20;
+    pos[0].x = p2->x + (p3->x - p2->x) * fVar20;
+    pos[0].y = p2->y + (p3->y - p2->y) * fVar20;
+    pos[0].z = p2->z + (p3->z - p2->z) * fVar20;
+    pos[1].x = p1->x + (p0->x - p1->x) * fVar20;
+    pos[1].y = p1->y + (p0->y - p1->y) * fVar20;
+    fVar22 = p1->z + (p0->z - p1->z) * fVar20;
+    pos[1].z = fVar22;
     fVar20 = qrand() * 0.000015259022f;
-    pos[1].x = pos[0].x + (((p3->x - p2->x) * fVar20 + p2->x) - pos[0].x) * fVar20;
-    pos[1].y = pos[0].y + (((p3->y - p2->y) * fVar20 + p2->y) - pos[0].y) * fVar20;
-    pos[1].z = pos[0].z + (((p3->z - p2->z) * fVar20 + p2->z) - pos[0].z) * fVar20;
-    if (fire_attack_wait > 0x3c) {
+    v.x = pos[1].x + (pos[0].x - pos[1].x) * fVar20;
+    v.y = pos[1].y + (pos[0].y - pos[1].y) * fVar20;
+    v.z = pos[1].z + (pos[0].z - pos[1].z) * fVar20;
+    if (fire_attack_wait > 0x3b) {
         for(i = 0; i < 2; i++) {
           AddGameDebrisRot(0x75,&v,1,0,0);
         }
     }
     else if (fire_attack_wait != 0) {
-      for(iVar13 = 0; iVar13 < 4; iVar13++) {
+      for(i = 0; i < 4; i++) {
         AddGameDebrisRot(0x76,&v,1,0,0);
       }
       if (player->obj.bot * player->obj.SCALE + player->obj.pos.y <
           crunchtime_arena_midpos.y + 1.0f) {
         if ((player->obj.pos.x - p2->x) * (p3->z - p2->z) + (player->obj.pos.z - p2->z) * (p2->x - p3->x) >= 0.0f) {
-          if ((player->obj.pos.x - p3->x) * (p1->z - p3->z) + (player->obj.pos.z - p3->z) * (p3->x - p1->x) >= 0.0f) {
-            if (((player->obj.pos.x - p1->x) * (p1->z - p1->z) + (player->obj.pos.z - p1->z) * (p1->x - p1->x) >= 0.0f) &&
+          if ((player->obj.pos.x - p3->x) * (p0->z - p3->z) + (player->obj.pos.z - p3->z) * (p3->x - p0->x) >= 0.0f) {
+            if (((player->obj.pos.x - p0->x) * (p1->z - p0->z) + (player->obj.pos.z - p0->z) * (p0->x - p1->x) >= 0.0f) &&
                ((player->obj.pos.x - p1->x) * (p2->z - p1->z) + (player->obj.pos.z - p1->z) * (p1->x - p2->x) >= 0.0f)) {
               KillPlayer(&player->obj,0xd);
             }
@@ -576,36 +593,33 @@ s32 UpdateCRUNCHTIME(void) {
   }
   p0 = weather_dstpos;
   p1 = weather_srcpos;
+  p2 = p0;
   active = 0;
-  for(iVar13 = 0; iVar13 < 9; iVar13++, p0++,p1++,p3++) {
-    if (weather_attack_on[iVar13] != 0) {
-      weather_attack_on[iVar13]--;
-      if (weather_attack_on[iVar13] == 0x3c) {
+  for(jf = 0; jf < 9; jf++, p0++,p1++,p2++) {
+    if (weather_attack_on[jf] != 0) {
+      weather_attack_on[jf]--;
+      if (weather_attack_on[jf] == 0x3c) {
         gamesfx_effect_volume = 0xbffd;
-        GameSfx(0x4b,p0);
+        GameSfx(0x4b,p2);
       }
-      if (weather_attack_on[iVar13] != 0) {
+      if (weather_attack_on[jf] != 0) {
         AddGameDebrisRot(0x78,p1,1,0,0);
         AddGameDebrisRot(0x78,p0,1,0,0);
       }
     }
-    if (weather_attack_on[iVar13] == 0x39 || weather_attack_on[iVar13] == 0x3a) {
-      if (!(NuVecDistSqr(&plrmid,&weather_srcpos[iVar13],NULL) < 0.110889f)) {
-        p2 = &weather_dstpos[iVar13];
-        if (!(NuVecDistSqr(&plrmid,p2,NULL) < 0.110889f)) {
-          yrot = NuAtan2D(weather_srcpos[iVar13].x - p2->x,weather_srcpos[iVar13].z - p2->z);
-          NuVecSub(pos,&plrmid,p2);
-          NuVecRotateY(pos,pos,-yrot);
-          if (!(NuFabs(pos[0].x) < 0.333f) || !(pos[0].y < 1.0f)) continue; //goto LAB_80004a20;
+    if ((weather_attack_on[jf] - 1) <= 0x3a) {
+      if (!(NuVecDistSqr(&plrmid,&weather_srcpos[jf],NULL) < 0.110889f)) {
+        if (!(NuVecDistSqr(&plrmid,&weather_dstpos[jf],NULL) < 0.110889f)) {
+          p1zf = &weather_srcpos[jf].z;
+          p0zf = &weather_dstpos[jf].z;
+          yrot = NuAtan2D(weather_srcpos[jf].x - weather_dstpos[jf].x,*p1zf - *p0zf);
+          NuVecSub(&pos[1],&plrmid,&weather_dstpos[jf]);
+          NuVecRotateY(&pos[1],&pos[1],-yrot);
+          if (!(NuFabs(pos[1].x) < 0.333f) || !(pos[1].y < 1.0f)) continue;
         }
       }
       active = 1;
     }
-//LAB_80004a20:
-    //p0++;
-    //p1++;
-    //p3++;
-    //i++;
   }
       if (weather_attack_wait != 0) {
         weather_attack_wait--;
@@ -614,30 +628,36 @@ s32 UpdateCRUNCHTIME(void) {
         KillPlayer(&player->obj,0xd);
       }
       if (cortex != NULL) {
-        pos[1].x = NuTrigTable[spaceuka_angle[0]] * 0.1f +
-                   (cortex->obj.pos.x - NuTrigTable[cortex->obj.hdg] * SPACEUKADIST);
-        pos[1].z = NuTrigTable[spaceuka_angle[2]] * 0.1f +
-                   (cortex->obj.pos.z - NuTrigTable[(cortex->obj.hdg + 0x4000) & 0xffff] * SPACEUKADIST);
-        pos[1].y = cortex->obj.top * cortex->obj.SCALE + cortex->obj.pos.y + SPACEUKAHACKY;
+        v.x = cortex->obj.pos.x - NuTrigTable[cortex->obj.hdg] * SPACEUKADIST;
+        v.z = cortex->obj.pos.z - NuTrigTable[(cortex->obj.hdg + 0x4000) & 0xffff] * SPACEUKADIST;
+        v.y = cortex->obj.top * cortex->obj.SCALE + cortex->obj.pos.y + SPACEUKAHACKY;
         if ((CrunchTime_Intro != 0) ||
            (((cortex->obj.anim.newaction != 0x1c && (cortex->obj.anim.newaction != 0x46)) &&
             ((cortex->obj.anim.action != 0x49 ||
              !(cortex->obj.anim.anim_time > SPACEUKAFRAMEHACK)))))) {
-          pos[1].y = pos[1].y + 2.0f;
+          v.y += 2.0f;
         }
-        pos[1].y += NuTrigTable[spaceuka_angle[1]] * 0.1f;
-        space_ukapos.x += (pos[1].x - space_ukapos.x) * 0.0333f;
-        space_ukapos.y += (pos[1].y - space_ukapos.y) * 0.0333f;
-        space_ukapos.z += (pos[1].z - space_ukapos.z) * 0.0333f;
+        v.x += NuTrigTable[spaceuka_angle[0]] * 0.1f;
+        v.y += NuTrigTable[spaceuka_angle[1]] * 0.1f;
+        v.z += NuTrigTable[spaceuka_angle[2]] * 0.1f;
+        fVar21 = 0.0333f;
+        space_ukapos.x = (v.x - space_ukapos.x) * fVar21 + space_ukapos.x;
+        space_ukapos.y = (v.y - space_ukapos.y) * fVar21 + space_ukapos.y;
+        space_ukapos.z = (v.z - space_ukapos.z) * fVar21 + space_ukapos.z;
       }
-      uVar9 = 0;
+      old = crunch_vulnerable;
+      kill = 0;
       if (crunch != NULL) {
-        uVar9 = (crunch->obj.anim.action == 0x73);
+        kill = (crunch->obj.anim.action == 0x73) ? 1 : 0;
       }
-      old = crunch_vulnerable == uVar9;
-      crunch_vulnerable = uVar9;
+      if (kill == old) {
+          old = 1;
+      } else {
+          old = 0;
+      }
+      crunch_vulnerable = kill;
       if (!old) {
-        if (uVar9 != 0) {
+        if (kill != 0) {
           v.x = 0.0f;
           v.y = 1.0f;
           v.z = 0.0f;
