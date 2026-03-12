@@ -1,0 +1,4 @@
+interface:
+  display_name: "Symbol Lookup"
+  short_description: "Lookup symbols, addresses, units, and DWARF clues"
+  default_prompt: "Use $symbol-lookup to locate a symbol, address, or owning unit in crashwoc-decomp."

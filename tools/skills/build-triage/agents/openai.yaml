@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Triage"
+  short_description: "Triage compile failures and objdiff regressions"
+  default_prompt: "Use $build-triage to diagnose build failures or matching regressions in crashwoc-decomp."

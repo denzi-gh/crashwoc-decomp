@@ -857,12 +857,29 @@ s32 FindAILabel(struct creatcmd_s *cmd,s32 i) {
 
 
 
-void FindGongBongerAnim(nuvec_s *pos,nuhspecial_s *obj)		//CHECK
+//NGC MATCH
+void FindGongBongerAnim(nuvec_s *pos,nuhspecial_s *obj)
 {
-  (void)pos;
-  if (obj != NULL) {
-    obj->scene = NULL;
-    obj->special = NULL;
+  nuhspecial_s gong[3];
+  float dx;
+  float dz;
+  s32 i;
+
+  memset(gong, 0, sizeof(gong));
+  if (world_scene[0] != NULL) {
+    NuSpecialFind(world_scene[0], gong, "gongbong1");
+    NuSpecialFind(world_scene[0], &gong[1], "gongbong2");
+    NuSpecialFind(world_scene[0], &gong[2], "gongbong3");
+    for (i = 0; i < 3; i++) {
+      if (gong[i].special != NULL) {
+        dz = gong[i].special->instance->mtx._32 - pos->z;
+        dx = gong[i].special->instance->mtx._30 - pos->x;
+        if ((dx * dx + dz * dz) < 25.0f) {
+          *obj = gong[i];
+          break;
+        }
+      }
+    }
   }
 }
 

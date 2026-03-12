@@ -1,0 +1,4 @@
+interface:
+  display_name: "Split Maintenance"
+  short_description: "Maintain splits.txt and generated config safely"
+  default_prompt: "Use $split-maintenance to update split ownership or import unit ranges safely."

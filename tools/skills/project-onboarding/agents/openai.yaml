@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Onboarding"
+  short_description: "Crash WOC repo workflow and build guidance"
+  default_prompt: "Use $project-onboarding to orient yourself in crashwoc-decomp before making changes."

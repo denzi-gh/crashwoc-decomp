@@ -1,0 +1,4 @@
+interface:
+  display_name: "Match Workflow"
+  short_description: "Guide symbol-to-verification matching work"
+  default_prompt: "Use $match-workflow to take a symbol from lookup through context, build, and verification."
