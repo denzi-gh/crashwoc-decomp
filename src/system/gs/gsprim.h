@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SYSTEM_GS_GSPRIM_H
+#define SYSTEM_GS_GSPRIM_H
+
 #include "system/gs.h"
 
 /*
@@ -26,3 +28,5 @@ extern s32 GS_EnableLightingFlag;
 extern s32 IsStencil;
 extern s32 ShadowBodge;
 extern s32 ShadowColour;
+
+#endif

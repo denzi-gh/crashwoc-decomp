@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SYSTEM_GC_FS_H
+#define SYSTEM_GC_FS_H
+
 #include "system.h"
 
 // Size: 0x20
@@ -38,6 +40,8 @@ struct DVDFileInfo
     unsigned int length; // Offset: 0x34, DWARF: 0xC18192
     void(*callback)(int, struct DVDFileInfo*); // Offset: 0x38, DWARF: 0xC181BB
 };
+
+#endif
 
 struct DVDFileInfo MAHFiles[20];
 struct DVDFileInfo MAHFile;

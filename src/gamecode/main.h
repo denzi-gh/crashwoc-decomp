@@ -278,7 +278,7 @@ void NuLstFree(struct nulnkhdr_s *lnk);
 struct nulnkhdr_s *NuLstGetNext(struct nulsthdr_s *hdr, struct nulnkhdr_s *lnk);
 
 // Size: 0x10
-static struct txanmlist
+struct txanmlist
 {
     char* path; // Offset: 0x0, DWARF: 0x40B859
     int pad1; // Offset: 0x4, DWARF: 0x40B883

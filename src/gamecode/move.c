@@ -60,6 +60,15 @@ struct tersurface_s {
   u32 flags;
 };
 
+struct tracklink_s {
+  s8 i_left;
+  s8 i_mid;
+  s8 i_right;
+  u8 start;
+  u8 end;
+  u8 flags;
+};
+
 struct tubinfo_s {
   struct creature_s *c;
   s8 track;
@@ -102,6 +111,15 @@ extern s32 TimeTrial;
 extern s32 i_ring;
 extern struct MoveInfo SwimmingMoveInfo;
 extern struct MoveInfo MechMoveInfo;
+extern struct tracklink_s *TubLink;
+extern struct tracklink_s TubLinkCR[9];
+extern struct tracklink_s TubLinkGT[16];
+extern struct nuvec_s TempTubPos;
+extern s32 MAXLAPS;
+extern s32 VEHICLECONTROL;
+extern s32 gamesfx_effect_volume;
+extern s32 temp_crate_type;
+extern f32 TUBBOOSTFRAMES;
 extern f32 FALLONCRATEBREAKSPEED;
 extern f32 SCOOTERJUMPPAUSEFRAME;
 extern f32 FIREENGINESTANDINGJUMPPAUSEFRAME;
@@ -109,11 +127,16 @@ extern f32 FIREENGINERUNNINGJUMPPAUSEFRAME;
 extern f32 MECHSTANDINGJUMPPAUSEFRAME;
 extern f32 MECHRUNNINGJUMPPAUSEFRAME;
 extern f32 SNOWBOARDJUMPPAUSEFRAME;
+extern s32 plr_tub_tilttarget;
+extern s32 plr_tub_tiltlock;
+extern s32 tub_overlap;
+
+void MoveTub(struct tubinfo_s *tub,s32 LEFT,s32 RIGHT);
 
 struct tubinfo_s PlrTub;
 struct tubinfo_s OppTub;
 struct creature_s OppTubCreature;
-struct PlrEvent move_PlrEvent[8] __asm__("PlrEvent");
+struct PlrEvent move_PlrEvent[8];
 unsigned long long gate_bits;
 s32 plr_gates;
 s32 GATECOUNT;
@@ -386,8 +409,8 @@ void AnimateCRASH(struct creature_s* plr) {
     if (((plr->obj.dead == 0) && (plr->spin != 0))
         && ((s32)plr->spin_frame < (s32)plr->spin_frames - (s32)plr->OnFootMoveInfo->SPINRESETFRAMES)) {
         pos.x = plr->obj.pos.x;
-        pos.y = (plr->obj.top - plr->obj.bot * plr->obj.SCALE) * ((float)qrand() * 0.000015259022f - 0.5f) +
-            (plr->obj.bot + plr->obj.top * plr->obj.SCALE * 0.5f) + plr->obj.pos.y;
+        pos.y = ((plr->obj.bot + plr->obj.top) * plr->obj.SCALE * 0.5f + plr->obj.pos.y) +
+            (plr->obj.top - plr->obj.bot) * plr->obj.SCALE * ((float)qrand() * 0.000015259022f - 0.5f);
         pos.z = plr->obj.pos.z;
         
         AddGameDebrisRot(0xb, &pos, 1, 0x4000, qrand());
@@ -703,6 +726,199 @@ void AnimateMINECART(struct creature_s *plr) {
     }
   }
   UpdateCharacterIdle(plr,0);
+  return;
+}
+
+void MoveMINETUB(struct creature_s *plr,struct nupad_s *pad) {
+  s32 LEFT;
+  s32 RIGHT;
+  struct nuvec_s v;
+  struct nuvec_s *p0;
+  struct nuvec_s *p1;
+  struct nuvec_s pos;
+  struct tubinfo_s *tub[3];
+  struct tubinfo_s *oldtub;
+  struct obj_s obj;
+  float f;
+  s32 sfx;
+  s32 old;
+  
+  TubLink = (Level == 0x1c) ? TubLinkGT : TubLinkCR;
+  OppTub.c->obj.oldpos = OppTub.c->obj.pos;
+  if ((Level == 0x1c) && (GameTimer.frame < 0xb4)) {
+    race_finished = 0;
+  }
+  if (PlrTub.boost != 0) {
+    PlrTub.boost--;
+  }
+  if (Level == 0x1c) {
+    if (((GameTimer.frame == 0) || (GameTimer.frame == 0x3c)) || (GameTimer.frame == 0x78)) {
+      sfx = 0x4f;
+    }
+    else {
+      sfx = -1;
+      if (GameTimer.frame == 0xb4) {
+        sfx = 0x4c;
+      }
+    }
+    if (sfx != -1) {
+      GameSfx(sfx,NULL);
+    }
+  }
+  RIGHT = 0;
+  LEFT = 0;
+  if ((plr->obj.pad_speed > 0.0f) &&
+     (Level != 0x1c || ((PlrTub.laps < MAXLAPS && (GameTimer.frame > 0xb3))))) {
+    if ((u16)(plr->obj.pad_angle + 0x6aaa) < 0x5555) {
+      LEFT = 1;
+    }
+    else if ((u32)(plr->obj.pad_angle - 0x1556) < 0x5555) {
+      RIGHT = 1;
+    }
+  }
+  old = plr_tub_tilt;
+  if ((s32)plr_tub_tilt < (s32)plr_tub_tilttarget) {
+    plr_tub_tilt++;
+  }
+  else if ((s32)plr_tub_tilt > (s32)plr_tub_tilttarget) {
+    plr_tub_tilt--;
+  }
+  if (plr_tub_tilt == plr_tub_tilttarget) {
+    if ((s32)plr_tub_tilt > 0) {
+      if (RIGHT == 0) {
+        plr_tub_tilttarget = 0;
+      }
+    }
+    else if ((s32)plr_tub_tilt < 0) {
+      if (LEFT == 0) {
+        plr_tub_tilttarget = 0;
+      }
+    }
+    else {
+      if (plr_tub_tilt != old) {
+        NewBuzz(&plr->rumble,6);
+      }
+      if (LEFT != 0) {
+        plr_tub_tilttarget = -plr_tub_tiltlock;
+      }
+      else if (RIGHT != 0) {
+        plr_tub_tilttarget = plr_tub_tiltlock;
+      }
+    }
+  }
+  RIGHT = 0;
+  LEFT = 0;
+  if ((s32)plr_tub_tilt < 0) {
+    LEFT = 1;
+  }
+  else if ((s32)plr_tub_tilt > 0) {
+    RIGHT = 1;
+  }
+  if ((s32)plr_tub_tilttarget < 0) {
+    plr->obj.direction = 3;
+  }
+  else if ((s32)plr_tub_tilttarget > 0) {
+    plr->obj.direction = 4;
+  }
+  else {
+    plr->obj.direction = 0;
+  }
+  MoveTub(&PlrTub,LEFT,RIGHT);
+  if (Level == 0x1c) {
+    VEHICLECONTROL = 1;
+    MoveTub(&OppTub,0,0);
+    v.x = OppTub.c->obj.pos.x - OppTub.c->obj.oldpos.x;
+    v.z = OppTub.c->obj.pos.z - OppTub.c->obj.oldpos.z;
+    OppTub.c->obj.xz_distance = NuFsqrt(v.x * v.x + v.z * v.z);
+    pos.x = OppTub.c->obj.pos.x;
+    pos.y = (OppTub.c->obj.bot + OppTub.c->obj.top) * OppTub.c->obj.SCALE * 0.5f + OppTub.c->obj.pos.y;
+    pos.z = OppTub.c->obj.pos.z;
+    GetLights(&pos,&OppTub.c->lights,1);
+    NuVecSub(&v,&OppTub.c->obj.pos,&PlrTub.c->obj.pos);
+    if (v.x * v.x + v.y * v.y + v.z * v.z < 1.0f) {
+      if (SplTab[0x3f].spl != NULL) {
+        p0 = (struct nuvec_s *)SplTab[0x3f].spl->pts;
+        p1 = (struct nuvec_s *)((s32)SplTab[0x3f].spl->pts + (s32)SplTab[0x3f].spl->ptsize);
+      }
+      else {
+        p1 = NULL;
+        p0 = NULL;
+      }
+      if (PlrTub.lap_position >= OppTub.lap_position) {
+        tub[0] = &PlrTub;
+        tub[1] = &OppTub;
+      }
+      else {
+        tub[0] = &OppTub;
+        tub[1] = &PlrTub;
+      }
+      if ((p0 != NULL) && (p1 != NULL)) {
+        oldtub = tub[0];
+        if (((tub[0]->c->obj.pos.x - p0->x) * (p1->z - p0->z) +
+            (tub[0]->c->obj.pos.z - p0->z) * (p0->x - p1->x) >= 0.0f) &&
+           !((tub[1]->c->obj.pos.x - p0->x) * (p1->z - p0->z) +
+             (tub[1]->c->obj.pos.z - p0->z) * (p0->x - p1->x) >= 0.0f)) {
+          tub[0] = tub[1];
+          tub[1] = tub[2] = oldtub;
+        }
+      }
+      tub[1]->stall = 1;
+      if (race_finished == 0) {
+        if (tub[0] == &PlrTub) {
+          PlrTub.boost = TUBBOOSTFRAMES;
+          NewRumble(&player->rumble,0xff);
+          NewBuzz(&player->rumble,0x3c);
+        }
+        else {
+          NewRumble(&player->rumble,0x7f);
+          NewBuzz(&player->rumble,0x1e);
+        }
+        if (tub_overlap == 0) {
+          GameSfx(0x70,&plr->obj.pos);
+          NewBuzz(&plr->rumble,0xc);
+        }
+      }
+      tub_overlap = 1;
+    }
+    else {
+      tub_overlap = 0;
+    }
+    if (race_finished == 0) {
+      if ((PlrTub.laps > OppTub.laps) ||
+         ((PlrTub.laps == OppTub.laps && (PlrTub.lap_position >= OppTub.lap_position)))) {
+        PlrTub.place = 1;
+        OppTub.place = 2;
+      }
+      else {
+        OppTub.place = 1;
+        PlrTub.place = 2;
+      }
+    }
+  }
+  obj = PlrTub.c->obj;
+  f = (float)plr_tub_tilt / plr_tub_tiltlock;
+  obj.pos.x += (NuTrigTable[(obj.hdg + 0x4000) & 0xffff] * 0.5f * 2.0f) * f;
+  obj.pos.y += (float)((plr_tub_tilt >= 0) ? plr_tub_tilt : -plr_tub_tilt) / plr_tub_tiltlock * 0.25f;
+  obj.pos.z += (NuTrigTable[(obj.hdg - 0x8000) & 0xffff] * 0.5f * 2.0f) * f;
+  TempTubPos = obj.pos;
+  HitItems(&obj);
+  if ((HitCrates(&obj,1) != 0) && ((temp_crate_type == 0x10 || (temp_crate_type == 9)))) {
+    KillPlayer(&plr->obj,0xb);
+  }
+  WumpaCollisions(&obj);
+  plr->obj.attack = 0;
+  if ((plr->obj.mask != NULL) && (plr->obj.mask->active > 2)) {
+    plr->obj.attack = 0x80;
+  }
+  plr->obj.attack |= 0x400;
+  if ((Level == 4) || (GameTimer.frame > 0xb3)) {
+    gamesfx_effect_volume = (s32)((plr->obj.xyz_distance * 32766.0f) / 0.083333336f);
+    if (gamesfx_effect_volume > 0x7ffe) {
+      gamesfx_effect_volume = 0x7ffe;
+    }
+    gamesfx_pitch = (s32)((plr->obj.xyz_distance * 25.0f) / 0.083333336f) + 0x32;
+    GameSfxLoop(0x73,&PlrTub.c->obj.pos);
+  }
   return;
 }
 

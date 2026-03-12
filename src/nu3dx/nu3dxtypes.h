@@ -252,7 +252,7 @@ typedef struct nufaceongeom_s
     struct nufaceon_s* faceons;
     int nfaceons;
     float faceon_radius;
-};
+} NUFACEONGEOM;
 
 // Size: 0x24
 struct nugeomitem_s

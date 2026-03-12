@@ -61,6 +61,9 @@ Use the repo-local helpers before manual grep when possible:
 - [`tools/ai_context.py`](tools/ai_context.py): one-stop context summary for a symbol or unit
   - `python tools/ai_context.py FindAIType`
   - `python tools/ai_context.py ai_1.c`
+- [`tools/ai_decompme_zip.py`](tools/ai_decompme_zip.py): inspect a decomp.me-style zip or extracted directory, resolve target functions to repo units, and surface insertion/missing-declaration hints
+  - `python tools/ai_decompme_zip.py C:/Users/denis/Downloads/MoveMINETUB.zip`
+  - `python tools/ai_decompme_zip.py path/to/extracted_bundle_dir`
 
 Existing helper scripts:
 
@@ -86,7 +89,7 @@ Repo-local skills live under `tools/skills/`:
 
 For decomp work, prefer this order:
 
-1. Resolve the target with `ai_lookup_symbol.py`, `ai_lookup_unit.py`, or `ai_context.py`.
+1. Resolve the target with `ai_lookup_symbol.py`, `ai_lookup_unit.py`, `ai_context.py`, or `ai_decompme_zip.py` for decomp.me-style bundles.
 2. Build the single object or context target when iterating.
 3. Keep changes narrow and match-focused.
 4. Run `ninja changes` before wrapping up if matching or tooling behavior may have changed.
