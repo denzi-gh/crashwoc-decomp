@@ -107,7 +107,6 @@ jobs:
                 after: safe(r.after),
               }));
 
-              // Wider than embed version because normal messages have more usable width
               const UNIT_W = 14;
               const ITEM_W = 30;
               const BYTES_W = 7;
@@ -165,23 +164,27 @@ jobs:
               const headerLines = [];
               const sections = [];
 
-              let insideAnyDetails = false;
+              let inDetailsBlock = false;
+              let seenFirstSection = false;
 
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
                 const trimmed = line.trim();
 
-                if (!insideAnyDetails && trimmed && !trimmed.startsWith("<details>")) {
-                  headerLines.push(line);
+                const summaryMatch = trimmed.match(/^<summary>\s*(.+?)\s*<\/summary>$/i);
+
+                if (!seenFirstSection && !inDetailsBlock && !summaryMatch && trimmed !== "<details>" && trimmed !== "</details>") {
+                  if (trimmed) headerLines.push(line.trimEnd());
                 }
 
                 if (trimmed === "<details>") {
-                  insideAnyDetails = true;
+                  inDetailsBlock = true;
                   continue;
                 }
 
-                const summaryMatch = trimmed.match(/^<summary>\s*(.+?)\s*<\/summary>$/i);
                 if (!summaryMatch) continue;
+
+                seenFirstSection = true;
 
                 const summaryText = summaryMatch[1].trim();
                 const rows = [];
@@ -192,22 +195,33 @@ jobs:
 
                   if (inner === "</details>") {
                     i = j;
-                    insideAnyDetails = false;
+                    inDetailsBlock = false;
                     break;
                   }
 
                   if (!inner) continue;
 
-                  if (inner.startsWith("| Unit |")) {
-                    inTable = true;
-                    continue;
-                  }
-
-                  if (inner.startsWith("| - |")) continue;
-
-                  if (inTable && inner.startsWith("|")) {
+                  if (inner.startsWith("|")) {
                     const parts = inner.split("|").map(s => s.trim()).filter(Boolean);
-                    if (parts.length >= 5) {
+
+                    const isHeaderRow =
+                      parts.length >= 5 &&
+                      parts[0].toLowerCase() === "unit";
+
+                    const isSeparatorRow =
+                      parts.length > 0 &&
+                      parts.every(p => /^-+$/.test(p));
+
+                    if (isHeaderRow) {
+                      inTable = true;
+                      continue;
+                    }
+
+                    if (isSeparatorRow) {
+                      continue;
+                    }
+
+                    if (inTable && parts.length >= 5) {
                       rows.push({
                         unit: safe(parts[0]),
                         item: safe(parts[1]),
@@ -226,10 +240,7 @@ jobs:
               }
 
               return {
-                headerText: headerLines
-                  .map(l => l.trimEnd())
-                  .filter(Boolean)
-                  .join("\n"),
+                headerText: headerLines.join("\n"),
                 sections
               };
             }
@@ -253,7 +264,6 @@ jobs:
                 text = rawComment.trim();
               }
 
-              // Discord message content limit is 2000, so split into chunks.
               const chunks = [];
               let remaining = text;
 
