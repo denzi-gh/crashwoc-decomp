@@ -10,7 +10,7 @@ on:
         description: "PR number to test"
         required: true
       dry_run:
-        description: "true = nur loggen, nichts an Discord senden"
+        description: "true = log only, do not send to Discord"
         required: true
         default: "true"
 
@@ -35,14 +35,14 @@ jobs:
           script: |
             const isManual = context.eventName === "workflow_dispatch";
 
-            const issue_number = isManual
+            const issueNumber = isManual
               ? Number(process.env.INPUT_PR_NUMBER)
               : context.payload.pull_request.number;
 
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: issue_number
+              pull_number: issueNumber
             }).then(r => r.data);
 
             const comments = await github.paginate(
@@ -50,7 +50,7 @@ jobs:
               {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number
+                issue_number: issueNumber
               }
             );
 
@@ -60,92 +60,46 @@ jobs:
             );
 
             if (botComments.length === 0) {
-              core.setFailed("Kein Bot-Kommentar gefunden.");
+              core.setFailed("No bot comment found.");
               return;
             }
 
-            const reportComment = [...botComments].reverse().find(c =>
-              (c.body || "").includes("Matched code:")
-            ) || botComments[botComments.length - 1];
+            const reportComment =
+              [...botComments].reverse().find(c => (c.body || "").includes("Matched code:")) ||
+              botComments[botComments.length - 1];
 
             const body = reportComment.body || "";
 
             if (!body.trim()) {
-              core.setFailed("Bot-Kommentar ist leer.");
+              core.setFailed("Bot comment is empty.");
               return;
+            }
+
+            function safe(value, fallback = "") {
+              return value == null ? fallback : String(value);
             }
 
             function firstMatch(regex, fallback = null) {
               return body.match(regex)?.[1]?.trim() ?? fallback;
             }
 
-            function extractSection(summaryEmoji, summaryText) {
-              const lines = body.split(/\r?\n/);
-              const start = lines.findIndex(
-                line => line.includes("<summary>") &&
-                        line.includes(summaryEmoji) &&
-                        line.includes(summaryText)
-              );
-
-              if (start === -1) return null;
-
-              const rows = [];
-              let inTable = false;
-
-              for (let i = start + 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-
-                if (line.startsWith("</details>")) break;
-                if (!line) continue;
-
-                if (line.startsWith("| Unit |")) {
-                  inTable = true;
-                  continue;
-                }
-
-                if (line.startsWith("| - |")) continue;
-
-                if (inTable && line.startsWith("|")) {
-                  const parts = line.split("|").map(s => s.trim()).filter(Boolean);
-                  if (parts.length >= 5) {
-                    rows.push({
-                      unit: parts[0],
-                      item: parts[1],
-                      bytes: parts[2],
-                      before: parts[3],
-                      after: parts[4],
-                    });
-                  }
-                }
-              }
-
-              const escapedEmoji = summaryEmoji.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-              const countMatch = body.match(
-                new RegExp(`${escapedEmoji}\\s*(\\d+)\\s+${summaryText}`, "i")
-              );
-
-              return {
-                count: countMatch?.[1] || "0",
-                rows
-              };
+            function pad(str, width) {
+              str = safe(str);
+              return str.length >= width ? str.slice(0, width) : str + " ".repeat(width - str.length);
             }
 
-            function pad(str, len) {
-              str = String(str);
-              return str.length >= len ? str.slice(0, len) : str + " ".repeat(len - str.length);
-            }
-
-            function tableToCodeBlock(rows) {
+            function renderTable(rows) {
               if (!rows.length) return "```text\n(none)\n```";
 
-              const unitW = Math.min(18, Math.max(4, ...rows.map(r => r.unit.length)));
-              const itemW = Math.min(24, Math.max(4, ...rows.map(r => r.item.length)));
-              const bytesW = Math.max(5, ...rows.map(r => r.bytes.length));
-              const beforeW = Math.max(6, ...rows.map(r => r.before.length));
-              const afterW = Math.max(6, ...rows.map(r => r.after.length));
+              const unitW = Math.min(20, Math.max(4, ...rows.map(r => r.unit.length), 4));
+              const itemW = Math.min(28, Math.max(4, ...rows.map(r => r.item.length), 4));
+              const bytesW = Math.max(5, ...rows.map(r => r.bytes.length), 5);
+              const beforeW = Math.max(6, ...rows.map(r => r.before.length), 6);
+              const afterW = Math.max(6, ...rows.map(r => r.after.length), 6);
 
               const header =
                 `${pad("Unit", unitW)}  ${pad("Item", itemW)}  ${pad("Bytes", bytesW)}  ${pad("Before", beforeW)}  ${pad("After", afterW)}`;
+
               const sep =
                 `${"-".repeat(unitW)}  ${"-".repeat(itemW)}  ${"-".repeat(bytesW)}  ${"-".repeat(beforeW)}  ${"-".repeat(afterW)}`;
 
@@ -155,93 +109,153 @@ jobs:
 
               let text = [header, sep, ...lines].join("\n");
 
-              if (text.length > 950) {
-                const trimmedLines = [];
+              // Keep room for Discord embed limits
+              if (text.length > 3500) {
+                const trimmed = [];
                 let total = header.length + sep.length + 2;
 
                 for (const line of lines) {
-                  if (total + line.length + 1 > 900) break;
-                  trimmedLines.push(line);
+                  if (total + line.length + 1 > 3300) break;
+                  trimmed.push(line);
                   total += line.length + 1;
                 }
 
-                const omitted = rows.length - trimmedLines.length;
+                const omitted = lines.length - trimmed.length;
                 text = [
                   header,
                   sep,
-                  ...trimmedLines,
+                  ...trimmed,
                   omitted > 0 ? `... (+${omitted} more rows)` : null
                 ].filter(Boolean).join("\n");
               }
 
-              return "```text\n" + text + "\n```";
+              return `\`\`\`text\n${text}\n\`\`\``;
             }
 
-            const reportName = firstMatch(/Report for\s+([^\n(]+)/i, pr.title);
-            const matchedCode = firstMatch(/Matched code:\s*([\d.]+%)/i, "?");
-            const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
-            const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
+            function parseDynamicSections(rawComment) {
+              const lines = rawComment.split(/\r?\n/);
+              const sections = [];
 
-            const newMatches = extractSection("✅", "new matches");
-            const improvements = extractSection("📈", "improvements in unmatched items");
-            const regressions =
-              extractSection("📉", "regression in an unmatched item") ||
-              extractSection("📉", "regressions in unmatched items") ||
-              extractSection("📉", "regression");
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
 
-            const fields = [
-              {
-                name: "Matched code",
-                value: `${matchedCode} (${deltaPercent}, ${deltaBytes})`,
-                inline: false
-              }
-            ];
+                const summaryMatch = line.match(/^<summary>\s*(.+?)\s*<\/summary>$/i);
+                if (!summaryMatch) continue;
 
-            if (newMatches && newMatches.rows.length) {
-              fields.push({
-                name: `✅ ${newMatches.count} new matches`,
-                value: tableToCodeBlock(newMatches.rows),
-                inline: false
-              });
-            }
+                const summaryText = summaryMatch[1].trim();
 
-            if (improvements && improvements.rows.length) {
-              fields.push({
-                name: `📈 ${improvements.count} improvements in unmatched items`,
-                value: tableToCodeBlock(improvements.rows),
-                inline: false
-              });
-            }
+                // Example:
+                // ✅ 7 new matches
+                // 📈 2 improvements in unmatched items
+                // 📉 1 regression in an unmatched item
+                // ❌ 3 matches broken
+                const countMatch = summaryText.match(/^(\S+)\s+(\d+)\s+(.+)$/);
 
-            if (regressions && regressions.rows.length) {
-              fields.push({
-                name: `📉 ${regressions.count} regression(s) in unmatched items`,
-                value: tableToCodeBlock(regressions.rows),
-                inline: false
-              });
-            }
+                const emoji = countMatch?.[1] || "";
+                const count = countMatch?.[2] || "0";
+                const label = countMatch?.[3] || summaryText;
 
-            const payload = {
-              username: "decomp-dev",
-              embeds: [
-                {
-                  title: `${isManual ? "[TEST] " : ""}Report for ${reportName}`,
-                  url: pr.html_url,
-                  description: pr.title,
-                  fields,
-                  footer: {
-                    text: `PR #${pr.number} • ${context.repo.owner}/${context.repo.repo}`
-                  },
-                  timestamp: new Date().toISOString()
+                const rows = [];
+                let inTable = false;
+
+                for (let j = i + 1; j < lines.length; j++) {
+                  const inner = lines[j].trim();
+
+                  if (inner.startsWith("</details>")) {
+                    i = j;
+                    break;
+                  }
+
+                  if (!inner) continue;
+
+                  if (inner.startsWith("| Unit |")) {
+                    inTable = true;
+                    continue;
+                  }
+
+                  if (inner.startsWith("| - |")) continue;
+
+                  if (inTable && inner.startsWith("|")) {
+                    const parts = inner.split("|").map(s => s.trim()).filter(Boolean);
+                    if (parts.length >= 5) {
+                      rows.push({
+                        unit: safe(parts[0]),
+                        item: safe(parts[1]),
+                        bytes: safe(parts[2]),
+                        before: safe(parts[3]),
+                        after: safe(parts[4]),
+                      });
+                    }
+                  }
                 }
-              ]
-            };
 
-            core.info("Discord payload:");
+                sections.push({
+                  emoji,
+                  count,
+                  label,
+                  rows
+                });
+              }
+
+              return sections;
+            }
+
+            function buildDiscordPayloadFromReport() {
+              const reportName = firstMatch(/Report for\s+([^\n(]+)/i, pr.title);
+              const matchedCode = firstMatch(/Matched code:\s*([\d.]+%)/i, "?");
+              const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
+              const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
+
+              const sections = parseDynamicSections(body);
+
+              const descriptionParts = sections.map(section => {
+                const titleLine = `${section.emoji} ${section.count} ${section.label}`.trim();
+                const tableBlock = renderTable(section.rows);
+                return `${titleLine}\n${tableBlock}`;
+              });
+
+              let description = descriptionParts.join("\n\n");
+              if (!description) {
+                description = "No parsed sections found.";
+              }
+
+              // Discord embed description max is limited; trim if needed
+              if (description.length > 4000) {
+                description = description.slice(0, 3950) + "\n\n...";
+              }
+
+              return {
+                content: "",
+                tts: false,
+                embeds: [
+                  {
+                    title: `Matched Code ${safe(matchedCode, "?")} (${safe(deltaPercent, "?")}, ${safe(deltaBytes, "?")})`,
+                    description,
+                    color: 2326507,
+                    fields: [],
+                    author: {
+                      name: `REPORT FOR ${safe(reportName, "UNKNOWN")}`
+                    },
+                    footer: {
+                      text: `PR #${safe(pr.number, "?")} • ${safe(`${context.repo.owner}/${context.repo.repo}`)}`
+                    }
+                  }
+                ],
+                components: [],
+                actions: {},
+                flags: 0,
+                username: "Crash: Wrath of Cortex Decompilation Report",
+                avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
+              };
+            }
+
+            const payload = buildDiscordPayloadFromReport();
+
+            core.info("Discord payload preview:");
             core.info(JSON.stringify(payload, null, 2));
 
             if (process.env.INPUT_DRY_RUN === "true") {
-              core.info("Dry run aktiv - nichts wird an Discord gesendet.");
+              core.info("Dry run enabled. Nothing will be sent to Discord.");
               return;
             }
 
