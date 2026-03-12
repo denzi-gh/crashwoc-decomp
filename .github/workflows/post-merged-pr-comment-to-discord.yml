@@ -79,53 +79,73 @@ jobs:
               return value == null ? fallback : String(value);
             }
 
-            function firstMatch(regex, fallback = null) {
-              return body.match(regex)?.[1]?.trim() ?? fallback;
+            function padRight(str, width) {
+              str = safe(str);
+              return str.length >= width ? str : str + " ".repeat(width - str.length);
             }
 
-            function pad(str, width) {
+            function padLeft(str, width) {
               str = safe(str);
-              return str.length >= width ? str.slice(0, width) : str + " ".repeat(width - str.length);
+              return str.length >= width ? str : " ".repeat(width - str.length) + str;
+            }
+
+            function truncate(str, width) {
+              str = safe(str);
+              if (str.length <= width) return str;
+              if (width <= 1) return str.slice(0, width);
+              return str.slice(0, width - 1) + "…";
             }
 
             function renderTable(rows) {
               if (!rows.length) return "```text\n(none)\n```";
 
-              const unitW = Math.min(20, Math.max(4, ...rows.map(r => r.unit.length), 4));
-              const itemW = Math.min(28, Math.max(4, ...rows.map(r => r.item.length), 4));
-              const bytesW = Math.max(5, ...rows.map(r => r.bytes.length), 5);
-              const beforeW = Math.max(6, ...rows.map(r => r.before.length), 6);
-              const afterW = Math.max(6, ...rows.map(r => r.after.length), 6);
+              const normalizedRows = rows.map(r => ({
+                unit: safe(r.unit),
+                item: safe(r.item),
+                bytes: safe(r.bytes),
+                before: safe(r.before),
+                after: safe(r.after),
+              }));
+
+              const UNIT_W = 18;
+              const ITEM_W = 30;
+              const BYTES_W = 7;
+              const BEFORE_W = 8;
+              const AFTER_W = 8;
 
               const header =
-                `${pad("Unit", unitW)}  ${pad("Item", itemW)}  ${pad("Bytes", bytesW)}  ${pad("Before", beforeW)}  ${pad("After", afterW)}`;
+                `${padRight("Unit", UNIT_W)} │ ${padRight("Item", ITEM_W)} │ ${padLeft("Bytes", BYTES_W)} │ ${padLeft("Before", BEFORE_W)} │ ${padLeft("After", AFTER_W)}`;
 
               const sep =
-                `${"-".repeat(unitW)}  ${"-".repeat(itemW)}  ${"-".repeat(bytesW)}  ${"-".repeat(beforeW)}  ${"-".repeat(afterW)}`;
+                `${"─".repeat(UNIT_W)}─┼─${"─".repeat(ITEM_W)}─┼─${"─".repeat(BYTES_W)}─┼─${"─".repeat(BEFORE_W)}─┼─${"─".repeat(AFTER_W)}`;
 
-              const lines = rows.map(r =>
-                `${pad(r.unit, unitW)}  ${pad(r.item, itemW)}  ${pad(r.bytes, bytesW)}  ${pad(r.before, beforeW)}  ${pad(r.after, afterW)}`
+              const lines = normalizedRows.map(r =>
+                `${padRight(truncate(r.unit, UNIT_W), UNIT_W)} │ ` +
+                `${padRight(truncate(r.item, ITEM_W), ITEM_W)} │ ` +
+                `${padLeft(truncate(r.bytes, BYTES_W), BYTES_W)} │ ` +
+                `${padLeft(truncate(r.before, BEFORE_W), BEFORE_W)} │ ` +
+                `${padLeft(truncate(r.after, AFTER_W), AFTER_W)}`
               );
 
               let text = [header, sep, ...lines].join("\n");
 
-              if (text.length > 900) {
+              if (text.length > 3400) {
                 const trimmed = [];
                 let total = header.length + sep.length + 2;
 
                 for (const line of lines) {
-                  if (total + line.length + 1 > 850) break;
+                  if (total + line.length + 1 > 3200) break;
                   trimmed.push(line);
                   total += line.length + 1;
                 }
 
                 const omitted = lines.length - trimmed.length;
-                text = [
-                  header,
-                  sep,
-                  ...trimmed,
-                  omitted > 0 ? `... (+${omitted} more rows)` : null
-                ].filter(Boolean).join("\n");
+                if (omitted > 0) {
+                  trimmed.push("");
+                  trimmed.push(`... (+${omitted} more rows)`);
+                }
+
+                text = [header, sep, ...trimmed].join("\n");
               }
 
               return `\`\`\`text\n${text}\n\`\`\``;
@@ -232,23 +252,14 @@ jobs:
               return description;
             }
 
-            const reportName = firstMatch(/Report for\s+([^\n(]+)/i, "UNKNOWN");
-            const matchedCode = firstMatch(/Matched code:\s*([\d.]+%)/i, "?");
-            const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
-            const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
-
             const payload = {
               content: "",
               tts: false,
               embeds: [
                 {
-                  title: `Matched Code ${safe(matchedCode)} (${safe(deltaPercent)}, ${safe(deltaBytes)})`,
                   description: buildDescription(body),
                   color: 2326507,
                   fields: [],
-                  author: {
-                    name: `REPORT FOR ${safe(reportName)}`
-                  },
                   footer: {
                     text: `PR #${safe(pr.number)} • ${context.repo.owner}/${context.repo.repo}`
                   }
