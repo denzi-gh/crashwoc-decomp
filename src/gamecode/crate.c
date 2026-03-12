@@ -181,6 +181,22 @@ extern s32 DRAWCRATESHADOWS;
 extern struct cammtx_s* pCam;
 extern struct objtab_s ObjTab[201];
 
+void AddKaboom(s32 type, struct nuvec_s *pos, float radius);
+void AddCrateExplosion(struct nuvec_s *pos, s32 type, s32 ang, struct nuvec_s *colbox);
+void AddPanelDebris(float x, float y, int type, float scale, int count);
+void JudderGameCamera(struct cammtx_s *cam, float time, struct nuvec_s *pos);
+s32 FurtherALONG(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
+s32 FurtherBEHIND(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
+void ResetCheckpoint(s32 iRAIL, s32 iALONG, float fALONG, struct nuvec_s *pos);
+void AddScreenWumpa(float x, float y, float z, s32 count);
+void AddTempWumpa(float x, float y, float z, CrateCube *crate, s32 n);
+void HopCratesAbove(float speed, CrateCubeGroup *group, CrateCube *crate);
+s32 InCrate(float x, float z, float top, float bot, float radius);
+s32 CrateOnTop(CrateCubeGroup *group, CrateCube *crate);
+float **NuHGobjEvalDwa(s32 layer, void *bollox, struct nuanimdata_s *vtxanim, float vtxtime);
+void NuHGobjEvalAnim(struct NUHGOBJ_s *hgobj, struct nuanimdata_s *animdata, float time, s32 njanims,
+                     struct NUJOINTANIM_s *janim, struct numtx_s *mtx_array);
+
 //NGC MATCH
 void ResetCrateType2(CrateCube *crt) {
   crt->type2 = crt->type1;
@@ -205,7 +221,7 @@ void InitCrates(void) {
   CRATECOUNT = 0;
   CRATEGROUPCOUNT = 0;
   if (crate_scene != NULL) {
-    for(iVar2 = 0; iVar2 < 28; iVar2++) {
+    for(iVar2 = 0; iVar2 < 29; iVar2++) {
       NuSpecialFind(crate_scene,(struct nuhspecial_s* )&crate_list[iVar2].obj,crate_list[iVar2].name);
     }
   }
@@ -253,7 +269,7 @@ s32 ReadCrateData(void) {
     handle = NuMemFileOpen(fbuff,NuFileLoadBuffer(tbuf,fbuff,0x7fffffff),NUFILE_READ);
     if (handle != 0) {
       version = NuFileReadInt(handle);
-      if (version > 5) {
+      if (version > 4) {
           NuFileClose(handle);
           return 0;
       }

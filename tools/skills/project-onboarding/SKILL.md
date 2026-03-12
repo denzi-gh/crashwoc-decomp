@@ -20,6 +20,11 @@ Use these commands as the default local workflow:
 - `ninja progress`
 - `ninja baseline`
 - `ninja changes`
+- `python tools/changes_fmt.py build/GCBE7D/report_changes.json`
+
+For automation, never use interactive `objdiff-cli diff` sessions. Prefer the
+report-based commands above, or direct `objdiff-cli report changes ... -o <file>`
+when you need raw objdiff output.
 
 For narrow iteration, build the single object or context target instead of the whole project:
 

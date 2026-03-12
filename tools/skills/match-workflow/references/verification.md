@@ -17,7 +17,11 @@ ninja build/GCBE7D/src/<unit>.o
 python tools/ai_lookup_symbol.py <symbol>
 ninja baseline
 ninja changes
+python tools/changes_fmt.py build/GCBE7D/report_changes.json
 ```
+
+Use the file-producing report commands above for automation. Avoid interactive
+`objdiff-cli diff` sessions because they stay open and keep refreshing.
 
 ## Exit Criteria
 

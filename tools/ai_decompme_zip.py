@@ -18,6 +18,7 @@ from ai_common import (
     format_hex,
     format_percent,
     format_size,
+    suggest_regression_commands,
 )
 
 
@@ -386,7 +387,7 @@ def iter_commands_for_resolved_functions(resolved_functions: Iterable[dict[str, 
             if unit.object_path:
                 commands.append(f"ninja {unit.object_path}")
             commands.append(f"python tools/ai_lookup_unit.py {unit.normalized_name}")
-        commands.append("ninja changes")
+        commands.extend(suggest_regression_commands())
         for command in commands:
             if command in seen:
                 continue
