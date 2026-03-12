@@ -22,6 +22,7 @@
 - `../../../tools/ai_lookup_symbol.py`
 - `../../../tools/ai_lookup_unit.py`
 - `../../../tools/ai_context.py`
+- `../../../tools/ai_decompme_zip.py`
 - `../../../tools/triage_build.py`
 - `../../../tools/add_split_from_backup.py`
 - `../../../tools/generate_seed_splits.py`

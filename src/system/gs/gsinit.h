@@ -1,4 +1,6 @@
-#pragma once
+#ifndef SYSTEM_GS_GSINIT_H
+#define SYSTEM_GS_GSINIT_H
+
 #include "system/gs.h"
 
 struct _GS_VERTEXTL* TVertices;
@@ -11,3 +13,5 @@ struct _GS_VECTOR3* GS_BlendSource;
 s32 MaxSkinVerts;
 s32 SkinLights;
 float c_one;
+
+#endif

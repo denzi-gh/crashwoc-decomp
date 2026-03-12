@@ -1,7 +1,6 @@
 #ifndef SYSTEM_GS_GS_H
 #define SYSTEM_GS_GS_H
 
-#pragma once
 #include "stdio.h"
 #include "nuraster/nurastertypes.h"
 #include"system/gxtype.h"

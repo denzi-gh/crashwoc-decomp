@@ -12,7 +12,7 @@ s32 font3d_initialised;
 typedef struct nuhspecial_s {
     struct nugscn_s* scene; // Offset: 0x0, DWARF: 0x840B
     struct nuspecial_s* special; // Offset: 0x4, DWARF: 0x8438
-};
+} NUHSPECIAL;
 
 
 typedef struct {

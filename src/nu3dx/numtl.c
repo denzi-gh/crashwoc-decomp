@@ -15,8 +15,6 @@ s32 faceonitem_cnt;
 s32 dynamic_glass_item_cnt;
 f32 sinetime_246;
 struct nustenitem_s stenitem[512];
-struct nufaceonitem_s* faceonmtllist[50];
-struct nufaceonitem_s faceonitem[512];
 struct nuotitem_s dynamic_glass_items[64];
 struct nuwateritem_s wateritem[512];
 s32 IsStencil = 0;
