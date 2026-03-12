@@ -137,12 +137,12 @@ jobs:
 
               let text = [header, sep, ...lines].join("\n");
 
-              if (text.length > 6000) {
+              if (text.length > 1200) {
                 const trimmed = [];
                 let total = header.length + sep.length + 2;
 
                 for (const line of lines) {
-                  if (total + line.length + 1 > 5600) break;
+                  if (total + line.length + 1 > 1100) break;
                   trimmed.push(line);
                   total += line.length + 1;
                 }
@@ -173,7 +173,13 @@ jobs:
 
                 const summaryMatch = trimmed.match(/^<summary>\s*(.+?)\s*<\/summary>$/i);
 
-                if (!seenFirstSection && !inDetailsBlock && !summaryMatch && trimmed !== "<details>" && trimmed !== "</details>") {
+                if (
+                  !seenFirstSection &&
+                  !inDetailsBlock &&
+                  !summaryMatch &&
+                  trimmed !== "<details>" &&
+                  trimmed !== "</details>"
+                ) {
                   if (trimmed) headerLines.push(line.trimEnd());
                 }
 
@@ -245,45 +251,51 @@ jobs:
               };
             }
 
-            function buildMessage(rawComment) {
+            function buildMessageChunks(rawComment) {
               const parsed = parseReport(rawComment);
-              const parts = [];
+              const chunks = [];
+              let current = "";
+
+              function pushBlock(block) {
+                if (!block || !block.trim()) return;
+
+                if (!current) {
+                  current = block;
+                  return;
+                }
+
+                if ((current + "\n\n" + block).length <= 1900) {
+                  current += "\n\n" + block;
+                } else {
+                  chunks.push(current);
+                  current = block;
+                }
+              }
 
               if (parsed.headerText) {
-                parts.push(parsed.headerText);
+                pushBlock(parsed.headerText);
               }
 
               for (const section of parsed.sections) {
-                parts.push(section.summaryText);
-                parts.push(renderTable(section.rows));
+                const block = `${section.summaryText}\n\n${renderTable(section.rows)}`;
+                pushBlock(block);
               }
 
-              let text = parts.join("\n\n").trim();
-
-              if (!text) {
-                text = rawComment.trim();
+              if (current) {
+                chunks.push(current);
               }
 
-              const chunks = [];
-              let remaining = text;
-
-              while (remaining.length > 1900) {
-                let splitAt = remaining.lastIndexOf("\n\n", 1900);
-                if (splitAt < 1000) splitAt = remaining.lastIndexOf("\n", 1900);
-                if (splitAt < 500) splitAt = 1900;
-
-                chunks.push(remaining.slice(0, splitAt).trim());
-                remaining = remaining.slice(splitAt).trim();
-              }
-
-              if (remaining) {
-                chunks.push(remaining);
+              if (!chunks.length) {
+                const fallback = rawComment.trim();
+                for (let i = 0; i < fallback.length; i += 1900) {
+                  chunks.push(fallback.slice(i, i + 1900));
+                }
               }
 
               return chunks;
             }
 
-            const chunks = buildMessage(body);
+            const chunks = buildMessageChunks(body);
 
             core.info("Discord message preview:");
             core.info(JSON.stringify(chunks, null, 2));
