@@ -109,13 +109,12 @@ jobs:
 
               let text = [header, sep, ...lines].join("\n");
 
-              // Keep room for Discord embed limits
-              if (text.length > 3500) {
+              if (text.length > 900) {
                 const trimmed = [];
                 let total = header.length + sep.length + 2;
 
                 for (const line of lines) {
-                  if (total + line.length + 1 > 3300) break;
+                  if (total + line.length + 1 > 850) break;
                   trimmed.push(line);
                   total += line.length + 1;
                 }
@@ -132,37 +131,40 @@ jobs:
               return `\`\`\`text\n${text}\n\`\`\``;
             }
 
-            function parseDynamicSections(rawComment) {
+            function parseReport(rawComment) {
               const lines = rawComment.split(/\r?\n/);
+
+              const headerLines = [];
               const sections = [];
 
-              for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
+              let insideAnyDetails = false;
 
-                const summaryMatch = line.match(/^<summary>\s*(.+?)\s*<\/summary>$/i);
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const trimmed = line.trim();
+
+                if (!insideAnyDetails && trimmed && !trimmed.startsWith("<details>")) {
+                  headerLines.push(line);
+                }
+
+                if (trimmed === "<details>") {
+                  insideAnyDetails = true;
+                  continue;
+                }
+
+                const summaryMatch = trimmed.match(/^<summary>\s*(.+?)\s*<\/summary>$/i);
                 if (!summaryMatch) continue;
 
                 const summaryText = summaryMatch[1].trim();
-
-                // Example:
-                // ✅ 7 new matches
-                // 📈 2 improvements in unmatched items
-                // 📉 1 regression in an unmatched item
-                // ❌ 3 matches broken
-                const countMatch = summaryText.match(/^(\S+)\s+(\d+)\s+(.+)$/);
-
-                const emoji = countMatch?.[1] || "";
-                const count = countMatch?.[2] || "0";
-                const label = countMatch?.[3] || summaryText;
-
                 const rows = [];
                 let inTable = false;
 
                 for (let j = i + 1; j < lines.length; j++) {
                   const inner = lines[j].trim();
 
-                  if (inner.startsWith("</details>")) {
+                  if (inner === "</details>") {
                     i = j;
+                    insideAnyDetails = false;
                     break;
                   }
 
@@ -190,66 +192,74 @@ jobs:
                 }
 
                 sections.push({
-                  emoji,
-                  count,
-                  label,
+                  summaryText,
                   rows
                 });
               }
 
-              return sections;
+              return {
+                headerText: headerLines
+                  .map(l => l.trimEnd())
+                  .filter(Boolean)
+                  .join("\n"),
+                sections
+              };
             }
 
-            function buildDiscordPayloadFromReport() {
-              const reportName = firstMatch(/Report for\s+([^\n(]+)/i, pr.title);
-              const matchedCode = firstMatch(/Matched code:\s*([\d.]+%)/i, "?");
-              const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
-              const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
+            function buildDescription(rawComment) {
+              const parsed = parseReport(rawComment);
+              const parts = [];
 
-              const sections = parseDynamicSections(body);
-
-              const descriptionParts = sections.map(section => {
-                const titleLine = `${section.emoji} ${section.count} ${section.label}`.trim();
-                const tableBlock = renderTable(section.rows);
-                return `${titleLine}\n${tableBlock}`;
-              });
-
-              let description = descriptionParts.join("\n\n");
-              if (!description) {
-                description = "No parsed sections found.";
+              if (parsed.headerText) {
+                parts.push(parsed.headerText);
               }
 
-              // Discord embed description max is limited; trim if needed
+              for (const section of parsed.sections) {
+                parts.push(section.summaryText);
+                parts.push(renderTable(section.rows));
+              }
+
+              let description = parts.join("\n\n").trim();
+
+              if (!description) {
+                description = body;
+              }
+
               if (description.length > 4000) {
                 description = description.slice(0, 3950) + "\n\n...";
               }
 
-              return {
-                content: "",
-                tts: false,
-                embeds: [
-                  {
-                    title: `Matched Code ${safe(matchedCode, "?")} (${safe(deltaPercent, "?")}, ${safe(deltaBytes, "?")})`,
-                    description,
-                    color: 2326507,
-                    fields: [],
-                    author: {
-                      name: `REPORT FOR ${safe(reportName, "UNKNOWN")}`
-                    },
-                    footer: {
-                      text: `PR #${safe(pr.number, "?")} • ${safe(`${context.repo.owner}/${context.repo.repo}`)}`
-                    }
-                  }
-                ],
-                components: [],
-                actions: {},
-                flags: 0,
-                username: "Crash: Wrath of Cortex Decompilation Report",
-                avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
-              };
+              return description;
             }
 
-            const payload = buildDiscordPayloadFromReport();
+            const reportName = firstMatch(/Report for\s+([^\n(]+)/i, "UNKNOWN");
+            const matchedCode = firstMatch(/Matched code:\s*([\d.]+%)/i, "?");
+            const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
+            const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
+
+            const payload = {
+              content: "",
+              tts: false,
+              embeds: [
+                {
+                  title: `Matched Code ${safe(matchedCode)} (${safe(deltaPercent)}, ${safe(deltaBytes)})`,
+                  description: buildDescription(body),
+                  color: 2326507,
+                  fields: [],
+                  author: {
+                    name: `REPORT FOR ${safe(reportName)}`
+                  },
+                  footer: {
+                    text: `PR #${safe(pr.number)} • ${context.repo.owner}/${context.repo.repo}`
+                  }
+                }
+              ],
+              components: [],
+              actions: {},
+              flags: 0,
+              username: "Crash: Wrath of Cortex Decompilation Report",
+              avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
+            };
 
             core.info("Discord payload preview:");
             core.info(JSON.stringify(payload, null, 2));
