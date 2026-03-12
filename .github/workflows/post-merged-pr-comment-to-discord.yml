@@ -107,12 +107,18 @@ jobs:
                 after: safe(r.after),
               }));
 
-              // Narrow widths so Discord embed descriptions do not wrap
               const UNIT_W = 10;
               const ITEM_W = 18;
               const BYTES_W = 6;
               const BEFORE_W = 7;
               const AFTER_W = 7;
+
+              const header =
+                rpad("UNIT", UNIT_W) + " " +
+                rpad("ITEM", ITEM_W) + " " +
+                lpad("BYTES", BYTES_W) + " " +
+                lpad("BEFORE", BEFORE_W) + " " +
+                lpad("AFTER", AFTER_W);
 
               const sep =
                 "-".repeat(UNIT_W) + " " +
@@ -129,11 +135,11 @@ jobs:
                 lpad(trunc(r.after, AFTER_W), AFTER_W)
               );
 
-              let text = [sep, ...lines].join("\n");
+              let text = [header, sep, ...lines].join("\n");
 
               if (text.length > 3000) {
                 const trimmed = [];
-                let total = sep.length + 1;
+                let total = header.length + sep.length + 2;
 
                 for (const line of lines) {
                   if (total + line.length + 1 > 2800) break;
@@ -146,7 +152,7 @@ jobs:
                   trimmed.push(`... (+${omitted} more rows)`);
                 }
 
-                text = [sep, ...trimmed].join("\n");
+                text = [header, sep, ...trimmed].join("\n");
               }
 
               return "```text\n" + text + "\n```";
@@ -237,7 +243,6 @@ jobs:
 
               for (const section of parsed.sections) {
                 parts.push(section.summaryText);
-                parts.push("**Unit** | **Item** | **Bytes** | **Before** | **After**");
                 parts.push(renderTable(section.rows));
               }
 
