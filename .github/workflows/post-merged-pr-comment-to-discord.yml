@@ -24,7 +24,7 @@ jobs:
       pull-requests: read
 
     steps:
-      - name: Find bot comment and post Discord embed
+      - name: Find bot comment and post Discord message
         uses: actions/github-script@v7
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -107,11 +107,12 @@ jobs:
                 after: safe(r.after),
               }));
 
-              const UNIT_W = 10;
-              const ITEM_W = 18;
-              const BYTES_W = 6;
-              const BEFORE_W = 7;
-              const AFTER_W = 7;
+              // Wider than embed version because normal messages have more usable width
+              const UNIT_W = 14;
+              const ITEM_W = 30;
+              const BYTES_W = 7;
+              const BEFORE_W = 8;
+              const AFTER_W = 8;
 
               const header =
                 rpad("UNIT", UNIT_W) + " " +
@@ -137,12 +138,12 @@ jobs:
 
               let text = [header, sep, ...lines].join("\n");
 
-              if (text.length > 3000) {
+              if (text.length > 6000) {
                 const trimmed = [];
                 let total = header.length + sep.length + 2;
 
                 for (const line of lines) {
-                  if (total + line.length + 1 > 2800) break;
+                  if (total + line.length + 1 > 5600) break;
                   trimmed.push(line);
                   total += line.length + 1;
                 }
@@ -233,7 +234,7 @@ jobs:
               };
             }
 
-            function buildDescription(rawComment) {
+            function buildMessage(rawComment) {
               const parsed = parseReport(rawComment);
               const parts = [];
 
@@ -246,54 +247,58 @@ jobs:
                 parts.push(renderTable(section.rows));
               }
 
-              let description = parts.join("\n\n").trim();
+              let text = parts.join("\n\n").trim();
 
-              if (!description) {
-                description = body;
+              if (!text) {
+                text = rawComment.trim();
               }
 
-              if (description.length > 4000) {
-                description = description.slice(0, 3950) + "\n\n...";
+              // Discord message content limit is 2000, so split into chunks.
+              const chunks = [];
+              let remaining = text;
+
+              while (remaining.length > 1900) {
+                let splitAt = remaining.lastIndexOf("\n\n", 1900);
+                if (splitAt < 1000) splitAt = remaining.lastIndexOf("\n", 1900);
+                if (splitAt < 500) splitAt = 1900;
+
+                chunks.push(remaining.slice(0, splitAt).trim());
+                remaining = remaining.slice(splitAt).trim();
               }
 
-              return description;
+              if (remaining) {
+                chunks.push(remaining);
+              }
+
+              return chunks;
             }
 
-            const payload = {
-              content: "",
-              tts: false,
-              embeds: [
-                {
-                  description: buildDescription(body),
-                  color: 2326507,
-                  fields: [],
-                  footer: {
-                    text: `PR #${safe(pr.number)} • ${context.repo.owner}/${context.repo.repo}`
-                  }
-                }
-              ],
-              components: [],
-              actions: {},
-              flags: 0,
-              username: "Crash: Wrath of Cortex Decompilation Report",
-              avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
-            };
+            const chunks = buildMessage(body);
 
-            core.info("Discord payload preview:");
-            core.info(JSON.stringify(payload, null, 2));
+            core.info("Discord message preview:");
+            core.info(JSON.stringify(chunks, null, 2));
 
             if (process.env.INPUT_DRY_RUN === "true") {
               core.info("Dry run enabled. Nothing will be sent to Discord.");
               return;
             }
 
-            const res = await fetch(process.env.DISCORD_WEBHOOK_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            });
+            for (let index = 0; index < chunks.length; index++) {
+              const payload = {
+                content: chunks[index],
+                username: `Crash: Wrath of Cortex Decompilation Report • PR #${safe(pr.number)}`,
+                avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
+              };
 
-            if (!res.ok) {
-              const text = await res.text();
-              core.setFailed(`Discord webhook failed: ${res.status} ${text}`);
+              const res = await fetch(process.env.DISCORD_WEBHOOK_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+              });
+
+              if (!res.ok) {
+                const text = await res.text();
+                core.setFailed(`Discord webhook failed on chunk ${index + 1}: ${res.status} ${text}`);
+                return;
+              }
             }
