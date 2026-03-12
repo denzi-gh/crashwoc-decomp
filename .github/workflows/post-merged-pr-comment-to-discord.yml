@@ -79,21 +79,21 @@ jobs:
               return value == null ? fallback : String(value);
             }
 
-            function padRight(str, width) {
+            function rpad(str, width) {
               str = safe(str);
-              return str.length >= width ? str : str + " ".repeat(width - str.length);
+              return str + " ".repeat(Math.max(0, width - str.length));
             }
 
-            function padLeft(str, width) {
+            function lpad(str, width) {
               str = safe(str);
-              return str.length >= width ? str : " ".repeat(width - str.length) + str;
+              return " ".repeat(Math.max(0, width - str.length)) + str;
             }
 
-            function truncate(str, width) {
+            function trunc(str, width) {
               str = safe(str);
               if (str.length <= width) return str;
               if (width <= 1) return str.slice(0, width);
-              return str.slice(0, width - 1) + "…";
+              return str.slice(0, width - 1) + ".";
             }
 
             function renderTable(rows) {
@@ -107,48 +107,49 @@ jobs:
                 after: safe(r.after),
               }));
 
-              const UNIT_W = 18;
-              const ITEM_W = 30;
-              const BYTES_W = 7;
-              const BEFORE_W = 8;
-              const AFTER_W = 8;
-
-              const header =
-                `${padRight("Unit", UNIT_W)} │ ${padRight("Item", ITEM_W)} │ ${padLeft("Bytes", BYTES_W)} │ ${padLeft("Before", BEFORE_W)} │ ${padLeft("After", AFTER_W)}`;
+              // Narrow widths so Discord embed descriptions do not wrap
+              const UNIT_W = 10;
+              const ITEM_W = 18;
+              const BYTES_W = 6;
+              const BEFORE_W = 7;
+              const AFTER_W = 7;
 
               const sep =
-                `${"─".repeat(UNIT_W)}─┼─${"─".repeat(ITEM_W)}─┼─${"─".repeat(BYTES_W)}─┼─${"─".repeat(BEFORE_W)}─┼─${"─".repeat(AFTER_W)}`;
+                "-".repeat(UNIT_W) + " " +
+                "-".repeat(ITEM_W) + " " +
+                "-".repeat(BYTES_W) + " " +
+                "-".repeat(BEFORE_W) + " " +
+                "-".repeat(AFTER_W);
 
               const lines = normalizedRows.map(r =>
-                `${padRight(truncate(r.unit, UNIT_W), UNIT_W)} │ ` +
-                `${padRight(truncate(r.item, ITEM_W), ITEM_W)} │ ` +
-                `${padLeft(truncate(r.bytes, BYTES_W), BYTES_W)} │ ` +
-                `${padLeft(truncate(r.before, BEFORE_W), BEFORE_W)} │ ` +
-                `${padLeft(truncate(r.after, AFTER_W), AFTER_W)}`
+                rpad(trunc(r.unit, UNIT_W), UNIT_W) + " " +
+                rpad(trunc(r.item, ITEM_W), ITEM_W) + " " +
+                lpad(trunc(r.bytes, BYTES_W), BYTES_W) + " " +
+                lpad(trunc(r.before, BEFORE_W), BEFORE_W) + " " +
+                lpad(trunc(r.after, AFTER_W), AFTER_W)
               );
 
-              let text = [header, sep, ...lines].join("\n");
+              let text = [sep, ...lines].join("\n");
 
-              if (text.length > 3400) {
+              if (text.length > 3000) {
                 const trimmed = [];
-                let total = header.length + sep.length + 2;
+                let total = sep.length + 1;
 
                 for (const line of lines) {
-                  if (total + line.length + 1 > 3200) break;
+                  if (total + line.length + 1 > 2800) break;
                   trimmed.push(line);
                   total += line.length + 1;
                 }
 
                 const omitted = lines.length - trimmed.length;
                 if (omitted > 0) {
-                  trimmed.push("");
                   trimmed.push(`... (+${omitted} more rows)`);
                 }
 
-                text = [header, sep, ...trimmed].join("\n");
+                text = [sep, ...trimmed].join("\n");
               }
 
-              return `\`\`\`text\n${text}\n\`\`\``;
+              return "```text\n" + text + "\n```";
             }
 
             function parseReport(rawComment) {
@@ -236,6 +237,7 @@ jobs:
 
               for (const section of parsed.sections) {
                 parts.push(section.summaryText);
+                parts.push("**Unit** | **Item** | **Bytes** | **Before** | **After**");
                 parts.push(renderTable(section.rows));
               }
 
