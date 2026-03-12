@@ -10,7 +10,7 @@ on:
         description: "PR number to test"
         required: true
       dry_run:
-        description: "true = only log"
+        description: "true = nur loggen, nichts an Discord senden"
         required: true
         default: "true"
 
@@ -64,7 +64,10 @@ jobs:
               return;
             }
 
-            const latestComment = botComments[botComments.length - 1];
+            const latestComment = [...botComments].reverse().find(c =>
+              (c.body || "").includes("Matched code:")
+            ) || botComments[botComments.length - 1];
+
             const body = latestComment.body || "";
 
             if (!body.trim()) {
@@ -72,8 +75,10 @@ jobs:
               return;
             }
 
+            const trimmed = body.length > 1800 ? body.slice(0, 1800) + "\n..." : body;
+
             const message = {
-              content: body
+              content: `${pr.html_url}\n\`\`\`md\n${trimmed}\n\`\`\``
             };
 
             core.info("Gefundener Kommentar:");
