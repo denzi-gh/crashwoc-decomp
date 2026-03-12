@@ -19,6 +19,18 @@ ninja baseline
 ninja changes
 ```
 
+For objdiff-driven regression checks in terminal automation, do not run interactive
+`objdiff-cli diff` or other live-session commands. They stay open and refresh
+continuously. Use one-shot report output instead:
+
+```sh
+ninja changes
+python tools/changes_fmt.py build/GCBE7D/report_changes.json
+```
+
+If you need to call objdiff directly, use `objdiff-cli report changes ... -o <file>`
+rather than the interactive diff UI.
+
 Single-unit iteration:
 
 ```sh
@@ -100,4 +112,5 @@ For decomp work, prefer this order:
 - `config/GCBE7D/symbols.txt` is the authoritative validated symbol list; use DWARF as a clue source, not as automatically trusted ground truth.
 - `build/GCBE7D/report.json` is the easiest structured source for progress categories and per-function fuzzy match data.
 - Prefer scripted split import and build triage over large manual edits when the workflow already exists in `tools/`.
+- For automation, prefer `ninja changes` plus `python tools/changes_fmt.py build/GCBE7D/report_changes.json` over interactive `objdiff-cli diff` sessions.
 - dont use `#pragma once` i nthe C Files

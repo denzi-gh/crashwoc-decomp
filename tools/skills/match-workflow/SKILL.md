@@ -18,6 +18,7 @@ description: Drive symbol-to-verification matching work in crashwoc-decomp. Use 
 
 - Prefer the normalized unit name printed by the lookup helpers when duplicate basenames exist.
 - Use `build/GCBE7D/report.json` through `ai_context.py` when you need function-level fuzzy-match data.
+- For regression checks in automation, use `ninja changes` and `python tools/changes_fmt.py build/GCBE7D/report_changes.json`; avoid interactive `objdiff-cli diff` sessions.
 - Use `build/GCBE7D/asm/<unit>.s` when context and current source are not enough to reconstruct the exact function shape.
 - Keep code edits narrow and reversible. Avoid unrelated cleanup while matching.
 

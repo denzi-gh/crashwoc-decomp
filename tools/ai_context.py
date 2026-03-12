@@ -20,6 +20,7 @@ from ai_common import (
     nearby_functions,
     parse_address,
     progress_category_labels,
+    suggest_regression_commands,
     suggest_unit_commands,
     unit_summary,
 )
@@ -90,7 +91,7 @@ def build_symbol_payload(unit, symbol, function, category_names: dict[str, str])
                     f"python tools/ai_lookup_symbol.py {symbol.name}",
                     f"python tools/ai_lookup_unit.py {unit.normalized_name}",
                     *suggest_unit_commands(unit),
-                    "ninja changes",
+                    *suggest_regression_commands(),
                 ]
             )
         ],
@@ -110,7 +111,7 @@ def build_unit_payload(unit, category_names: dict[str, str]) -> dict[str, Any]:
             }
             for function in interesting_functions(unit)
         ],
-        "commands": [*dedupe([*suggest_unit_commands(unit), "ninja changes"])],
+        "commands": [*dedupe([*suggest_unit_commands(unit), *suggest_regression_commands()])],
     }
 
 
@@ -153,7 +154,7 @@ def print_symbol_context(unit, symbol, function, category_names: dict[str, str])
             f"python tools/ai_lookup_symbol.py {symbol.name}",
             f"python tools/ai_lookup_unit.py {unit.normalized_name}",
             *suggest_unit_commands(unit),
-            "ninja changes",
+            *suggest_regression_commands(),
         ]
     ):
         print(f"  {command}")
@@ -206,7 +207,7 @@ def print_unit_context(unit, category_names: dict[str, str]) -> None:
             )
 
     print("Commands:")
-    for command in dedupe([*suggest_unit_commands(unit), "ninja changes"]):
+    for command in dedupe([*suggest_unit_commands(unit), *suggest_regression_commands()]):
         print(f"  {command}")
 
 

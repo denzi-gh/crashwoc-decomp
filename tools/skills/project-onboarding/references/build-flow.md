@@ -15,9 +15,12 @@ ninja
 ninja progress
 ninja baseline
 ninja changes
+python tools/changes_fmt.py build/GCBE7D/report_changes.json
 ```
 
 If `build/GCBE7D/baseline.json` does not exist yet, run `ninja baseline` before `ninja changes`.
+Do not use interactive `objdiff-cli diff` commands from automation; they stay open.
+Prefer `ninja changes` and `tools/changes_fmt.py`, or direct `objdiff-cli report changes ... -o <file>`.
 
 ## Narrow Iteration
 

@@ -517,6 +517,13 @@ def suggest_unit_commands(unit: UnitInfo) -> list[str]:
     return commands
 
 
+def suggest_regression_commands() -> list[str]:
+    return [
+        "ninja changes",
+        "python tools/changes_fmt.py build/GCBE7D/report_changes.json",
+    ]
+
+
 def nearby_functions(unit: UnitInfo, address: int, radius: int = 2) -> list[ReportFunction]:
     if not unit.functions:
         return []

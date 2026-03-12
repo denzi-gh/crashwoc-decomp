@@ -33,6 +33,10 @@ If you want formatted regression output directly:
 
 - `python tools/changes_fmt.py build/GCBE7D/report_changes.json`
 
+Do not run interactive `objdiff-cli diff` sessions from automation. They do not
+terminate on their own. Use the file-based report flow above, or direct
+`objdiff-cli report changes ... -o <file>` if you need raw JSON output.
+
 ## Working Pattern
 
 1. Reproduce the failure or regression on the narrowest useful target.
