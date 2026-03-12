@@ -24,7 +24,7 @@ jobs:
       pull-requests: read
 
     steps:
-      - name: Find bot comment and post pretty Discord embed
+      - name: Find bot comment and post Discord embed
         uses: actions/github-script@v7
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -79,28 +79,24 @@ jobs:
               return body.match(regex)?.[1]?.trim() ?? fallback;
             }
 
-            function extractSectionCount(labelRegex) {
-              const m = body.match(labelRegex);
-              return m ? Number(m[1]) : 0;
-            }
-
-            function extractTableRowsAfter(summaryText) {
+            function extractSection(summaryEmoji, summaryText) {
               const lines = body.split(/\r?\n/);
-              const startIndex = lines.findIndex(line => line.includes(summaryText));
-              if (startIndex === -1) return [];
+              const start = lines.findIndex(
+                line => line.includes("<summary>") &&
+                        line.includes(summaryEmoji) &&
+                        line.includes(summaryText)
+              );
+
+              if (start === -1) return null;
 
               const rows = [];
               let inTable = false;
 
-              for (let i = startIndex + 1; i < lines.length; i++) {
+              for (let i = start + 1; i < lines.length; i++) {
                 const line = lines[i].trim();
 
-                if (!line) {
-                  if (inTable) break;
-                  continue;
-                }
-
                 if (line.startsWith("</details>")) break;
+                if (!line) continue;
 
                 if (line.startsWith("| Unit |")) {
                   inTable = true;
@@ -123,14 +119,62 @@ jobs:
                 }
               }
 
-              return rows;
+              const escapedEmoji = summaryEmoji.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+              const countMatch = body.match(
+                new RegExp(`${escapedEmoji}\\s*(\\d+)\\s+${summaryText}`, "i")
+              );
+
+              return {
+                count: countMatch?.[1] || "0",
+                rows
+              };
             }
 
-            function formatRows(rows, limit = 5) {
-              if (!rows.length) return "—";
-              return rows.slice(0, limit).map(r =>
-                `• \`${r.item}\` (${r.unit}) ${r.bytes} · ${r.before} → ${r.after}`
-              ).join("\n");
+            function pad(str, len) {
+              str = String(str);
+              return str.length >= len ? str.slice(0, len) : str + " ".repeat(len - str.length);
+            }
+
+            function tableToCodeBlock(rows) {
+              if (!rows.length) return "```text\n(none)\n```";
+
+              const unitW = Math.min(18, Math.max(4, ...rows.map(r => r.unit.length)));
+              const itemW = Math.min(24, Math.max(4, ...rows.map(r => r.item.length)));
+              const bytesW = Math.max(5, ...rows.map(r => r.bytes.length));
+              const beforeW = Math.max(6, ...rows.map(r => r.before.length));
+              const afterW = Math.max(6, ...rows.map(r => r.after.length));
+
+              const header =
+                `${pad("Unit", unitW)}  ${pad("Item", itemW)}  ${pad("Bytes", bytesW)}  ${pad("Before", beforeW)}  ${pad("After", afterW)}`;
+              const sep =
+                `${"-".repeat(unitW)}  ${"-".repeat(itemW)}  ${"-".repeat(bytesW)}  ${"-".repeat(beforeW)}  ${"-".repeat(afterW)}`;
+
+              const lines = rows.map(r =>
+                `${pad(r.unit, unitW)}  ${pad(r.item, itemW)}  ${pad(r.bytes, bytesW)}  ${pad(r.before, beforeW)}  ${pad(r.after, afterW)}`
+              );
+
+              let text = [header, sep, ...lines].join("\n");
+
+              if (text.length > 950) {
+                const trimmedLines = [];
+                let total = header.length + sep.length + 2;
+
+                for (const line of lines) {
+                  if (total + line.length + 1 > 900) break;
+                  trimmedLines.push(line);
+                  total += line.length + 1;
+                }
+
+                const omitted = rows.length - trimmedLines.length;
+                text = [
+                  header,
+                  sep,
+                  ...trimmedLines,
+                  omitted > 0 ? `... (+${omitted} more rows)` : null
+                ].filter(Boolean).join("\n");
+              }
+
+              return "```text\n" + text + "\n```";
             }
 
             const reportName = firstMatch(/Report for\s+([^\n(]+)/i, pr.title);
@@ -138,76 +182,50 @@ jobs:
             const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
             const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
 
-            const newMatchesCount = extractSectionCount(/✅\s*(\d+)\s+new matches/i);
-            const improvementsCount = extractSectionCount(/📈\s*(\d+)\s+improvements in unmatched items/i);
-            const regressionsCount = extractSectionCount(/📉\s*(\d+)\s+regression(?:s)? in an unmatched item(?:s)?/i);
-
-            const newMatchesRows = extractTableRowsAfter("<summary>✅");
-            const improvementsRows = extractTableRowsAfter("<summary>📈");
-            const regressionsRows = extractTableRowsAfter("<summary>📉");
+            const newMatches = extractSection("✅", "new matches");
+            const improvements = extractSection("📈", "improvements in unmatched items");
+            const regressions =
+              extractSection("📉", "regression in an unmatched item") ||
+              extractSection("📉", "regressions in unmatched items") ||
+              extractSection("📉", "regression");
 
             const fields = [
               {
                 name: "Matched code",
-                value: matchedCode,
-                inline: true
-              },
-              {
-                name: "Delta",
-                value: deltaPercent,
-                inline: true
-              },
-              {
-                name: "Bytes",
-                value: deltaBytes,
-                inline: true
-              },
-              {
-                name: "New matches",
-                value: String(newMatchesCount),
-                inline: true
-              },
-              {
-                name: "Improvements",
-                value: String(improvementsCount),
-                inline: true
-              },
-              {
-                name: "Regressions",
-                value: String(regressionsCount),
-                inline: true
+                value: `${matchedCode} (${deltaPercent}, ${deltaBytes})`,
+                inline: false
               }
             ];
 
-            if (newMatchesRows.length) {
+            if (newMatches && newMatches.rows.length) {
               fields.push({
-                name: "Top new matches",
-                value: formatRows(newMatchesRows),
+                name: `✅ ${newMatches.count} new matches`,
+                value: tableToCodeBlock(newMatches.rows),
                 inline: false
               });
             }
 
-            if (improvementsRows.length) {
+            if (improvements && improvements.rows.length) {
               fields.push({
-                name: "Top improvements",
-                value: formatRows(improvementsRows),
+                name: `📈 ${improvements.count} improvements in unmatched items`,
+                value: tableToCodeBlock(improvements.rows),
                 inline: false
               });
             }
 
-            if (regressionsRows.length) {
+            if (regressions && regressions.rows.length) {
               fields.push({
-                name: "Regressions",
-                value: formatRows(regressionsRows, 3),
+                name: `📉 ${regressions.count} regression(s) in unmatched items`,
+                value: tableToCodeBlock(regressions.rows),
                 inline: false
               });
             }
 
             const payload = {
-              username: "decomp report",
+              username: "decomp-dev",
               embeds: [
                 {
-                  title: `${isManual ? "[TEST] " : ""}${reportName}`,
+                  title: `${isManual ? "[TEST] " : ""}Report for ${reportName}`,
                   url: pr.html_url,
                   description: pr.title,
                   fields,
