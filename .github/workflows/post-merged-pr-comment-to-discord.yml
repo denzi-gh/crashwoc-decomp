@@ -1,4 +1,4 @@
-name: Post merged PR bot comment to Discord
+name: Post merged PR report to Discord
 
 on:
   pull_request:
@@ -15,7 +15,7 @@ on:
         default: "true"
 
 jobs:
-  post-comment:
+  post-report:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
@@ -24,7 +24,7 @@ jobs:
       pull-requests: read
 
     steps:
-      - name: Find bot comment and send raw text to Discord
+      - name: Find bot comment and post pretty Discord embed
         uses: actions/github-script@v7
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
@@ -64,25 +64,163 @@ jobs:
               return;
             }
 
-            const latestComment = [...botComments].reverse().find(c =>
+            const reportComment = [...botComments].reverse().find(c =>
               (c.body || "").includes("Matched code:")
             ) || botComments[botComments.length - 1];
 
-            const body = latestComment.body || "";
+            const body = reportComment.body || "";
 
             if (!body.trim()) {
               core.setFailed("Bot-Kommentar ist leer.");
               return;
             }
 
-            const trimmed = body.length > 1800 ? body.slice(0, 1800) + "\n..." : body;
+            function firstMatch(regex, fallback = null) {
+              return body.match(regex)?.[1]?.trim() ?? fallback;
+            }
 
-            const message = {
-              content: `${pr.html_url}\n\`\`\`md\n${trimmed}\n\`\`\``
+            function extractSectionCount(labelRegex) {
+              const m = body.match(labelRegex);
+              return m ? Number(m[1]) : 0;
+            }
+
+            function extractTableRowsAfter(summaryText) {
+              const lines = body.split(/\r?\n/);
+              const startIndex = lines.findIndex(line => line.includes(summaryText));
+              if (startIndex === -1) return [];
+
+              const rows = [];
+              let inTable = false;
+
+              for (let i = startIndex + 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                if (!line) {
+                  if (inTable) break;
+                  continue;
+                }
+
+                if (line.startsWith("</details>")) break;
+
+                if (line.startsWith("| Unit |")) {
+                  inTable = true;
+                  continue;
+                }
+
+                if (line.startsWith("| - |")) continue;
+
+                if (inTable && line.startsWith("|")) {
+                  const parts = line.split("|").map(s => s.trim()).filter(Boolean);
+                  if (parts.length >= 5) {
+                    rows.push({
+                      unit: parts[0],
+                      item: parts[1],
+                      bytes: parts[2],
+                      before: parts[3],
+                      after: parts[4],
+                    });
+                  }
+                }
+              }
+
+              return rows;
+            }
+
+            function formatRows(rows, limit = 5) {
+              if (!rows.length) return "—";
+              return rows.slice(0, limit).map(r =>
+                `• \`${r.item}\` (${r.unit}) ${r.bytes} · ${r.before} → ${r.after}`
+              ).join("\n");
+            }
+
+            const reportName = firstMatch(/Report for\s+([^\n(]+)/i, pr.title);
+            const matchedCode = firstMatch(/Matched code:\s*([\d.]+%)/i, "?");
+            const deltaPercent = firstMatch(/Matched code:.*?\(([+-][\d.]+%)\s*,/i, "?");
+            const deltaBytes = firstMatch(/Matched code:.*?,\s*([+-]?\d+\s*bytes)\)/i, "?");
+
+            const newMatchesCount = extractSectionCount(/✅\s*(\d+)\s+new matches/i);
+            const improvementsCount = extractSectionCount(/📈\s*(\d+)\s+improvements in unmatched items/i);
+            const regressionsCount = extractSectionCount(/📉\s*(\d+)\s+regression(?:s)? in an unmatched item(?:s)?/i);
+
+            const newMatchesRows = extractTableRowsAfter("<summary>✅");
+            const improvementsRows = extractTableRowsAfter("<summary>📈");
+            const regressionsRows = extractTableRowsAfter("<summary>📉");
+
+            const fields = [
+              {
+                name: "Matched code",
+                value: matchedCode,
+                inline: true
+              },
+              {
+                name: "Delta",
+                value: deltaPercent,
+                inline: true
+              },
+              {
+                name: "Bytes",
+                value: deltaBytes,
+                inline: true
+              },
+              {
+                name: "New matches",
+                value: String(newMatchesCount),
+                inline: true
+              },
+              {
+                name: "Improvements",
+                value: String(improvementsCount),
+                inline: true
+              },
+              {
+                name: "Regressions",
+                value: String(regressionsCount),
+                inline: true
+              }
+            ];
+
+            if (newMatchesRows.length) {
+              fields.push({
+                name: "Top new matches",
+                value: formatRows(newMatchesRows),
+                inline: false
+              });
+            }
+
+            if (improvementsRows.length) {
+              fields.push({
+                name: "Top improvements",
+                value: formatRows(improvementsRows),
+                inline: false
+              });
+            }
+
+            if (regressionsRows.length) {
+              fields.push({
+                name: "Regressions",
+                value: formatRows(regressionsRows, 3),
+                inline: false
+              });
+            }
+
+            const payload = {
+              username: "decomp report",
+              embeds: [
+                {
+                  title: `${isManual ? "[TEST] " : ""}${reportName}`,
+                  url: pr.html_url,
+                  description: pr.title,
+                  fields,
+                  footer: {
+                    text: `PR #${pr.number} • ${context.repo.owner}/${context.repo.repo}`
+                  },
+                  timestamp: new Date().toISOString()
+                }
+              ]
             };
 
-            core.info("Gefundener Kommentar:");
-            core.info(body);
+            core.info("Discord payload:");
+            core.info(JSON.stringify(payload, null, 2));
 
             if (process.env.INPUT_DRY_RUN === "true") {
               core.info("Dry run aktiv - nichts wird an Discord gesendet.");
@@ -92,7 +230,7 @@ jobs:
             const res = await fetch(process.env.DISCORD_WEBHOOK_URL, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(message)
+              body: JSON.stringify(payload)
             });
 
             if (!res.ok) {
