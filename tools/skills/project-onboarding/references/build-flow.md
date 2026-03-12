@@ -17,6 +17,8 @@ ninja baseline
 ninja changes
 ```
 
+If `build/GCBE7D/baseline.json` does not exist yet, run `ninja baseline` before `ninja changes`.
+
 ## Narrow Iteration
 
 Build a single object:
@@ -32,3 +34,4 @@ ninja build/GCBE7D/src/<unit>.ctx
 ```
 
 Use the lookup helpers to find the normalized unit name first.
+If you already know the unit and need exact control flow or nearby constants, inspect `build/GCBE7D/asm/<unit>.s`.

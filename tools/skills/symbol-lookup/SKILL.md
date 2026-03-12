@@ -25,8 +25,9 @@ Use the lookup sources in this order:
 
 1. `config/GCBE7D/symbols.txt` for validated names and addresses
 2. `build/GCBE7D/report.json` for owning source paths, progress categories, and fuzzy-match data
-3. `config/GCBE7D/splits.txt` to resolve the owning unit from an address range
-4. `src/dump_alphaNGCport_DWARF.txt` for fallback hints only
+3. `build/GCBE7D/asm/<unit>.s` when you need exact function control flow, rodata strings, or float constants from the extracted retail assembly
+4. `config/GCBE7D/splits.txt` to resolve the owning unit from an address range
+5. `src/dump_alphaNGCport_DWARF.txt` for fallback hints only
 
 Do not promote DWARF hints into validated facts without checking the rest of the repo state.
 
@@ -34,6 +35,7 @@ Do not promote DWARF hints into validated facts without checking the rest of the
 
 - If you have a symbol or address, use `ai_lookup_symbol.py` first.
 - If you need the source path, object target, context target, and nearby functions, use `ai_context.py`.
+- If helper output and source context are not enough, inspect `build/GCBE7D/asm/<unit>.s` for the exact body and nearby rodata labels before falling back to DWARF.
 - If the lookup returns multiple unit candidates because of duplicate basenames, switch to the normalized unit name printed by the helper, for example `ai_1.c`.
 
 ## References
