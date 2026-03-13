@@ -4,6 +4,21 @@
 
 typedef struct anim_s AnimPacket;
 int strncasecmp(const char* s1, const char* s2, size_t n);
+int sprintf(char *str, const char *format, ...);
+char *strcat(char *dest, const char *src);
+
+extern f32 temp_fALONG;
+extern u16 temp_xrot;
+extern u16 temp_zrot;
+extern struct nuvec_s ShadNorm;
+
+s32 qrand(void);
+s32 StartHGobjAnim(struct nuhspecial_s *obj);
+s32 ResetHGobjAnim(struct nuhspecial_s *obj);
+void PointAlongSpline(struct nugspline_s *spl, float ratio, struct nuvec_s *dst, u16 *angle, u16 *tilt);
+float NewShadowMask(struct nuvec_s *ppos, float size, int extramask);
+void JudderGameCamera(struct cammtx_s *cam, float time, struct nuvec_s *pos);
+struct nugspline_s *NuSplineFind(struct nugscn_s *scene, char *name);
 
 struct chaseevent_s {
     struct nugspline_s* spl;
@@ -24,8 +39,8 @@ struct chase_s {
     u16 xrot[6];
     u16 yrot[6];
     u16 zrot[6];
-    struct chaseevent_s event[24][6];
-    struct nugspline_s* spl_MISC[4][6];
+    struct chaseevent_s event[6][24];
+    struct nugspline_s* spl_MISC[6][4];
     struct Nearest_Light_s lights[6];
     float scale[6];
     u8 misc_phase[6];
@@ -62,7 +77,108 @@ extern struct objtab_s ObjTab[201];
 void EvalModelAnim(struct CharacterModel *model, struct anim_s *anim, struct numtx_s *m, struct numtx_s *tmtx, float ***dwa, struct numtx_s *mLOCATOR);
 s32 FurtherALONG(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
 s32 FurtherBEHIND(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
-void InitChase(struct chase_s* chase);
+void InitChase(CHASE *chase) {
+    s32 j;
+
+    for (j = 0; j <= 5; j++) {
+        if (chase->ok[j] == 0) continue;
+
+        if ((s8)chase->i_last == -1) goto init_scratch;
+        if (chase->character[j] == -1) goto start_anim;
+        if (chase->character[j] != Chase[(s8)chase->i_last].character[j]) goto init_scratch;
+
+        chase->anim[j] = Chase[(s8)chase->i_last].anim[j];
+        chase->lights[j] = Chase[(s8)chase->i_last].lights[j];
+        goto start_anim;
+
+    init_scratch:
+        if (chase->character[j] == -1) goto start_anim;
+
+        {
+            struct CharacterModel *model = &CModel[CRemap[chase->character[j]]];
+            if (chase->action[j] != -1 && model->anmdata[chase->action[j]] != NULL) {
+                s32 r = qrand();
+                f32 rf = (f32)r * (1.0f / 65536.0f);
+                f32 model_scale = *(f32 *)model->anmdata[chase->action[j]];
+                chase->anim[j].anim_time = rf * (model_scale - 1.0f) + 1.0f;
+            } else {
+                chase->anim[j].anim_time = 1.0f;
+            }
+
+            chase->anim[j].blend = 0;
+            chase->anim[j].action = chase->action[j];
+            chase->anim[j].newaction = chase->action[j];
+            chase->anim[j].oldaction = chase->action[j];
+        }
+
+    start_anim:
+        if (chase->obj[j].special != NULL) {
+            StartHGobjAnim(&chase->obj[j]);
+        }
+
+        chase->xrot[j] = 0;
+        chase->zrot[j] = 0;
+        PointAlongSpline(chase->spl_CHASER[j], 0.0f, &chase->pos[j], &chase->yrot[j], NULL);
+
+        {
+            f32 shadow = NewShadowMask(&chase->pos[j], 0.0f, -1);
+            if (shadow != 2000000.0f) {
+                FindAnglesZX(&ShadNorm);
+                if (Level != 0x11 && Level != 0x0E && Level != 0x1F && Level != 0x05) {
+                    chase->pos[j].y = shadow;
+                }
+            } else {
+                temp_xrot = 0;
+                temp_zrot = 0;
+            }
+        }
+
+        chase->xrot[j] = temp_xrot;
+        chase->zrot[j] = temp_zrot;
+
+        GetALONG(&chase->pos[j], &chase->RPos[j], -1, -1, 2);
+        ResetLights(&chase->lights[j]);
+    }
+
+    chase->time = 0.0f;
+    chase->status = 2;
+    JudderGameCamera(GameCam, 0.5f, NULL);
+    GameSfx(0x3b, NULL);
+    NewBuzz(&player->rumble, 0x1E);
+}
+
+void ResetChases(void) {
+    CHASE *chase;
+    s32 i;
+    s32 j;
+    s32 k;
+    s32 l;
+
+    chase = Chase;
+    for (i = 0; i <= 2; i++, chase = chase + 1) {
+        if (chase->status != 0) {
+            if (AheadOfCheckpoint((s8)chase->iRAIL, chase->iALONG, chase->fALONG) != 0) {
+                for (j = 0; j <= 5; j++) {
+                    if (chase->ok[j] != 0) {
+                        if (chase->obj[j].special != NULL) {
+                            ResetHGobjAnim(&chase->obj[j]);
+                        }
+                        for (k = 0; k <= 23; k++) {
+                            if (chase->event[j][k].spl != NULL) {
+                                for (l = 0; l < 24; l++) {
+                                    ResetHGobjAnim(&chase->event[j][k].obj[l]);
+                                }
+                            }
+                        }
+                        chase->misc_phase[j] = 0;
+                    }
+                }
+                chase->status = 1;
+            }
+        }
+    }
+}
+
 s32 LineCrossed(float xold, float zold, float xnew, float znew, float x0, float z0, float x1, float z1);
 s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hgobj, struct numtx_s *wm, int nlayers, short *layers, struct numtx_s *mtx_array, float **dwa);
 s32 NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm);

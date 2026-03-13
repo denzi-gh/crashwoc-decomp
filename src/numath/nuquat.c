@@ -69,6 +69,8 @@ void NuQuatToMtx(struct Quat* q, struct Mtx* m)
 	f32 xw;
 	f32 yz;
 	f32 yw;
+	f32 zw;
+	f32 zz;
 
 	m->m44 = 1.0;
 	y2 = y * y;
@@ -79,20 +81,26 @@ void NuQuatToMtx(struct Quat* q, struct Mtx* m)
 	m->m43 = 0.0;
 	m->m14 = 0.0;
 	m->m24 = 0.0;
-	xy = x * y + x * y;
-	xz = x * z + x * z;
-	xw = x * w + x * w;
-	yz = y * z + y * z;
-	yw = y * w + y * w;
-	y = z * w + z * w;
-	z = z * z;
-	m->m12 = xy + y;
+	xy = x * y;
+	xz = x * z;
+	xw = x * w;
+	yz = y * z;
+	yw = y * w;
+	zw = z * w;
+	xy = xy + xy;
+	xz = xz + xz;
+	xw = xw + xw;
+	yz = yz + yz;
+	yw = yw + yw;
+	zw = zw + zw;
+	zz = z * z;
+	m->m12 = xy + zw;
 	m->m13 = xz - yw;
 	m->m23 = yz + xw;
-	m->m33 = (diff - y2) + z;
-	m->m11 = ((w * w + x * x) - y2) - z;
-	m->m22 = (diff + y2) - z;
-	m->m21 = xy - y;
+	m->m33 = (diff - y2) + zz;
+	m->m11 = ((w * w + x * x) - y2) - zz;
+	m->m22 = (diff + y2) - zz;
+	m->m21 = xy - zw;
 	m->m31 = xz + yw;
 	m->m32 = yz - xw;
 }
@@ -100,9 +108,9 @@ void NuQuatToMtx(struct Quat* q, struct Mtx* m)
 void NuQuatMul(struct Quat* dest, struct Quat* a, struct Quat* b)
 {
 	dest->w = ((a->w * b->w - a->x * b->x) - a->y * b->y) - a->z * b->z;
-	dest->x = (a->y * b->z + a->w * b->x + a->x * b->w) - a->z * b->y;
-	dest->y = (a->z * b->x + a->w * b->y + a->y * b->w) - a->x * b->z;
-	dest->z = (a->x * b->y + a->w * b->z + a->z * b->w) - a->y * b->x;
+	dest->x = (a->y * b->z + (a->w * b->x + a->x * b->w)) - a->z * b->y;
+	dest->y = (a->z * b->x + (a->w * b->y + a->y * b->w)) - a->x * b->z;
+	dest->z = (a->x * b->y + (a->w * b->z + a->z * b->w)) - a->y * b->x;
 }
 
 void NuQuatNormalise(struct Quat* dest, struct Quat* q)

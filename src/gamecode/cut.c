@@ -253,7 +253,7 @@ void LoadCutSceneCharacters(struct csc_s *name) {
   return;
 }
 
-//PS2
+
 void InitCutScenes(void) {
   NuGCutSceneSysInit(cutscene_locatorfns);
   NuSetCutSceneFindCharactersFn(AppCutSceneFindCharacters);

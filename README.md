@@ -110,11 +110,9 @@ Repo-local helper commands include:
 - `python tools/ai_lookup_unit.py <unit-or-path>`
 - `python tools/ai_match_plan.py <unit-or-path>`
 
-After changing AI tooling docs or helper scripts, run:
 
-```sh
-python tools/validate_ai_tooling.py
-```
+
+Please always review AI generated Code. The workflows are designed in way that prevents the AI to generate slop like inline Assembly and compiler specific patterns that no human would write but you never know!
 
 Pull Requests
 =============
