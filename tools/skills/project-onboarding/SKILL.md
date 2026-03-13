@@ -8,8 +8,10 @@ description: Onboard Codex to crashwoc-decomp. Use when working in this reposito
 ## Quick Start
 
 - Read [../../../AGENTS.md](../../../AGENTS.md) first for the repo-level summary.
+- Read [../../../.github/copilot-instructions.md](../../../.github/copilot-instructions.md) when the active agent is GitHub Copilot.
 - If generated build files may be stale or missing, run `python configure.py --version GCBE7D --toolchain prodg35`.
 - Use `python tools/ai_lookup_symbol.py ...`, `python tools/ai_lookup_unit.py ...`, or `python tools/ai_context.py ...` before manual repo-wide searching.
+- Use `python tools/ai_match_plan.py <unit-or-path>` when the task starts from a file or unit and needs a backlog of remaining functions.
 
 ## Build Flow
 

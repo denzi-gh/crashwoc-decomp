@@ -37,4 +37,5 @@ ninja build/GCBE7D/src/<unit>.ctx
 ```
 
 Use the lookup helpers to find the normalized unit name first.
+For file-based matching work, start with `python tools/ai_match_plan.py <unit-or-path>` so you know the remaining functions and the next target.
 If you already know the unit and need exact control flow or nearby constants, inspect `build/GCBE7D/asm/<unit>.s`.

@@ -10,20 +10,37 @@ from ai_common import (
     find_units,
     format_hex,
     format_percent,
+    format_size,
     load_repo_index,
+    next_unmatched_function,
     progress_category_labels,
     suggest_unit_commands,
+    unit_asm_path,
+    unit_match_counts,
     unit_summary,
 )
 
 
-def build_unit_payload(unit, category_names: dict[str, str]) -> dict[str, Any]:
+def build_unit_payload(unit, category_names: dict[str, str], version: str = DEFAULT_VERSION) -> dict[str, Any]:
     payload = unit_summary(unit, category_names)
+    payload["asm_path"] = unit_asm_path(unit, version=version)
+    payload["match_summary"] = unit_match_counts(unit)
+    next_function = next_unmatched_function(unit)
+    payload["next_function"] = (
+        {
+            "name": next_function.name,
+            "address": next_function.address,
+            "size": next_function.size,
+            "fuzzy_match_percent": next_function.fuzzy_match_percent,
+        }
+        if next_function is not None
+        else None
+    )
     payload["commands"] = suggest_unit_commands(unit)
     return payload
 
 
-def print_unit(unit, category_names: dict[str, str]) -> None:
+def print_unit(unit, category_names: dict[str, str], version: str = DEFAULT_VERSION) -> None:
     print(f"Unit: {unit.raw_name}")
     if unit.raw_name != unit.normalized_name:
         print(f"Normalized: {unit.normalized_name}")
@@ -33,6 +50,7 @@ def print_unit(unit, category_names: dict[str, str]) -> None:
         print(f"Object: {unit.object_path}")
     if unit.ctx_path:
         print(f"Context: {unit.ctx_path}")
+    print(f"Asm: {unit_asm_path(unit, version=version)}")
     if unit.build_label:
         print(f"Build label: {unit.build_label}")
     if unit.linked is not None:
@@ -60,6 +78,22 @@ def print_unit(unit, category_names: dict[str, str]) -> None:
             print(
                 f"  {section.section:<7} {format_hex(section.start)} - {format_hex(section.end)}"
             )
+
+    counts = unit_match_counts(unit)
+    if counts["total"]:
+        print(
+            "Match summary: "
+            f"{counts['matched']}/{counts['total']} matched, "
+            f"{counts['remaining']} remaining "
+            f"({counts['partial']} partial, {counts['unknown']} unknown)"
+        )
+    next_function = next_unmatched_function(unit)
+    if next_function is not None:
+        print(
+            f"Next target: {next_function.name}  {format_hex(next_function.address)}  "
+            f"size {format_size(next_function.size)}  "
+            f"match {format_percent(next_function.fuzzy_match_percent)}"
+        )
 
     print("Commands:")
     for command in suggest_unit_commands(unit):
@@ -93,12 +127,14 @@ def main() -> int:
         return 1
 
     if args.json:
-        payload = [build_unit_payload(unit, index.category_names) for unit in matches]
+        payload = [
+            build_unit_payload(unit, index.category_names, version=args.version) for unit in matches
+        ]
         print(json.dumps(payload, indent=2))
         return 0
 
     if len(matches) == 1:
-        print_unit(matches[0], index.category_names)
+        print_unit(matches[0], index.category_names, version=args.version)
         return 0
 
     print(f"Found {len(matches)} unit matches for '{args.query}':")

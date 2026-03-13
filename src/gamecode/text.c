@@ -136,6 +136,7 @@ void NewLanguage(s32 l) {
   PData[5].description = (s32 *)tSUPERBELLYFLOPTEXT[(u8)l];
   Game.language = l;
   DefaultTimeTrialNames(0);
+  return;
 }
 
 //NGC MATCH

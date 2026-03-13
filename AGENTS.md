@@ -2,6 +2,16 @@
 
 Matching decompilation of Crash Bandicoot: The Wrath of Cortex for GameCube. The active retail target in this repo is `GCBE7D`, and the default local toolchain is `prodg35`. The compiler used is the ProDG 3.5 (with gcc 2.95.2 under the hood) and the compiler flags are written in configure.py
 
+## Agent Entry Points
+
+Use the repo-level AI docs that match your agent:
+
+- `AGENTS.md`: shared repo instructions for coding agents
+- `.github/copilot-instructions.md`: repository-wide GitHub Copilot instructions
+- `.github/instructions/decomp.instructions.md`: path-specific Copilot instructions for decomp source work
+- `.github/instructions/ai-tooling.instructions.md`: path-specific Copilot instructions for maintaining AI tooling docs and helpers
+- `.github/prompts/match-unit.prompt.md`: reusable Copilot prompt for "take this file/unit until done"
+
 ## Build and Verify
 
 Run configure after changing `configure.py`, `config/GCBE7D/config.yml`, or `config/GCBE7D/splits.txt`:
@@ -73,6 +83,9 @@ Use the repo-local helpers before manual grep when possible:
 - [`tools/ai_context.py`](tools/ai_context.py): one-stop context summary for a symbol or unit
   - `python tools/ai_context.py FindAIType`
   - `python tools/ai_context.py ai_1.c`
+- [`tools/ai_match_plan.py`](tools/ai_match_plan.py): file- or unit-level matching backlog, next target, and suggested loop commands
+  - `python tools/ai_match_plan.py src/gamecode/text.c`
+  - `python tools/ai_match_plan.py text.c`
 - [`tools/ai_decompme_zip.py`](tools/ai_decompme_zip.py): inspect a decomp.me-style zip or extracted directory, resolve target functions to repo units, and surface insertion/missing-declaration hints
   - `python tools/ai_decompme_zip.py C:/Users/denis/Downloads/MoveMINETUB.zip`
   - `python tools/ai_decompme_zip.py path/to/extracted_bundle_dir`
@@ -102,9 +115,27 @@ Repo-local skills live under `tools/skills/`:
 For decomp work, prefer this order:
 
 1. Resolve the target with `ai_lookup_symbol.py`, `ai_lookup_unit.py`, `ai_context.py`, or `ai_decompme_zip.py` for decomp.me-style bundles.
-2. Build the single object or context target when iterating.
-3. Keep changes narrow and match-focused.
-4. Run `ninja changes` before wrapping up if matching or tooling behavior may have changed.
+2. If the task starts from a file or unit, run `python tools/ai_match_plan.py <unit-or-path>` to list the remaining functions and the next target.
+3. Build the single object or context target when iterating.
+4. Keep changes narrow and match-focused.
+5. Run `ninja changes` before wrapping up if matching or tooling behavior may have changed.
+
+## Autonomous Matching Loop
+
+For "take this file and keep going" work, use this loop:
+
+1. Resolve the unit with `ai_match_plan.py` and pick the first remaining function.
+2. Build the `.ctx` target or inspect `build/GCBE7D/asm/<unit>.s` when source context is not enough.
+3. Edit one function at a time, then build only that object.
+4. Re-run `ai_lookup_symbol.py <symbol>`, `ai_context.py <symbol>`, or `ai_match_plan.py <unit>` after each measurable change.
+5. If the function stops improving after 4 build/measure cycles, note the blocker and move to the next function instead of stalling.
+
+Anti-stall rules:
+
+- Never use interactive `objdiff-cli diff` sessions in automation or long-running agent loops.
+- Do not spend long speculative "thinking" loops when a single-object build, report refresh, or extracted asm check can answer the next question.
+- Prefer true matches over fake matches: use normal control flow, proper structs, and typed fields instead of raw pointer arithmetic or goto-heavy code.
+- Do not use inline asm for decomp work. Always express the target in C code.
 
 ## Repo-Specific Notes
 
@@ -113,4 +144,4 @@ For decomp work, prefer this order:
 - `build/GCBE7D/report.json` is the easiest structured source for progress categories and per-function fuzzy match data.
 - Prefer scripted split import and build triage over large manual edits when the workflow already exists in `tools/`.
 - For automation, prefer `ninja changes` plus `python tools/changes_fmt.py build/GCBE7D/report_changes.json` over interactive `objdiff-cli diff` sessions.
-- dont use `#pragma once` i nthe C Files
+- Do not use `#pragma once` in C files.

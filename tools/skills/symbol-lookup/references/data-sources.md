@@ -2,8 +2,8 @@
 
 ## Validated Data
 
-- [`../../../config/GCBE7D/symbols.txt`](../../../config/GCBE7D/symbols.txt) stores validated names, addresses, sizes, scopes, and basic symbol types.
-- [`../../../config/GCBE7D/splits.txt`](../../../config/GCBE7D/splits.txt) maps address ranges back to units and sections.
+- [`../../../../config/GCBE7D/symbols.txt`](../../../../config/GCBE7D/symbols.txt) stores validated names, addresses, sizes, scopes, and basic symbol types.
+- [`../../../../config/GCBE7D/splits.txt`](../../../../config/GCBE7D/splits.txt) maps address ranges back to units and sections.
 
 ## Generated Data
 
@@ -13,7 +13,7 @@
 
 ## Fallback Data
 
-- [`../../../src/dump_alphaNGCport_DWARF.txt`](../../../src/dump_alphaNGCport_DWARF.txt) is the large fallback dump for hints when validated repo data is missing.
+- [`../../../../src/dump_alphaNGCport_DWARF.txt`](../../../../src/dump_alphaNGCport_DWARF.txt) is the large fallback dump for hints when validated repo data is missing.
 
 ## Special Cases
 

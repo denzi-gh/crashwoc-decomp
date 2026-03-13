@@ -9,10 +9,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REQUIRED_FILES = [
     "AGENTS.md",
+    "README.md",
+    ".github/copilot-instructions.md",
+    ".github/instructions/decomp.instructions.md",
+    ".github/instructions/ai-tooling.instructions.md",
+    ".github/prompts/match-unit.prompt.md",
     "tools/ai_common.py",
     "tools/ai_lookup_symbol.py",
     "tools/ai_lookup_unit.py",
     "tools/ai_context.py",
+    "tools/ai_match_plan.py",
 ]
 REQUIRED_SKILLS = [
     "project-onboarding",
@@ -20,6 +26,14 @@ REQUIRED_SKILLS = [
     "split-maintenance",
     "build-triage",
     "match-workflow",
+]
+MARKDOWN_DOCS = [
+    "AGENTS.md",
+    "README.md",
+    ".github/copilot-instructions.md",
+    ".github/instructions/decomp.instructions.md",
+    ".github/instructions/ai-tooling.instructions.md",
+    ".github/prompts/match-unit.prompt.md",
 ]
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 
@@ -76,6 +90,22 @@ def validate_openai_yaml(path: Path, skill_name: str, errors: list[str]) -> None
         )
 
 
+def validate_instruction_frontmatter(path: Path, errors: list[str]) -> None:
+    text = path.read_text(encoding="utf-8")
+    if not text.startswith("---\n"):
+        errors.append(f"{path.relative_to(ROOT).as_posix()}: missing YAML frontmatter")
+        return
+
+    end = text.find("\n---\n", 4)
+    if end == -1:
+        errors.append(f"{path.relative_to(ROOT).as_posix()}: frontmatter terminator not found")
+        return
+
+    frontmatter = text[4:end]
+    if "applyTo:" not in frontmatter:
+        errors.append(f"{path.relative_to(ROOT).as_posix()}: missing applyTo in frontmatter")
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -84,9 +114,14 @@ def main() -> int:
         if not path.is_file():
             errors.append(f"Missing required file: {rel_path}")
 
-    agents_path = ROOT / "AGENTS.md"
-    if agents_path.is_file():
-        check_markdown_links(agents_path, errors)
+    for rel_path in MARKDOWN_DOCS:
+        path = ROOT / rel_path
+        if path.is_file():
+            check_markdown_links(path, errors)
+
+    for instruction_path in (ROOT / ".github" / "instructions").glob("*.instructions.md"):
+        validate_instruction_frontmatter(instruction_path, errors)
+        check_markdown_links(instruction_path, errors)
 
     for skill_name in REQUIRED_SKILLS:
         skill_dir = ROOT / "tools" / "skills" / skill_name
@@ -114,6 +149,11 @@ def main() -> int:
 
         check_markdown_links(skill_md, errors)
         validate_openai_yaml(skill_dir / "agents" / "openai.yaml", skill_name, errors)
+
+        for reference_path in skill_dir.rglob("*.md"):
+            if reference_path == skill_md:
+                continue
+            check_markdown_links(reference_path, errors)
 
     if errors:
         for error in errors:

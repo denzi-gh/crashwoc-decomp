@@ -17,32 +17,24 @@ from ai_common import (
     format_percent,
     format_size,
     load_repo_index,
+    next_unmatched_function,
     nearby_functions,
     parse_address,
     progress_category_labels,
+    ranked_unit_functions,
     suggest_regression_commands,
     suggest_unit_commands,
+    unit_asm_path,
+    unit_match_counts,
     unit_summary,
 )
 
 
 def interesting_functions(unit):
-    if not unit.functions:
-        return []
-    non_matching = [
-        function
-        for function in unit.functions
-        if function.fuzzy_match_percent is None or function.fuzzy_match_percent < 100.0
-    ]
-    if non_matching:
-        return sorted(
-            non_matching,
-            key=lambda function: (
-                function.fuzzy_match_percent if function.fuzzy_match_percent is not None else -1.0,
-                function.address,
-            ),
-        )[:8]
-    return unit.functions[:5]
+    ranked = ranked_unit_functions(unit, include_matched=False)
+    if ranked:
+        return ranked[:8]
+    return ranked_unit_functions(unit)[:5]
 
 
 def dedupe(items):
@@ -56,7 +48,9 @@ def dedupe(items):
     return out
 
 
-def build_symbol_payload(unit, symbol, function, category_names: dict[str, str]) -> dict[str, Any]:
+def build_symbol_payload(
+    unit, symbol, function, category_names: dict[str, str], version: str = DEFAULT_VERSION
+) -> dict[str, Any]:
     return {
         "kind": "symbol",
         "symbol": {
@@ -68,6 +62,7 @@ def build_symbol_payload(unit, symbol, function, category_names: dict[str, str])
             "symbol_type": symbol.symbol_type,
         },
         "unit": unit_summary(unit, category_names),
+        "asm_path": unit_asm_path(unit, version=version),
         "function": {
             "name": function.name,
             "address": function.address,
@@ -98,10 +93,21 @@ def build_symbol_payload(unit, symbol, function, category_names: dict[str, str])
     }
 
 
-def build_unit_payload(unit, category_names: dict[str, str]) -> dict[str, Any]:
+def build_unit_payload(unit, category_names: dict[str, str], version: str = DEFAULT_VERSION) -> dict[str, Any]:
+    next_function = next_unmatched_function(unit)
     return {
         "kind": "unit",
         "unit": unit_summary(unit, category_names),
+        "asm_path": unit_asm_path(unit, version=version),
+        "match_summary": unit_match_counts(unit),
+        "next_function": {
+            "name": next_function.name,
+            "address": next_function.address,
+            "size": next_function.size,
+            "fuzzy_match_percent": next_function.fuzzy_match_percent,
+        }
+        if next_function is not None
+        else None,
         "interesting_functions": [
             {
                 "name": function.name,
@@ -115,7 +121,9 @@ def build_unit_payload(unit, category_names: dict[str, str]) -> dict[str, Any]:
     }
 
 
-def print_symbol_context(unit, symbol, function, category_names: dict[str, str]) -> None:
+def print_symbol_context(
+    unit, symbol, function, category_names: dict[str, str], version: str = DEFAULT_VERSION
+) -> None:
     print("Kind: symbol")
     print(f"Symbol: {symbol.name}")
     print(f"Section: {symbol.section}")
@@ -132,6 +140,7 @@ def print_symbol_context(unit, symbol, function, category_names: dict[str, str])
         print(f"Object: {unit.object_path}")
     if unit.ctx_path:
         print(f"Context: {unit.ctx_path}")
+    print(f"Asm: {unit_asm_path(unit, version=version)}")
     labels = progress_category_labels(unit, category_names)
     if labels:
         print(f"Progress categories: {', '.join(labels)}")
@@ -160,7 +169,7 @@ def print_symbol_context(unit, symbol, function, category_names: dict[str, str])
         print(f"  {command}")
 
 
-def print_unit_context(unit, category_names: dict[str, str]) -> None:
+def print_unit_context(unit, category_names: dict[str, str], version: str = DEFAULT_VERSION) -> None:
     print("Kind: unit")
     print(f"Unit: {unit.raw_name}")
     if unit.raw_name != unit.normalized_name:
@@ -173,6 +182,7 @@ def print_unit_context(unit, category_names: dict[str, str]) -> None:
         print(f"Context: {unit.ctx_path}")
     if unit.build_label:
         print(f"Build label: {unit.build_label}")
+    print(f"Asm: {unit_asm_path(unit, version=version)}")
     labels = progress_category_labels(unit, category_names)
     if labels:
         print(f"Progress categories: {', '.join(labels)}")
@@ -196,6 +206,22 @@ def print_unit_context(unit, category_names: dict[str, str]) -> None:
             print(
                 f"  {section.section:<7} {format_hex(section.start)} - {format_hex(section.end)}"
             )
+
+    counts = unit_match_counts(unit)
+    if counts["total"]:
+        print(
+            "Match summary: "
+            f"{counts['matched']}/{counts['total']} matched, "
+            f"{counts['remaining']} remaining "
+            f"({counts['partial']} partial, {counts['unknown']} unknown)"
+        )
+    next_function = next_unmatched_function(unit)
+    if next_function is not None:
+        print(
+            f"Next target: {next_function.name}  {format_hex(next_function.address)}  "
+            f"size {format_size(next_function.size)}  "
+            f"match {format_percent(next_function.fuzzy_match_percent)}"
+        )
 
     interesting = interesting_functions(unit)
     if interesting:
@@ -284,16 +310,18 @@ def main() -> int:
 
     if args.json:
         if kind == "symbol" and symbol is not None:
-            payload = build_symbol_payload(unit, symbol, function, index.category_names)
+            payload = build_symbol_payload(
+                unit, symbol, function, index.category_names, version=args.version
+            )
         else:
-            payload = build_unit_payload(unit, index.category_names)
+            payload = build_unit_payload(unit, index.category_names, version=args.version)
         print(json.dumps(payload, indent=2))
         return 0
 
     if kind == "symbol" and symbol is not None:
-        print_symbol_context(unit, symbol, function, index.category_names)
+        print_symbol_context(unit, symbol, function, index.category_names, version=args.version)
     else:
-        print_unit_context(unit, index.category_names)
+        print_unit_context(unit, index.category_names, version=args.version)
     return 0
 
 

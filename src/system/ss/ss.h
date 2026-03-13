@@ -9,6 +9,8 @@
   800cc2bc 00006c 800cc2bc  4 SS_Update 	Global
 */
 
-
+void PlayStream(int num, int vol, int chan);
+void StreamClear(void);
+void SS_Update(int vol);
 
 #endif // !SS_H
