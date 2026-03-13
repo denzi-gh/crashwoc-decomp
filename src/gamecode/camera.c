@@ -1,5 +1,16 @@
 #include "gamecode/camera.h"
 
+double fmod(double, double);
+
+void PointAlongSpline(struct nugspline_s *spl, float ratio, struct nuvec_s *dst, u16 *angle, u16 *tilt);
+float NewShadowMask(struct nuvec_s *ppos, float size, int extramask);
+void NuCameraSet(struct nucamera_s *camera);
+void RumbleCam(struct cammtx_s *CamMtx);
+void GliderCam(struct cammtx_s *CamMtx);
+void JeepCam(struct cammtx_s *CamMtx);
+void JeepCamFollowAng(struct cammtx_s *CamMtx, int mode);
+void JeepCamIntro(struct cammtx_s *CamMtx);
+
 float temp_fALONG;
 float temp_fACROSS;
 s32 temp_rail_end;
@@ -857,7 +868,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
   float fVar3;
   s32 zrot_override;
   s32 uVar31;
-  register char vehicle;
+  int vehicle;
   int a;
   s32 iVar34;
   struct nuvec_s vec;
@@ -883,6 +894,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
   float dVar41;
   float dVar42;
   new_var53 = (void *) 0;
+  pVIS = new_var53;
   vehicle = -1;
   cut_on = set_cutscenecammtx;
   if (set_cutscenecammtx != 0)
@@ -893,9 +905,6 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
   if (((PLAYERCOUNT != 0) && (VEHICLECONTROL == 1)) && (player->obj.vehicle != (-1)))
   {
     vehicle = player->obj.vehicle;
-    c = new_var53;
-    pVIS = new_var53;
-    goto Finish;
   }
   new_var5 = 13;
   new_var29 = CModel;
@@ -1613,7 +1622,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
       }
     }
       break;
-      new_var30 = ((s32) ((((unsigned long long) ((new_var87 % 0xbf) * 0x10000)) * 0xab8f69e3) >> 0x25)) & 0xFFFF;
+      new_var30 = ((new_var87 % 0xbf) * 0x10000 / 0xbf) & 0xFFFF;
 
     case 0x1f:
     {
@@ -1646,12 +1655,12 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
       }
       PointAlongSpline(SplTab[65].spl, dVar39, new_var77, new_var53, new_var53);
       iVIS = iTEMP;
-      vec.x += new_var75[((((unsigned long long) ((GlobalTimer.frame % 0xf7) * 0x10000)) * 0x10953f391) >> 0x26) & 0xFFFF] * 0.1f;
-      vec.y += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xbf) * 0x10000)) * 0xab8f69e3) >> 0x25)) & 0xFFFF] * 0.1f;
-      vec.z += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xd5) * 0x10000)) * 0x99d722db) >> 0x25)) & 0xFFFF] * 0.1f;
+      vec.x += new_var75[((GlobalTimer.frame % 0xf7) * 0x10000 / 0xf7) & 0xFFFF] * 0.1f;
+      vec.y += NuTrigTable[((GlobalTimer.frame % 0xbf) * 0x10000 / 0xbf) & 0xFFFF] * 0.1f;
+      vec.z += NuTrigTable[((GlobalTimer.frame % 0xd5) * 0x10000 / 0xd5) & 0xFFFF] * 0.1f;
     }
-      break;
       PointAlongSpline(SplTab[66].spl, dVar39, &local_150, new_var53, new_var53);
+      break;
 
     case 6:
       local_140.z = 0.1f;
@@ -1731,9 +1740,9 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
       local_150 = *p1;
       if (Level == 0x26)
     {
-      vec.x += (fVar3 = NuTrigTable[((((unsigned long long) ((GlobalTimer.frame % 0x26e) * 0x10000)) * 0x34ae820f) >> 0x25) & 0xFFFF]) * 0.05f;
+      vec.x += (fVar3 = NuTrigTable[((GlobalTimer.frame % 0x26e) * 0x10000 / 0x26e) & 0xFFFF]) * 0.05f;
       vec.z += NuTrigTable[(((GlobalTimer.frame % 0x1dc) * 0x10000) / 0x77) & 0xFFFF] * 0.05f;
-      vec.y += NuTrigTable[((uVar28 = ((unsigned long long) ((new_var46 = GlobalTimer.frame % 0x1eb) * 0x10000)) * 0x10af2f723) >> 0x27) & 0xFFFF] * 0.05f;
+      vec.y += NuTrigTable[(((new_var46 = GlobalTimer.frame % 0x1eb) * 0x10000) / 0x1eb) & 0xFFFF] * 0.05f;
     }
       break;
       new_var32 = 600;
@@ -1760,9 +1769,9 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
 
     case 0x21:
       vec = cutcamlook_FRONTEND;
-      vec.y += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xbf) * 0x10000)) * 0xab8f69e3) >> 0x25)) & 0xFFFF] * 0.1f;
-      vec.x += NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xf7) * 0x10000)) * 0x10953f391) >> 0x26)) & 0xFFFF] * 0.1f;
-      vec.z = vec.z + (NuTrigTable[((s32) ((((unsigned long long) ((GlobalTimer.frame % 0xd5) * 0x10000)) * 0x99d722db) >> 0x25)) & 0xFFFF] * 0.1f);
+      vec.y += NuTrigTable[((GlobalTimer.frame % 0xbf) * 0x10000 / 0xbf) & 0xFFFF] * 0.1f;
+      vec.x += NuTrigTable[((GlobalTimer.frame % 0xf7) * 0x10000 / 0xf7) & 0xFFFF] * 0.1f;
+      vec.z = vec.z + (NuTrigTable[((GlobalTimer.frame % 0xd5) * 0x10000 / 0xd5) & 0xFFFF] * 0.1f);
       break;
 
     case 0x1a:
@@ -1828,7 +1837,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
       vec.z = (NuTrigTable[0xFFFF & (uVar31 + 0x4000)] * 4.0f) + 0.0f;
       dVar39 = local_150.z - vec.z;
       dVar42 = local_150.x - vec.x;
-      dVar41 = NuFsqrt(((*new_var68) * dVar42) + (dVar39 * dVar39)) + 0.1f;
+      dVar41 = NuFsqrt((dVar42 * dVar42) + (dVar39 * dVar39)) + 0.1f;
       if ((unsigned long long) (dVar41 != dVar40))
     {
       dVar40 = (-(dVar40 - dVar41)) / dVar41;
@@ -1847,12 +1856,12 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
       break;
 
     case 0x19:
-      new_var38 = ((GlobalTimer.frame % 0xbf) * 0x10000) * 0xab8f69e3;
+      new_var38 = (GlobalTimer.frame % 0xbf) * 0x10000 / 0xbf;
       uVar27 = (uVar28 = 0);
-      vec.y = (NuTrigTable[((s32) (new_var38 >> 0x25)) & 0xFFFF] * 0.1f) + 0.5f;
+      vec.y = (NuTrigTable[new_var38 & 0xFFFF] * 0.1f) + 0.5f;
       vec.z = -1.0f;
-      vec.z = (NuTrigTable[((((unsigned long long) ((GlobalTimer.frame % 0xd5) * 0x10000)) * 0x99d722db) >> 0x25) & 0xFFFF] * 0.1f) + vec.z;
-      vec.x = (NuTrigTable[((s32) (((((unsigned long long) ((GlobalTimer.frame % 0xf7) * 0x10000)) * 0x10953f391) >> 36) >> 2)) & 0xFFFF] * 0.1f) + 1.0f;
+      vec.z = (NuTrigTable[((GlobalTimer.frame % 0xd5) * 0x10000 / 0xd5) & 0xFFFF] * 0.1f) + vec.z;
+      vec.x = (NuTrigTable[((GlobalTimer.frame % 0xf7) * 0x10000 / 0xf7) & 0xFFFF] * 0.1f) + 1.0f;
       break;
       new_var55 = &GameCamera->pos;
       new_var90 = 0.5f;
@@ -2047,14 +2056,8 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
     if (GameCamera->blend_time < GameCamera->blend_duration)
     {
       fVar3 = (dVar39 = GameCamera->blend_time / GameCamera->blend_duration);
-      new_var60 = vec.x;
-      new_var58 = &GameCamera->oldpos;
-      new_var64 = &GameCamera->oldpos;
-      new_var89 = &(*new_var58);
-      vec.x = new_var60;
-      new_var42 = (*(new_var12 = new_var64)).x;
-      vec.x = ((vec.x - (*new_var89).x) * fVar3) + new_var42;
-      vec.y = ((vec.y - (*new_var89).y) * fVar3) + (*new_var12).y;
+      vec.x = ((vec.x - GameCamera->oldpos.x) * fVar3) + GameCamera->oldpos.x;
+      vec.y = ((vec.y - GameCamera->oldpos.y) * fVar3) + GameCamera->oldpos.y;
       new_var11 = GameCamera;
       vec.z = ((vec.z - new_var11->oldpos.z) * fVar3) + new_var11->oldpos.z;
     }
@@ -2209,7 +2212,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
   }
   else
   {
-    if (xrot_override != new_var48)
+    if (xrot_override != -1)
     {
       new_var11->xrot = xrot_override;
     }
@@ -2217,7 +2220,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
     {
       new_var11->xrot = SeekRot(new_var11->xrot, (u16) uVar31, axSEEK);
     }
-    if (yrot_override != new_var48)
+    if (yrot_override != -1)
     {
       new_var11->yrot = yrot_override;
       iVar13 = -iVar13;
@@ -2226,7 +2229,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
     {
       new_var11->yrot = SeekRot(new_var11->yrot, (u16) uVar14, aySEEK);
     }
-    if (zrot_override != new_var48)
+    if (zrot_override != -1)
     {
       new_var11->zrot = zrot_override;
     }
@@ -2244,8 +2247,9 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
     if (new_var11->judder > 0.0f)
     {
       iVar13 = (s32) ((new_var11->judder + new_var11->judder) * 256.0f);
-      if (gcc2_compiled__N102(new_var11->judder, 0.06666667f) < 0.03333334f)
+      if (fmod(new_var11->judder, 0.06666667f) < 0.03333334f)
       {
+        iVar13 = -iVar13;
       }
       a += iVar13;
     }
@@ -2272,7 +2276,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
   new_var11->vZ.z = new_var11->m._22;
   pNuCam->mtx = new_var11->m;
   NuCameraSet(pNuCam);
-  if (player->used != new_var47)
+  if (player->used != 0)
   {
     new_var11->hdg_to_player = NuAtan2D(player->obj.pos.x - (*new_var33).x, player->obj.pos.z - (*(&new_var11->pos)).z);
   }
