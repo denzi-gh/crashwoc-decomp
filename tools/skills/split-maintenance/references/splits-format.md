@@ -2,7 +2,7 @@
 
 ## Source of Truth
 
-- Edit [`../../../config/GCBE7D/splits.txt`](../../../config/GCBE7D/splits.txt).
+- Edit [`../../../../config/GCBE7D/splits.txt`](../../../../config/GCBE7D/splits.txt).
 - Do not hand-edit `../../../config/GCBE7D/splits.generated.txt`.
 
 `configure.py` runs `tools/normalize_splits.py` to keep the generated files tool-safe.

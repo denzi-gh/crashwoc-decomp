@@ -41,5 +41,6 @@ terminate on their own. Use the file-based report flow above, or direct
 
 1. Reproduce the failure or regression on the narrowest useful target.
 2. Use `triage_build.py` when header or type issues make the first failing object unclear.
-3. Use `ninja changes` before wrapping up if matching behavior may have moved.
-4. Use `build/GCBE7D/report.json` or `python tools/ai_context.py <unit>` when you need unit-level match data.
+3. Use `python tools/ai_match_plan.py <unit-or-path>` when a file-level matching campaign stalls and you need the next actionable function.
+4. Use `ninja changes` before wrapping up if matching behavior may have moved.
+5. Use `build/GCBE7D/report.json` or `python tools/ai_context.py <unit>` when you need unit-level match data.

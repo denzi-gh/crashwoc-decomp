@@ -93,6 +93,29 @@ Once the initial build succeeds, `objdiff.json` will be generated in the project
 
 Download the latest release from [encounter/objdiff](https://github.com/encounter/objdiff). Set the project directory to this repository and the configuration should load automatically.
 
+AI-assisted workflows
+=====================
+
+Repository AI guidance lives in:
+
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- `.github/instructions/*.instructions.md`
+- `.github/prompts/match-unit.prompt.md`
+
+Repo-local helper commands include:
+
+- `python tools/ai_context.py <symbol-or-unit>`
+- `python tools/ai_lookup_symbol.py <symbol-or-address>`
+- `python tools/ai_lookup_unit.py <unit-or-path>`
+- `python tools/ai_match_plan.py <unit-or-path>`
+
+After changing AI tooling docs or helper scripts, run:
+
+```sh
+python tools/validate_ai_tooling.py
+```
+
 Pull Requests
 =============
 

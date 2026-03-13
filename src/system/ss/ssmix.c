@@ -70,25 +70,195 @@ s32 __MIXPanTableR[128] = {
              -1,           -1,            0,            0
 };
 
-s32 __MIXGetPanL(s8 pan)
+u16 __MIXGetVolume(s32 db)
+{
+    if (db <= -904) {
+        return 0;
+    }
+    if (db > 59) {
+        return 0xFF64;
+    }
+    return __MIXVolumeTable[db + 904];
+}
+
+s32 __MIXGetPanL(s32 pan)
 {
     return __MIXPanTableL[pan];
 }
 
-s32 __MIXGetPanR(s8 pan)
+s32 __MIXGetPanR(s32 pan)
 {
     return __MIXPanTableR[pan];
 }
 
-void MIXInit()
+void __MIXResetChannel(MIX *channel)
+{
+    channel->mode = 0x50000000;
+    channel->input = 0;
+    channel->auxA = -960;
+    channel->auxB = -960;
+    channel->l = __MIXGetPanL(64);
+    channel->r = __MIXGetPanR(64);
+    channel->f = __MIXGetPanR(0);
+    channel->b = __MIXGetPanL(0);
+    channel->pan = 64;
+    channel->span = 127;
+    channel->fader = 0;
+    channel->vBS = 0;
+    channel->vBR = 0;
+    channel->vBL = 0;
+    channel->vAS = 0;
+    channel->vAR = 0;
+    channel->vAL = 0;
+    channel->vS = 0;
+    channel->vR = 0;
+    channel->vL = 0;
+    channel->v = 0;
+}
+
+void __MIXSetPan(MIX *channel)
+{
+    channel->l = __MIXGetPanL(channel->pan);
+    channel->r = __MIXGetPanR(channel->pan);
+    channel->f = __MIXGetPanR(channel->span);
+    channel->b = __MIXGetPanL(channel->span);
+}
+
+void MIXInit(void)
 {
     s32 i;
 
     for (i = 0; i < NUM_MIX_CHANNELS; i++)
     {
-        //__MIXResetChannel(&__MIXChannel[i]);
+        __MIXResetChannel(&__MIXChannel[i]);
     }
-    __MIXDvdStreamAttenCurrent = 0;
     __MIXDvdStreamAttenUser = 0;
+    __MIXDvdStreamAttenCurrent = 0;
     __MIXSoundMode = 1;
+}
+
+void MIXInitChannel(AXVPB *axvpb, u32 mode, s32 input, s32 auxA, s32 auxB, s32 pan, s32 span, s32 fader)
+{
+    MIX *c;
+    s32 old;
+    u16 mixerCtrl;
+
+    c = &__MIXChannel[axvpb->index];
+    c->axvpb = axvpb;
+    c->span = span;
+    c->mode = mode & 7;
+    c->auxA = auxA;
+    c->auxB = auxB;
+    c->pan = pan;
+    c->fader = fader;
+    c->input = input;
+    __MIXSetPan(c);
+
+    if (c->mode & 4) {
+        c->v = 0;
+    } else {
+        c->v = __MIXGetVolume(input);
+    }
+
+    if (__MIXSoundMode == 1) {
+        c->vL = __MIXGetVolume(c->fader + c->l + c->f);
+        c->vR = __MIXGetVolume(c->fader + c->r + c->f);
+        c->vS = __MIXGetVolume(c->fader + c->b);
+
+        if (c->mode & 1) {
+            c->vAL = __MIXGetVolume(c->auxA + c->l + c->f);
+            c->vAR = __MIXGetVolume(c->auxA + c->r + c->f);
+            c->vAS = __MIXGetVolume(c->auxA + c->b - 60);
+        } else {
+            c->vAL = __MIXGetVolume(c->fader + c->auxA + c->l + c->f);
+            c->vAR = __MIXGetVolume(c->fader + c->auxA + c->r + c->f);
+            c->vAS = __MIXGetVolume(c->fader + c->auxA + c->b - 60);
+        }
+
+        if (c->mode & 2) {
+            c->vBL = __MIXGetVolume(c->auxB + c->l + c->f);
+            c->vBR = __MIXGetVolume(c->auxB + c->r + c->f);
+            c->vBS = __MIXGetVolume(c->auxB + c->b - 60);
+        } else {
+            c->vBL = __MIXGetVolume(c->fader + c->auxB + c->l + c->f);
+            c->vBR = __MIXGetVolume(c->fader + c->auxB + c->r + c->f);
+            c->vBS = __MIXGetVolume(c->fader + c->auxB + c->b - 60);
+        }
+    } else {
+        c->vL = __MIXGetVolume(c->fader + c->f);
+        c->vR = __MIXGetVolume(c->fader + c->f);
+        c->vS = __MIXGetVolume(c->fader + c->b);
+
+        if (c->mode & 1) {
+            c->vAL = __MIXGetVolume(c->auxA + c->f);
+            c->vAR = __MIXGetVolume(c->auxA + c->f);
+            c->vAS = __MIXGetVolume(c->auxA + c->b - 60);
+        } else {
+            c->vAL = __MIXGetVolume(c->fader + c->auxA + c->f);
+            c->vAR = __MIXGetVolume(c->fader + c->auxA + c->f);
+            c->vAS = __MIXGetVolume(c->fader + c->auxA + c->b - 60);
+        }
+
+        if (c->mode & 2) {
+            c->vBL = __MIXGetVolume(c->auxB + c->f);
+            c->vBR = __MIXGetVolume(c->auxB + c->f);
+            c->vBS = __MIXGetVolume(c->auxB + c->b - 60);
+        } else {
+            c->vBL = __MIXGetVolume(c->fader + c->auxB + c->f);
+            c->vBR = __MIXGetVolume(c->fader + c->auxB + c->f);
+            c->vBS = __MIXGetVolume(c->fader + c->auxB + c->b - 60);
+        }
+    }
+
+    old = OSDisableInterrupts();
+
+    axvpb->pb.ve.currentVolume = c->v;
+    axvpb->pb.ve.currentDelta = 0;
+    axvpb->pb.mix.vL = c->vL;
+    axvpb->pb.mix.vDeltaL = 0;
+    axvpb->pb.mix.vR = c->vR;
+    axvpb->pb.mix.vDeltaR = 0;
+    axvpb->pb.mix.vAuxAL = c->vAL;
+    axvpb->pb.mix.vDeltaAuxAL = 0;
+    axvpb->pb.mix.vAuxAR = c->vAR;
+    axvpb->pb.mix.vDeltaAuxAR = 0;
+    axvpb->pb.mix.vAuxBL = c->vBL;
+    axvpb->pb.mix.vDeltaAuxBL = 0;
+    axvpb->pb.mix.vAuxBR = c->vBR;
+    axvpb->pb.mix.vDeltaAuxBR = 0;
+    axvpb->pb.mix.vAuxBS = c->vBS;
+    axvpb->pb.mix.vDeltaAuxBS = 0;
+    axvpb->pb.mix.vS = c->vS;
+    axvpb->pb.mix.vDeltaS = 0;
+    axvpb->pb.mix.vAuxAS = c->vAS;
+    axvpb->pb.mix.vDeltaAuxAS = 0;
+
+    mixerCtrl = 0;
+    if (axvpb->pb.mix.vAuxAL || axvpb->pb.mix.vAuxAR || axvpb->pb.mix.vAuxAS) {
+        mixerCtrl |= 1;
+    }
+    if (axvpb->pb.mix.vAuxBL || axvpb->pb.mix.vAuxBR || axvpb->pb.mix.vAuxBS) {
+        mixerCtrl |= 2;
+    }
+    if (axvpb->pb.mix.vS || axvpb->pb.mix.vAuxAS || axvpb->pb.mix.vAuxBS) {
+        mixerCtrl |= 4;
+    }
+
+    axvpb->pb.mixerCtrl = mixerCtrl;
+    axvpb->sync |= 0x212;
+    OSRestoreInterrupts(old);
+}
+
+void MIXReleaseChannel(AXVPB *axvpb)
+{
+    __MIXChannel[axvpb->index].axvpb = 0;
+}
+
+void MIXSetInput(AXVPB *p, s32 dB)
+{
+    MIX *channel;
+
+    channel = &__MIXChannel[p->index];
+    channel->input = dB;
+    channel->mode |= 0x10000000;
 }

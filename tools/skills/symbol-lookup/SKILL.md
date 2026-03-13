@@ -35,6 +35,7 @@ Do not promote DWARF hints into validated facts without checking the rest of the
 
 - If you have a symbol or address, use `ai_lookup_symbol.py` first.
 - If you need the source path, object target, context target, and nearby functions, use `ai_context.py`.
+- If the task starts from a file or unit and you need the remaining-function backlog, use `ai_match_plan.py`.
 - If helper output and source context are not enough, inspect `build/GCBE7D/asm/<unit>.s` for the exact body and nearby rodata labels before falling back to DWARF.
 - If the lookup returns multiple unit candidates because of duplicate basenames, switch to the normalized unit name printed by the helper, for example `ai_1.c`.
 

@@ -130,6 +130,15 @@ def format_percent(value: Optional[float]) -> str:
     return f"{value:.2f}%"
 
 
+def function_match_status(function: ReportFunction) -> str:
+    percent = function.fuzzy_match_percent
+    if percent is None:
+        return "unknown"
+    if percent >= 100.0:
+        return "matched"
+    return "partial"
+
+
 def unit_key_from_stem_and_suffix(stem: str, suffix: str) -> str:
     return f"{stem}{suffix.lower()}"
 
@@ -509,6 +518,7 @@ def progress_category_labels(unit: UnitInfo, category_names: dict[str, str]) -> 
 
 def suggest_unit_commands(unit: UnitInfo) -> list[str]:
     commands: list[str] = []
+    commands.append(f"python tools/ai_match_plan.py {unit.normalized_name}")
     if unit.object_path:
         commands.append(f"ninja {unit.object_path}")
     if unit.ctx_path:
@@ -533,6 +543,52 @@ def nearby_functions(unit: UnitInfo, address: int, radius: int = 2) -> list[Repo
             end = min(len(unit.functions), index + radius + 1)
             return unit.functions[start:end]
     return []
+
+
+def unit_asm_path(unit: UnitInfo, version: str = DEFAULT_VERSION) -> str:
+    stem = Path(unit.normalized_name).stem
+    return rel_posix(repo_path("build", version, "asm", f"{stem}.s"))
+
+
+def function_match_sort_key(function: ReportFunction) -> tuple[bool, float, int, str]:
+    percent = function.fuzzy_match_percent
+    matched = percent is not None and percent >= 100.0
+    rank = percent if percent is not None else -1.0
+    return (matched, rank, function.address, function.name)
+
+
+def ranked_unit_functions(unit: UnitInfo, include_matched: bool = True) -> list[ReportFunction]:
+    ranked = sorted(unit.functions, key=function_match_sort_key)
+    if include_matched:
+        return ranked
+    return [function for function in ranked if function_match_status(function) != "matched"]
+
+
+def next_unmatched_function(unit: UnitInfo) -> Optional[ReportFunction]:
+    ranked = ranked_unit_functions(unit, include_matched=False)
+    return ranked[0] if ranked else None
+
+
+def unit_match_counts(unit: UnitInfo) -> dict[str, int]:
+    total = len(unit.functions)
+    matched = 0
+    partial = 0
+    unknown = 0
+    for function in unit.functions:
+        status = function_match_status(function)
+        if status == "matched":
+            matched += 1
+        elif status == "partial":
+            partial += 1
+        else:
+            unknown += 1
+    return {
+        "total": total,
+        "matched": matched,
+        "remaining": total - matched,
+        "partial": partial,
+        "unknown": unknown,
+    }
 
 
 def search_dwarf_lines(query: str, limit: int = 5, version: str = DEFAULT_VERSION) -> list[str]:
