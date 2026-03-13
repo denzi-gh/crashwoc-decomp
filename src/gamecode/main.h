@@ -266,6 +266,7 @@ s32 NuSpecialDrawAt(struct nuhspecial_s *sph, struct numtx_s *mtx);
 s32 JStrLen(char *txt);
 s32 CombinationCharacterBD(char c0, char c1);
 s32 CombinationCharacterBC(char c0, char c1);
+void DefaultTimeTrialNames(s32 all);
 void NewLanguage(s32 l);
 void ChangeCharacter(struct creature_s *c, s32 character);
 float RatioAlongLine(struct nuvec_s* pos, struct nuvec_s* p0, struct nuvec_s* p1);
