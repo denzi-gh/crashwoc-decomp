@@ -1,25 +1,32 @@
 #include "nuvec4.h"
 #include "numtx.h"
 
-void NuVec4Scale(struct nuvec4_s* v, struct nuvec4_s* dest, f32 k)
+void NuVec4Scale(struct nuvec4_s* v, struct nuvec4_s* v0, f32 k)
 {
-	dest->x = v->x * k;
-	dest->y = v->y * k;
-	dest->z = v->z * k;
-	dest->w = v->w * k;
+	v->x = v0->x * k;
+	v->y = v0->y * k;
+	v->z = v0->z * k;
+	v->w = v0->w * k;
 }
 
-void NuVec4MtxTransform(struct nuvec4_s* dest, struct nuvec4_s* a, struct Mtx* b)
+void NuVec4MtxTransform(struct nuvec4_s* v, struct nuvec_s* v0, struct numtx_s* m0)
 {
-	dest->x = a->x * b->m11 + a->y * b->m21 + a->z * b->m31 + b->m41;
-	dest->y = a->x * b->m12 + a->y * b->m22 + a->z * b->m32 + b->m42;
-	dest->z = a->x * b->m13 + a->y * b->m23 + a->z * b->m33 + b->m43;
-	dest->w = a->x * b->m14 + a->y * b->m24 + a->z * b->m34 + b->m44;
+	float x, y, z, w;
+
+	x = v0->x * m0->_00 + v0->y * m0->_10 + v0->z * m0->_20 + m0->_30;
+	y = v0->x * m0->_01 + v0->y * m0->_11 + v0->z * m0->_21 + m0->_31;
+	z = v0->x * m0->_02 + v0->y * m0->_12 + v0->z * m0->_22 + m0->_32;
+	w = v0->x * m0->_03 + v0->y * m0->_13 + v0->z * m0->_23 + m0->_33;
+
+	v->x = x;
+	v->y = y;
+	v->z = z;
+	v->w = w;
 }
 
 void NuVec4MtxInvTransform(struct nuvec4_s* dest, struct nuvec4_s* a, struct Mtx* b)
 {
 	struct Mtx tmp;
 	NuMtxInv(&tmp, b);
-	NuVec4MtxTransform(dest, a, &tmp);
+	NuVec4MtxTransform(dest, (struct nuvec_s*)a, (struct numtx_s*)&tmp);
 }
