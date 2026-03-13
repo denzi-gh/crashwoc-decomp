@@ -140,13 +140,11 @@ angle ang[UNIT_CIRCLE_PRECISION] = {
 
 void NuTrigInit()
 {
-	f32 inc = 0.00009587f;
 	s32 i;
 
 	for (i = 0; i < NU_TRIG_TABLE_SIZE; i++)
 	{
-		NuTrigTable[i] = (f32)sin((f64)(i * inc));
-		//printf("table: %d\n", NuTrigTable[i]);
+		NuTrigTable[i] = (f32)sin((f64)(i * 0.00009587f));
 	}
 }
 
@@ -274,7 +272,11 @@ angle NuAtan2D(f32 x, f32 y)
 	return ret;
 }
 
-angle NuAngleSub(angle a, angle b)
+s32 NuAngSub(s32 ang1, s32 ang2)
 {
-	return a - b;
+	s32 retang = (ang1 - ang2) & 0xFFFF;
+	if (retang > 0x7FFF) {
+		retang -= 0x10000;
+	}
+	return retang;
 }

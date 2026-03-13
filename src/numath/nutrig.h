@@ -45,7 +45,7 @@ angle fxyd(f32 x, f32 y);
 // Return the tan-1 with x and y sizes.
 angle NuAtan2D(f32 x, f32 y);
 
-// Return a - b.
-angle NuAngleSub(angle a, angle b);
+// Return signed shortest angle difference (a - b).
+s32 NuAngSub(s32 ang1, s32 ang2);
 
 #endif // !NUTRIG_H
