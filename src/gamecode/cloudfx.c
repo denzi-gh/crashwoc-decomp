@@ -8,12 +8,53 @@ s32 NuRndrGobj(struct nugobj_s *gobj, struct numtx_s *wm, f32 **blendvals);
 int rand(void);
 void srand(unsigned int seed);
 
+static const unsigned long D3DSIMPLERENDERSTATEENCODE[82] = {
+    0x00040260, 0x00040264, 0x00040268, 0x0004026C, 0x00040270, 0x00040274,
+    0x00040278, 0x0004027C, 0x00040288, 0x0004028C, 0x00040A60, 0x00040A64,
+    0x00040A68, 0x00040A6C, 0x00040A70, 0x00040A74, 0x00040A78, 0x00040A7C,
+    0x00040A80, 0x00040A84, 0x00040A88, 0x00040A8C, 0x00040A90, 0x00040A94,
+    0x00040A98, 0x00040A9C, 0x00040AA0, 0x00040AA4, 0x00040AA8, 0x00040AAC,
+    0x00040AB0, 0x00040AB4, 0x00040AB8, 0x00040ABC, 0x00040AC0, 0x00040AC4,
+    0x00040AC8, 0x00040ACC, 0x00040AD0, 0x00040AD4, 0x00040AD8, 0x00040ADC,
+    0x000417F8, 0x00041E20, 0x00041E24, 0x00041E40, 0x00041E44, 0x00041E48,
+    0x00041E4C, 0x00041E50, 0x00041E54, 0x00041E58, 0x00041E5C, 0x00041E60,
+    0x00041D90, 0x00041E74, 0x00041E78, 0x00040354, 0x0004033C, 0x00040304,
+    0x00040300, 0x00040340, 0x00040344, 0x00040348, 0x0004035C, 0x00040310,
+    0x0004037C, 0x00040358, 0x00040374, 0x00040378, 0x00040364, 0x00040368,
+    0x0004036C, 0x00040360, 0x00040350, 0x0004034C, 0x000409F8, 0x00040384,
+    0x00040388, 0x00040330, 0x00040334, 0x00040338
+};
+
+static const unsigned long D3DTEXTUREDIRECTENCODE[4] = {
+    0x00081B00, 0x00081B40, 0x00081B80, 0x00081BC0
+};
+
+static const unsigned long D3DDIRTYFROMRENDERSTATE[35] = {
+    0x00002000, 0x00002000, 0x00002000, 0x00002000, 0x00002000, 0x00002000,
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x00001200, 0x00003000,
+    0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000,
+    0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000,
+    0x00000100, 0x00000100, 0x00000900, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0x00000100, 0x00000000, 0x00000000, 0x00000000
+};
+
+static const unsigned long D3DDIRTYFROMTEXTURESTATE[22] = {
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F,
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F,
+    0x0000480F, 0x00000800, 0x00000800, 0x00000800, 0x00000800, 0x00000800,
+    0x00000800, 0x00000800, 0x00000800, 0x00000400
+};
+
+const char lbl_801058F4[] = "gfx\\cloudslo.bmp";
+const char lbl_80105908[] = "C:/source/crashwoc/code/gamecode/cloudfx.c";
+const char lbl_80105934[] = "cloudInit : Lock VB failed!";
+
 float CLOUDRNG;
 float MAXCLOUDSIZE;
 float PARTICLESIZE;
 struct nugobj_s* cloudGobj;
 struct numtl_s* cloudmtl;
-static s32 disable_clouds;
+static s32 disable_clouds = 0;
 struct nuvec_s groff[20];
 struct nuivec_s grphase[20];
 struct nuivec_s grphaserate[20];
@@ -32,7 +73,7 @@ void cloudInit(union variptr_u *buffer,union variptr_u *buffend) {
     
   diffuse = -1;
   if (cloudmtl == NULL) {
-    cloudtex = NuTexReadBitmap("gfx\\cloudslo.bmp");
+    cloudtex = NuTexReadBitmap((char *)lbl_801058F4);
     cloudmtl = NuMtlCreate(1);
     if (cloudmtl != NULL) {
       (cloudmtl->diffuse).r = 1.0f;
@@ -74,7 +115,7 @@ void cloudInit(union variptr_u *buffer,union variptr_u *buffend) {
   stride = NuVtxStride(cloudGobj->geom->vtxtype);
   vtx = (struct nuvtx_ps_s *)cloudGobj->geom->hVB;
   if (vtx == NULL) {
-    ((error_func *(*)(char *, s32))NuErrorProlog)("C:/source/crashwoc/code/gamecode/cloudfx.c",0x4a)("cloudInit : Lock VB failed!");
+    ((error_func *(*)(char *, s32))NuErrorProlog)((char *)lbl_80105908,0x4a)((char *)lbl_80105934);
   }
 
   ptr = (char *)vtx;

@@ -66,6 +66,11 @@ char* tNOTCOMPAT[6][2];
 char* tOTHERMARKET[6][4];
 char* tWRONGDEV[6][2];
 
+extern char* tFSERR1[];
+extern char* tFSERR2[];
+extern char* tFSERR3[];
+extern char* tFSERR4[];
+
 //NGC MATCH
 char* GetStringIdx(s32 errcode, s32 arg1) {
 
@@ -131,57 +136,31 @@ void NewLanguage(s32 l) {
   PData[5].description = (s32 *)tSUPERBELLYFLOPTEXT[(u8)l];
   Game.language = l;
   DefaultTimeTrialNames(0);
-  return;
 }
 
-//CHECK
+//NGC MATCH
 char* GetDiskErrString(s32 errcode, s32 index) {
     switch (errcode) {
     case 0:
         if (index > 2) {
             return 0;
         }
-        return tNOCARD[(u32)Game.language];
+        return tFSERR1[index];
     case 1:
-        if (index <= 1) {
-            return tOTHERMARKET[(u32)Game.language][index];
+        if (index > 1) {
+            return 0;
         }
-        return 0;
+        return tFSERR2[index];
     case 2:
-        if (index <= 2) {
-            return tCORRUPTED[(u32)Game.language][index];
-        }
-        return 0;
-    case 3:
-        if (index < 4) {
-            return tOTHERMARKET[(u32)Game.language][index];
-        }
-        return 0;
-    case 4:
-        if (index > 1) {
-          return tDAMAGED[(u32)Game.language][index];
-        }
-    return 0;
-    case 5:
-        if (index > 1) {
-            return tWRONGDEV[(u32)Game.language][index];
-        }
-    return 0;
-    case 6:
         if (index > 2) {
-            return tINSUFFICIENTSPACE[(u32)Game.language][index];
+            return 0;
         }
-        return 0;
-    case 7:
-        if (index <= 2) {
-            return tNOTCOMPAT[(u32)Game.language][index];
+        return tFSERR3[index];
+    case 3:
+        if (index > 2) {
+            return 0;
         }
-        return 0;
-    case 8:
-        if (1 < index) {
-            return tCORRUPTDATA[(u32)Game.language][index];
-        }
-        return 0;
+        return tFSERR4[index];
     default:
         return 0;
     }
