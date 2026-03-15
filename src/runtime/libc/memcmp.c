@@ -1,51 +1,40 @@
 #include "string.h"
 
 #define UNALIGNED(X, Y) ((((long)X) & (sizeof(long) - 1)) | (((long)Y) & (sizeof(long) - 1)))
+#define TOO_SMALL(n) ((n) < sizeof(long))
+#define LBLOCKSIZE (sizeof(long))
 
-int memcmp(const void *lhs, const void *rhs, size_t count)
+int memcmp(const void *m1, const void *m2, size_t n)
 {
+  unsigned char *s1 = (unsigned char *) m1;
+  unsigned char *s2 = (unsigned char *) m2;
+  unsigned long *a1;
+  unsigned long *a2;
 
-  const unsigned char *p1;
-  p1 = (const unsigned char *) lhs;
-  if ((count > 3) && (!((((long) p1) & ((sizeof(long)) - 1)) | (((long) rhs) & ((sizeof(long)) - 1)))))
-  {
-    p1 = rhs;
-    if ((*((const unsigned long *) p1)) != (*((const unsigned long *) lhs)))
+  if (!TOO_SMALL(n) && !UNALIGNED(s1, s2))
     {
-      goto bytes;
-    }
-    do
-    {
-      count = count - 4;
-      lhs = ((const unsigned char *) lhs) + 4;
-      rhs = ((const unsigned char *) rhs) + 4;
-      if (count <= 3)
-      {
-        break;
-      }
-    }
-    while ((*((const unsigned long *) lhs)) == (*((const unsigned long *) rhs)));
-    bytes:
-    p1 = (const unsigned char *) lhs;
+      a1 = (unsigned long*) s1;
+      a2 = (unsigned long*) s2;
+      while (n >= LBLOCKSIZE)
+        {
+          if (*a1 != *a2)
+            break;
+          n -= LBLOCKSIZE;
+          a1++;
+          a2++;
+        }
 
-  }
-  if ((count--) != 0)
-  {
-    do
-    {
-      int a;
-      int b;
-      a = *p1;
-      b = *((const unsigned char *) rhs);
-      if (a != b)
-      {
-        return a - b;
-      }
-      p1++;
-      rhs = ((const unsigned char *) rhs) + 1;
+      s1 = (unsigned char*) a1;
+      s2 = (unsigned char*) a2;
     }
-    while ((count--) != 0);
-  }
+
+  while (n--)
+    {
+      if (*s1 != *s2)
+        return *s1 - *s2;
+      s1++;
+      s2++;
+    }
+
   return 0;
-
 }

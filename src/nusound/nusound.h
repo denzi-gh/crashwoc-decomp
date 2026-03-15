@@ -32,6 +32,9 @@ extern s32 SS_CurrentChannel;
 
 // TODO: FUNCTIONS!!!
 
+// Play a 3D positional sound effect.
+void NuSoundPlay3d(struct nuvec_s *pos, int SSample, int VolL, int VolR, int Pitch);
+
 // Resume SFX.
 void NuSoundResumeSfx();
 

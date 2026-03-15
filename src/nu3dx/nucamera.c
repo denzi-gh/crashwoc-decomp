@@ -1,6 +1,9 @@
 #include <nucore/numem.h>
 #include "nucamera.h"
 #include "numath/numtx.h"
+#include "nuvport.h"
+
+double tan(double);
 
 static s32 clip_enable = 1;
 static struct nuvec_s cam_axes = { 1.0f, 1.0f, 1.0f };
@@ -21,53 +24,6 @@ struct nucamera_s * NuCameraCreate(void) {
   (cam->scale).y = 1.0f;
   (cam->scale).x = 1.0f;
   return cam;
-}
-
-struct numtx_s* NuCameraGetMtx()
-{
-    return &global_camera.mtx;
-}
-
-struct numtx_s* NuCameraGetViewMtx()
-{
-    return &vmtx;
-}
-
-struct numtx_s* NuCameraGetProjectionMtx()
-{
-    return &pmtx;
-}
-
-struct numtx_s* NuCameraGetVPCSMtx()
-{
-    return &vpcsmtx;
-}
-
-f32 NuCameraDistSqr(struct nuvec_s* point)
-{
-    return NuVecDistSqr(point, (struct nuvec_s*)&global_camera.mtx._30, NULL);
-}
-
-void FixAxes(struct numtx_s* m)
-{
-    m->_00 *= cam_axes.x;
-    m->_01 *= cam_axes.x;
-    m->_02 *= cam_axes.x;
-    m->_03 *= cam_axes.x;
-    m->_10 *= cam_axes.y;
-    m->_11 *= cam_axes.y;
-    m->_12 *= cam_axes.y;
-    m->_13 *= cam_axes.y;
-    m->_20 *= cam_axes.z;
-    m->_21 *= cam_axes.z;
-    m->_22 *= cam_axes.z;
-    m->_23 *= cam_axes.z;
-    return;
-}
-
-void NuCameraEnableClipping(s32 enable)
-{
-    clip_enable = enable;
 }
 
 //MATCH NGC
@@ -175,6 +131,26 @@ void NuCameraSet(struct nucamera_s *camera) {
     return;
 }
 
+struct numtx_s* NuCameraGetMtx()
+{
+    return &global_camera.mtx;
+}
+
+struct numtx_s* NuCameraGetViewMtx()
+{
+    return &vmtx;
+}
+
+struct numtx_s* NuCameraGetProjectionMtx()
+{
+    return &pmtx;
+}
+
+struct numtx_s* NuCameraGetVPCSMtx()
+{
+    return &vpcsmtx;
+}
+
 //NGC MATCH
 void NuCameraTransformView(struct nuvec_s *dest,struct nuvec_s *src,s32 n, const struct numtx_s *w) {
     struct nuvec_s *end;
@@ -212,25 +188,6 @@ void NuCameraTransformClip(struct nuvec_s *dest,struct nuvec_s *src,int n, const
 }
 
 //MATCH GCN
-void NuCameraTransformScreenClip(struct nuvec_s *dest,struct nuvec_s *src,s32 n,struct numtx_s *w) {
-    struct nuvec_s *end;
-    struct numtx_s m;
-
-    end = &src[n];
-    if (w != NULL) {
-        NuMtxMulH(&m,w,&vpc_vport_mtx);
-    }
-    else {
-        m = vpc_vport_mtx;
-    }
-    for (; src < end; src++, dest++) {
-        NuVecMtxTransformH(dest,src,&m);
-    }
-    return;
-}
-
-
-//MATCH GCN
 s32 NuCameraClipTestExtents(struct nuvec_s* min, struct nuvec_s* max, const struct numtx_s* wm) {
     struct nuvec_s* ext[2];
     struct nuvec_s src[8];
@@ -239,12 +196,13 @@ s32 NuCameraClipTestExtents(struct nuvec_s* min, struct nuvec_s* max, const stru
     s32 iVar2;
     s32 iVar4;
     s32 iVar6;
+    s32 j;
     char oc[8];
 
     if (clip_enable == 0) {
         k = 1;
     } else {
-        int j = 0;
+        j = 0;
         ext[0] = min;
         ext[1] = max;
         for (iVar2 = 0; iVar2 < 2; iVar2++) {
@@ -359,6 +317,28 @@ s32 NuCameraClipTestPoints(struct nuvec_s* pnts, s32 cnt, struct numtx_s* wm) {
     return out;
 }
 
+f32 NuCameraDistSqr(struct nuvec_s* point)
+{
+    return NuVecDistSqr(point, (struct nuvec_s*)&global_camera.mtx._30, NULL);
+}
+
+void FixAxes(struct numtx_s* m)
+{
+    m->_00 *= cam_axes.x;
+    m->_01 *= cam_axes.x;
+    m->_02 *= cam_axes.x;
+    m->_03 *= cam_axes.x;
+    m->_10 *= cam_axes.y;
+    m->_11 *= cam_axes.y;
+    m->_12 *= cam_axes.y;
+    m->_13 *= cam_axes.y;
+    m->_20 *= cam_axes.z;
+    m->_21 *= cam_axes.z;
+    m->_22 *= cam_axes.z;
+    m->_23 *= cam_axes.z;
+    return;
+}
+
 //MATCH GCN  //part of SetProjectionMatrix
 float tan2(float x) {
     return cos(x) / sin(x);
@@ -371,9 +351,6 @@ static void SetProjectionMatrix(struct numtx_s* mtx, float fFOV, float fAspect, 
     float w;
     float Q;
     float fVar1;
-
-    // Stack Padding
-    u8 x[0x38];
 
     h = fFarPlane - fNearPlane;
 
@@ -397,5 +374,28 @@ static void SetProjectionMatrix(struct numtx_s* mtx, float fFOV, float fAspect, 
     mtx->_22 = dVar5;
     mtx->_23 = 1.0f;
     mtx->_32 = (-dVar5 * fNearPlane);
+    return;
+}
+
+void NuCameraEnableClipping(s32 enable)
+{
+    clip_enable = enable;
+}
+
+//MATCH GCN
+void NuCameraTransformScreenClip(struct nuvec_s *dest,struct nuvec_s *src,s32 n,struct numtx_s *w) {
+    struct nuvec_s *end;
+    struct numtx_s m;
+
+    end = &src[n];
+    if (w != NULL) {
+        NuMtxMulH(&m,w,&vpc_vport_mtx);
+    }
+    else {
+        m = vpc_vport_mtx;
+    }
+    for (; src < end; src++, dest++) {
+        NuVecMtxTransformH(dest,src,&m);
+    }
     return;
 }

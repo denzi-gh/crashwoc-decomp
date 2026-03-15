@@ -90,7 +90,7 @@ void LoadLights(void) {
             if (0x100 < LIGHTCOUNT) {
                 LIGHTCOUNT = 0x100;
             }
-            for (i = 0; i < LIGHTCOUNT; i++) {
+            for (i = 0; i < LIGHTCOUNT; ) {
                 Lights[i].type = NuFileReadInt(handle);
                 Lights[i].pos.x = NuFileReadFloat(handle);
                 (Lights[i].pos.y) = NuFileReadFloat(handle);
@@ -114,10 +114,10 @@ void LoadLights(void) {
                 Lights[i].globalflag = (u8)NuFileReadInt(handle);
                 switch (Lights[i].globalflag) {
                     case 4:
-                        Lights[i].brightness = (u8)NuFileReadInt(handle);
+                        Lights[i++].brightness = (u8)NuFileReadInt(handle);
                         break;
                     default:
-                        Lights[i].brightness = (u8)NuFileReadInt(handle);
+                        Lights[i++].brightness = (u8)NuFileReadInt(handle);
                         break;
                 }
             }
@@ -466,8 +466,7 @@ void CalculateSingleLightProportion(struct nuvec_s *vec,struct pdir_s *light,s32
                     glob_vec.y *= glb_proportion;
                     glob_vec.z *= glb_proportion;
                     NuVecAdd(&blend_vec,&loc_vec,&glob_vec);
-                    if ((blend_vec.x != 0.0f) || (blend_vec.y != 0.0f) || (blend_vec.z != 0.0f)) {
-                      NuVecNorm(&blend_vec,&blend_vec);
+                    if (NuVecNorm(&blend_vec,&blend_vec) > 0.0f) {
                       (light->Direction) = blend_vec;
                     }
               }

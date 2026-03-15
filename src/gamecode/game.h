@@ -20,7 +20,7 @@ struct remember {
 };
 
 struct cursor_s {
-    struct remember remember[48];
+    struct remember remember[52];
     u32 menu_frame;
     u32 item_frame;
     char x;

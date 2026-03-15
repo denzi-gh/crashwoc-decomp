@@ -4,13 +4,13 @@
 #include <string.h>
 
 void exit(int);
+void _assert(const char* expr, const char* file, int line);
 
 s32 NuFileOpen(char* filename, s32 mode);
 void NuFileClose(fileHandle handle);
 s32 NuFileSeek(fileHandle handle, s32 offset, s32 origin);
 s32 NuFileWrite(fileHandle handle, const void* data, s32 size);
 
-char txt[0x400];
 char captxt[0x100];
 char* nufile;
 u32 nuline;
@@ -27,13 +27,11 @@ static void NuErrorFunction(char* msg, ...)
 {
 	va_list aptr;
 
-	printf(captxt, "NuError - %s Line %d : ", nufile, nuline);
-	puts(captxt);
+	sprintf(captxt, "NuError - %s Line %d : ", nufile, nuline);
 	va_start(aptr, msg);
 	vsprintf(txt, msg, aptr);
-	puts(txt);
 	va_end(aptr);
-	exit(1);
+	_assert(txt, nufile, nuline);
 }
 
 // PS2 MATCH

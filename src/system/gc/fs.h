@@ -41,6 +41,8 @@ struct DVDFileInfo
     void(*callback)(int, struct DVDFileInfo*); // Offset: 0x38, DWARF: 0xC181BB
 };
 
+s32 GCFileSize(s32 fd);
+
 #endif
 
 struct DVDFileInfo MAHFiles[20];

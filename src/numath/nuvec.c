@@ -122,7 +122,7 @@ f32 NuVecMagSqr(struct nuvec_s* v)
 	return NuVecDot(v, v);
 }
 
-void NuVecNorm(struct nuvec_s* dest, struct nuvec_s* v)
+float NuVecNorm(struct nuvec_s* dest, struct nuvec_s* v)
 {
 	f32 x, y, z;
 	f32 mag = NuVecMag(v);

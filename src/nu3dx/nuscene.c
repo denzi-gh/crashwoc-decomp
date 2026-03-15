@@ -1,4 +1,5 @@
 #include "nuscene.h"
+#include "nucvtskn.h"
 #include"nu3dxtypes.h"
 #include"types.h"
 #include "nuanim.h"
@@ -382,13 +383,11 @@ static void ReadNuIFFGeomSkin(s32 handle,struct nugeom_s *geom) {
   return;
 }
 
-//84%
 static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
-    s32 i;
-    s32 nblends;
-    s32 next_ix;
-    s32 j;
     s32 numblends;
+    s32 nblends;
+    s32 i;
+    s32 j;
     s32 nbytes;
 
     nblends = NuFileReadInt(fh);
@@ -396,20 +395,16 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
         return;
     }
 
-    // Get size of memory to allocate for nblends of nuvec_s pointers
     nbytes = nblends * sizeof(struct nuvec_s*);
 
-    // allocate NUBLENDGEOM_s
     geom->blendgeom = (struct NUBLENDGEOM_s *)NuMemAlloc(sizeof(struct NUBLENDGEOM_s));
-
     memset(geom->blendgeom, 0, sizeof(struct NUBLENDGEOM_s));
 
     geom->blendgeom->nblends = nblends;
 
-    geom->blendgeom->blend_offsets = (struct nuvec_s **)NuMemAlloc(nblends * sizeof(struct nuvec_s*));
+    geom->blendgeom->blend_offsets = (struct nuvec_s **)NuMemAlloc(nbytes);
     memset(geom->blendgeom->blend_offsets, 0, nbytes);
 
-    // next_ix = (s32)NuMemAlloc(nbytes);
     geom->blendgeom->ix = (s32 *)NuMemAlloc(nbytes);
     NuFileRead(fh, geom->blendgeom->ix, nbytes);
 
@@ -429,7 +424,7 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
         geom->blendgeom = NULL;
     }
 
-    if (geom->blendgeom) {
+    if (geom->blendgeom != NULL) {
         for (i = 0; i < geom->vtxcnt; i++) {
             for (j = 0; j < nblends; j++) {
                 if (geom->blendgeom->blend_offsets[j] != NULL) {
@@ -445,7 +440,7 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
                 }
             }
         }
-        geom->blendgeom->hVB =  GS_CreateBuffer(geom->vtxcnt * 0xc,3);
+        geom->blendgeom->hVB = (int)GS_CreateBuffer(geom->vtxcnt * 0xc, 3);
     }
 }
 

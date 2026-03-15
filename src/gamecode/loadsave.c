@@ -233,31 +233,32 @@ void DrawGameSlots(struct cursor_s *cursor) {
   DrawGameSlot(&SaveSlot[3],x + SLOTPANELDX,y - SLOTPANELDY,(sel != 3) ? 0 : col,(sel == 3) ? menu_pulsate * 0.6f : 0.6f);
 }
 
-//78% NGC
+//95% NGC
 void InitLoadSaveDeleteScreen(struct cursor_s *cur,s32 menu) {
   s32 i;
   s32 recent;
-  s32 error;
-  struct _ULARGE_INTEGER dVar4;
-  struct _ULARGE_INTEGER dVar5;
   struct _SYSTEMTIME temp_time;
+  struct _FILETIME dVar5;
   struct _FILETIME file_time;
+  double dVar4;
   
+  i = 0;
   memset(&temp_time,0,0x10);
   recent = -1;
-  dVar4.QuadPart = 0.0;
-  for(i = 0; i < 4; i++) {
+  dVar4 = 0.0;
+  for(; i < 4; i++) {
     if (SaveSlot[i].empty == 0) {
       temp_time.wYear = SaveSlot[i].year + 2000;
       temp_time.wHour = (u16)SaveSlot[i].hours;
       temp_time.wMonth = (u16)SaveSlot[i].month;
       temp_time.wDay = (u16)SaveSlot[i].day;
       temp_time.wMinute = (u16)SaveSlot[i].mins;
-      error = GetLastError();
-      dVar5.QuadPart = file_time.dwLowDateTime;
-      if (dVar5.QuadPart > dVar4.QuadPart) {
+      GetLastError();
+      *(u32 *)&dVar5 = *(u32 *)&file_time;
+      *((u32 *)&dVar5 + 1) = *((u32 *)&file_time + 1);
+      if (*(double *)&dVar5 > dVar4) {
         recent = i;
-        dVar4.QuadPart = dVar5.QuadPart;
+        dVar4 = *(double *)&dVar5;
       }
     }
   }
@@ -300,4 +301,19 @@ void InvalidateSaveSlots(void) {
   for(i = 0; i < 4; i++) {
     SaveSlot[i].empty = 1;
   }
+}
+
+void XbUpdateDateStamp(struct game_s *game) {
+  s32 year;
+  s32 month;
+  s32 day;
+  s32 hour;
+  s32 minute;
+
+  UpdateTime(&year, &month, &day, &hour, &minute);
+  game->year = year + 0x30;
+  game->month = month + 1;
+  game->day = day;
+  game->hours = hour;
+  game->mins = minute;
 }

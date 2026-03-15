@@ -17,5 +17,7 @@
 */
 
 void NuVpSetSize(float w, float h);
+void NuVpGetClippingMtx(struct numtx_s *mtx);
+void NuVpGetScalingMtx(struct numtx_s *mtx);
 
 #endif // !NUVPORT_H

@@ -1,8 +1,15 @@
 #include "nuwater.h"
+#include "nutex.h"
 #include "../system.h"
+#include "../system/port.h"
 
 struct numtl_s* DebMat[8]; //debris.c
 void NuDynamicWaterUpdate(s32 forceupdate);
+void* makenuvec(float x, float y, float z);
+void NuRndrClear(s32 flags, s32 colour, f32 depth);
+void NuSetShaderState(enum shadertypes_e type, enum nuvtxtype_e vtxtype);
+void NuRndrRectUV2di(s32 x, s32 y, s32 w, s32 h, float tx, float ty, float tw, float th, s32 col, struct numtl_s *mtl);
+float randyfloat(void);
 
 //NGC MATCH
 static s32 Powr2(s32 v) {
@@ -264,7 +271,7 @@ static void NuDynamicWaterRender2dRect(s32 width,s32 height) {
     vtx[3].rhw = 1.0;
     vtx[3].tc[0] = 1.0f;
     vtx[3].tc[1] = 1.0f;
-    //GS_DrawTriStripTTL((struct _GS_VERTEXTL *)vtx,4);
+    GS_DrawTriStripTTL((struct _GS_VERTEXTL *)vtx,4);
     return;
 }
 
@@ -301,7 +308,6 @@ static void NuDynamicWaterCycleTextures(void) {
 
 //97.40%
 static void NuDynamicWaterExcite() {
-    char pad[54];
     float random;
     float x;
     float y;
@@ -362,7 +368,7 @@ void NuDynamicWaterUpdate(s32 forceupdate) {
         NudxFw_SetRenderState(0x7d,0);
         GS_EnableLighting(0);
         GS_EnableColorVertex(0);
-        //NuSetShaderState(CALCNEIGHBOURFORCE,NUVT_TLTC1);
+        NuSetShaderState(CALCNEIGHBOURFORCE,NUVT_TLTC1);
         NudxFw_SetRenderTargetSurface(dynamicWaterSurfaces[dynamicWaterForceStepOneTex],NULL);
         GS_SetBlendSrc(1,1,0);
         NuTexSetTexture(0,dynamicWaterTextureIds[dynamicWaterHeightSourceTex]);
@@ -379,14 +385,14 @@ void NuDynamicWaterUpdate(s32 forceupdate) {
         }
         NuDynamicWaterSetVertexShaderUVOffsets(1);
         NuDynamicWaterRender2dRect(0x80,0x80);
-        //NuSetShaderState(CALCNEIGHBOURFORCE2,NUVT_TLTC1);
+        NuSetShaderState(CALCNEIGHBOURFORCE2,NUVT_TLTC1);
         NudxFw_SetRenderTargetSurface(dynamicWaterSurfaces[dynamicWaterForceTex],NULL);
         NuTexSetTexture(0,dynamicWaterTextureIds[dynamicWaterHeightSourceTex]);
         NuTexSetTexture(1,dynamicWaterTextureIds[dynamicWaterHeightSourceTex]);
         NuTexSetTexture(2,dynamicWaterTextureIds[dynamicWaterForceStepOneTex]);
         NuDynamicWaterSetVertexShaderUVOffsets(2);
         NuDynamicWaterRender2dRect(0x80,0x80);
-        //NuSetShaderState(APPLYFORCEORVELOCITY,NUVT_TLTC1);
+        NuSetShaderState(APPLYFORCEORVELOCITY,NUVT_TLTC1);
         NudxFw_SetRenderTargetSurface(dynamicWaterSurfaces[dynamicWaterVelocityTargetTex],NULL);
         NuTexSetTexture(0,dynamicWaterTextureIds[dynamicWaterVelocitySourceTex]);
         NuTexSetTexture(1,dynamicWaterTextureIds[dynamicWaterForceTex]);
@@ -394,12 +400,12 @@ void NuDynamicWaterUpdate(s32 forceupdate) {
         NuTexSetTexture(3,0);
         NuDynamicWaterSetVertexShaderUVOffsets(0);
         NuDynamicWaterRender2dRect(0x80,0x80);
-        //NuSetShaderState(APPLYFORCEORVELOCITY,NUVT_TLTC1);
+        NuSetShaderState(APPLYFORCEORVELOCITY,NUVT_TLTC1);
         NudxFw_SetRenderTargetSurface(dynamicWaterSurfaces[dynamicWaterHeightTargetTex],NULL);
         NuTexSetTexture(0,dynamicWaterTextureIds[dynamicWaterHeightSourceTex]);
         NuTexSetTexture(1,dynamicWaterTextureIds[dynamicWaterVelocityTargetTex]);
         NuDynamicWaterRender2dRect(0x80,0x80);
-        //NuSetShaderState(BLURFILTER,NUVT_TLTC1);
+        NuSetShaderState(BLURFILTER,NUVT_TLTC1);
         NudxFw_SetRenderTargetSurface(dynamicWaterSurfaces[dynamicWaterBlurTex],NULL);
         i = dynamicWaterHeightTargetTex;
         dynamicWaterHeightTargetTex = dynamicWaterHeightSourceTex;
@@ -410,7 +416,7 @@ void NuDynamicWaterUpdate(s32 forceupdate) {
         NuTexSetTexture(3,dynamicWaterTextureIds[dynamicWaterHeightSourceTex]);
         NuDynamicWaterSetVertexShaderUVOffsets(4);
         NuDynamicWaterRender2dRect(0x80,0x80);
-        //NuSetShaderState(CREATENORMALMAP,NUVT_TLTC1);
+        NuSetShaderState(CREATENORMALMAP,NUVT_TLTC1);
         NudxFw_SetRenderTargetSurface(dynamicWaterSurfaces[dynamicWaterNormalTex],NULL);
         NuTexSetTexture(0,dynamicWaterTextureIds[dynamicWaterHeightTargetTex]);
         NuTexSetTexture(1,dynamicWaterTextureIds[dynamicWaterHeightTargetTex]);
@@ -427,13 +433,12 @@ void NuDynamicWaterUpdate(s32 forceupdate) {
     return;
 }
 
-//NGC MATCH
 static s32 isWaterInstance(struct nugscn_s *gsc,struct nuinstance_s *inst) {
     struct nugeom_s *geom;
 
     geom = gsc->gobjs[inst->objid]->geom;
     while( geom != NULL ) {
-        //if ((NuShaderAssignShader(geom) == 1) || (NuShaderAssignShader(geom) == 0x1b)) return 1;
+        if ((NuShaderAssignShader(geom) == 1) || (NuShaderAssignShader(geom) == 0x1b)) return 1;
         geom = geom->next;
     }
     return 0;
@@ -492,7 +497,6 @@ static void animateWater(float scale_in, float theta_in, struct numtl_s *mtl) {
     struct nuvec_s v;
     struct numtx_s mtx;
     struct nuvec_s scalevec;
-    char pad[70];
 
 
     scalevec = *(struct nuvec_s *)makenuvec(0.5f,0.5f,0.5f);

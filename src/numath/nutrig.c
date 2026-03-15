@@ -148,14 +148,21 @@ void NuTrigInit()
 	}
 }
 
-angle xy(fxi x, fxi y)
+static angle xy(fxi x, fxi y)
 {
-	return x <= y ? ang[(x << 9) / y] : (PIOV2 - ang[(y << 9) / x]);
+	angle ret;
+	if (x <= y) {
+		ret = ang[(x << 9) / y];
+	} else {
+		ret = ang[(y << 9) / x];
+		ret = PIOV2 - ret;
+	}
+	return ret;
 }
 
 angle NuAtani(fxi x, fxi y)
 {
-	angle ret;
+	s32 ret;
 	if (x == 0)
 	{
 		ret = (angle)((u32)y >> 0x10) & PI;
@@ -187,14 +194,14 @@ angle NuAtani(fxi x, fxi y)
 			}
 			else
 			{
-				if (y < 0)
+				if (y >= 0)
 				{
-					ret = xy(x, -y);
-					ret = PI - ret;
+					ret = xy(x, y);
 				}
 				else
 				{
-					ret = xy(x, y);
+					ret = xy(x, -y);
+					ret = PI - ret;
 				}
 			}
 		}
@@ -207,56 +214,45 @@ f32 NuAtan2(f32 x, f32 y)
 	return (f32)atan2(x, y);
 }
 
-angle fxyd(f32 x, f32 y)
+static angle fxyd(f32 x, f32 y)
 {
 	angle ret;
-	if (y < x)
+	if (!(x > y))
 	{
-		ret = PIOV2 - ang[(s32)((y * 512.0) / x)];
+		ret = ang[(s32)((x * 512.0f) / y)];
 	}
 	else
 	{
-		ret = ang[(s32)((x * 512.0) / y)];
+		ret = ang[(s32)((y * 512.0f) / x)];
+		ret = PIOV2 - ret;
 	}
 	return ret;
 }
 
 angle NuAtan2D(f32 x, f32 y)
 {
-	angle ret;
-	if (x == 0.0)
+	s32 ret;
+	if (x == 0.0f)
 	{
 		ret = 0;
-		if (y < 0.0)
+		if (y < 0.0f)
 		{
 			ret = PI;
 		}
 	}
 	else
 	{
-		if (y == 0.00) {
+		if (y == 0.0f) {
 			ret = PIOV2;
-			if (x < 0.0)
+			if (x < 0.0f)
 			{
 				ret = PI3OV2;
 			}
 		}
 		else {
-			if (x >= 0.0)
+			if (x < 0.0f)
 			{
-				if (y < 0.0)
-				{
-					ret = fxyd(x, -y);
-					ret = PI - ret;
-				}
-				else
-				{
-					ret = fxyd(x, y);
-				}
-			}
-			else
-			{
-				if (y < 0.0)
+				if (y < 0.0f)
 				{
 					ret = fxyd(-x, -y);
 					ret += PI;
@@ -265,6 +261,18 @@ angle NuAtan2D(f32 x, f32 y)
 				{
 					ret = fxyd(-x, y);
 					ret = -ret;
+				}
+			}
+			else
+			{
+				if (!(y < 0.0f))
+				{
+					ret = fxyd(x, y);
+				}
+				else
+				{
+					ret = fxyd(x, -y);
+					ret = PI - ret;
 				}
 			}
 		}

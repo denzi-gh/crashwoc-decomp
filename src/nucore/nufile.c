@@ -45,19 +45,13 @@ void NuFileInitEx(s32 deviceid, s32 rebootiop) {
 
 //NGC MATCH
 s32 NuFileExists(char* filename) {
-    FILE* filep; //__sFILE*
-    char name[128] = "";
-    char tmp;
+    FILE* filep;
+    char name[128];
 
-    //strcpy(name, "/");
-    seekoffset = 0; //fopen NGC
+    strcpy(name, "/");
 	strcat(name, filename);
 	filep = fopen(name, "r");
 	if (filep != NULL) {
-            //skip SDK check
-        fileoffset = 0;
-        filelength = 1;
-            //
 		fclose(filep);
         return 1;
 	}
@@ -74,49 +68,41 @@ s32 checkdiscfile(char* name)
 	return -1;
 }
 
-//NGC 94%
+//NGC MATCH
 s32 NuFileOpen(char* file, enum nufilemode_e mode) {
-    int s; // r31
-    int t; // r3
-    int f;
-    FILE* fp; // r9	//__sFILE*
-    FILE** p; //__sFILE**
-    char name[128] = ""; // 0x80229388
+    int s;
+    FILE* fp;
+    FILE** p;
+    static char name[128];
     void* m;
 
     if (NuFileGetBadGameDisc() == 0) {
         thisbytesread = 0;
         checkmemfile(file);
         if (checkdiscfile(file) == -1) {
-            //strcpy(name, "/");
+            strcpy(name, "/");
         } else {
             strcpy(name, "z:\\");
         }
         strcat(name, file);
         if (mode > NUFILE_APPEND) {
-            NuErrorProlog("OpenCrashWOC/code/nucore/nufile.c", 0x39e)("assert");
+            NuErrorProlog("C:/source/crashwoc/code/nucore/nufile.c", 0x39e)("assert");
         }
-        for (p = fpointers, s = 0; s < 10; s++) {
+        for (p = fpointers, s = 0; s <= 9; s++) {
             m = *p;
-            if (*p == NULL) {
+            if (m == NULL) {
                 fp = fopen(name, fmode[mode]);
                 if (fp == NULL) {
-                    return NULL;
+                    return 0;
                 }
-                    //skip SDK check
-                fileoffset = 0;
-                filelength = 1;
-                    //
+                bytesleft = (s32)m;
                 *p = fp;
-                bytesleft = m;
-                //printf("bytesleft %d \n",bytesleft);
-                s++;
-                return s;
+                return s + 1;
             }
             p++;
         }
     }
-    return NULL;
+    return 0;
 }
 
 //NGC MATCH
@@ -244,17 +230,17 @@ s32 NuFilePos(s32 handle) {
     s32 ret;
     struct fileinfo_s* info;
 
-	if (handle > 0x400) {
+	if (handle > 0x3ff) {
 		return NuMemFilePos(handle);
 	}
 	else {
         handle--;
         info = &file_info[handle];
-		if (info->use_buff == NULL) {
+		if (info->use_buff == 0) {
 		    ret = thisbytesread;
 		}
         else{
-			ret = ftell(fpointers[handle]); //ret = info->read_pos;
+			ret = info->read_pos;
         }
 		return ret;
 	}
@@ -287,11 +273,10 @@ s32 NuFileSize(char* fileName) {
 	s32 rv = -1;
 	s32 handle;
 
-    //printf("checking file size \n");
 	if (fileName != NULL && *fileName != 0) {
 	    if (NuFileExists(fileName) != 0) {
             handle = NuFileOpen(fileName, NUFILE_READ);
-            if (handle != NULL)
+            if (handle != 0)
 			{
 				rv = GCFileSize(handle);
 				NuFileClose(handle);

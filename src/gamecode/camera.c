@@ -986,7 +986,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
       {
         new_var61 = (unsigned int) 0x20;
         new_var8 = (*(&Cursor)).wait == new_var52;
-        if (((((((((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x15) && ((((*((struct camera_cursor_s *) (&Cursor))).wait == 0) || ((*((struct camera_cursor_s *) (&Cursor))).new_menu != 0x15)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1a))) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x2f) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x21)) && ((*(new_var84 = (struct camera_cursor_s *) (&Cursor))).menu != 0x20))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x30)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x31)) && (((*((struct camera_cursor_s *) (&Cursor))).menu != 0x16) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x19) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1d)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x18)))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1c)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1b)) && (((*((struct camera_cursor_s *) (&Cursor))).menu != 0x17) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1e) && ((*((struct camera_cursor_s *) (&Cursor))).menu != new_var61)) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1f) && ((long) ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x25))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x26))))) || ((SplTab[65].spl == new_var53) || (SplTab[66].spl != new_var53)))
+        if (((((((((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x15) && ((((*((struct camera_cursor_s *) (&Cursor))).wait == 0) || ((*((struct camera_cursor_s *) (&Cursor))).new_menu != 0x15)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1a))) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x2f) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x21)) && ((*(new_var84 = (struct camera_cursor_s *) (&Cursor))).menu != 0x20))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x30)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x31)) && (((*((struct camera_cursor_s *) (&Cursor))).menu != 0x16) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x19) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1d)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x18)))) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1c)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1b)) && (((*((struct camera_cursor_s *) (&Cursor))).menu != 0x17) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1e) && ((*((struct camera_cursor_s *) (&Cursor))).menu != new_var61)) && ((((*((struct camera_cursor_s *) (&Cursor))).menu != 0x1f) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x25)) && ((*((struct camera_cursor_s *) (&Cursor))).menu != 0x26))))) || ((SplTab[65].spl == new_var53) || (SplTab[66].spl != new_var53)))
         {
           GameCamera->mode = 0x1f;
         }
@@ -1037,7 +1037,7 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
           (*GameCamera).mode = 0x10;
         }
         else
-          if (((obj->flags & 1) != 0) && (((obj->dead == 2) || (obj->dead == 3)) || (((char) obj->dead) == 8)))
+          if (((obj->flags & 1) != 0) && (((obj->dead == 2) || (obj->dead == 3)) || (obj->dead == 8)))
         {
           GameCamera->mode = 0x1e;
         }

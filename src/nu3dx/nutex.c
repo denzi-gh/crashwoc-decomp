@@ -106,25 +106,12 @@ u32 NuTexUnRef(s32 id)
 }
 
 s32 NuTexPixelSize(enum nutextype_e type) {
-  if (type == NUTEX_RGB24) {
-    return 0x18;
-  }
-  if (type < NUTEX_RGBA32) {
-    if ((type == NUTEX_RGB16) || (type == NUTEX_RGBA16)) {
-      return 0x10;
-    }
-  }
-  else {
-    if (type == NUTEX_PAL4) {
-      return 4;
-    }
-    if (type < NUTEX_PAL4) {
-      return 0x20;
-    }
-    if (type == NUTEX_PAL8) {
-      return 8;
-    }
-  }
+  if (type == NUTEX_RGB16) return 0x10;
+  if (type == NUTEX_RGBA16) return 0x10;
+  if (type == NUTEX_RGB24) return 0x18;
+  if (type == NUTEX_RGBA32) return 0x20;
+  if (type == NUTEX_PAL4) return 4;
+  if (type == NUTEX_PAL8) return 8;
   return 0;
 }
 

@@ -123,13 +123,13 @@ void GS_SetupFog(int type, float startz, float endz, u32 colour);
 
 struct nulight_s* NuLightGetLight(s32 index);
 
-void NuLightSetAmbientLight(struct nuvec_s *c0);
+// NuLightSetAmbientLight - no prototype (K&R call convention)
 
-void NuLightSetDirectionalLights(struct nuvec_s *d0, struct nucolour3_s *c0, struct nuvec_s *d1, struct nucolour3_s *c1, struct nuvec_s *d2, struct nucolour3_s *c2);
+// NuLightSetDirectionalLights - no prototype (K&R call convention)
 
 s32 NuLightStoreCurrentLights(void);
 
-void NuLightSetStoredLights(s32 index);
+// NuLightSetStoredLights - no prototype (K&R call convention)
 
 void NuLightClearStoredLights(void);
 

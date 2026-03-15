@@ -41,6 +41,7 @@ struct NUJOINTANIM_s;
 
 
 struct nuanimdata_s* NuAnimDataRead(s32 fh);
+struct nuanimdata_s* NuAnimDataLoadBuff(char *file, union variptr_u *buff, union variptr_u *endbuff);
 struct nuanimdata2_s* NuAnimData2FixPtrs(struct nuanimdata2_s* animdata, s32 address_offset);
 f32 NuAnimCurveCalcVal2(struct nuanimcurve_s* animcurve, struct nuanimtime_s* atime);
 void NuAnimDataDestroy(struct nuanimdata_s *animdata);

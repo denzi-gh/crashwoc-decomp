@@ -53,7 +53,7 @@ f32 NuVecMag(struct nuvec_s* v);
 f32 NuVecMagSqr(struct nuvec_s* v);
 
 // Normalize the vector v and put it into the destination. This isn't how the original does it, but it makes more sense this way (calling existing functions).
-void NuVecNorm(struct nuvec_s* dest, struct nuvec_s* v);
+float NuVecNorm(struct nuvec_s* dest, struct nuvec_s* v);
 
 // Get the distance between a and b. The distance vector is stored in dist.
 f32 NuVecDist(struct nuvec_s* a, struct nuvec_s* b, struct nuvec_s* dist);

@@ -298,11 +298,13 @@ void Text3D(char* txt, float x, float y, float z, float scalex, float scaley, fl
     s32 l;
     float xpulsescale;
     float orig_x;
-    float dx_scale;
-    float f28;
+    float dx;
+    float dy;
+    float w;
     float f;
     float x0;
     float y0;
+    float dx_scale;
     volatile FONT3DOBJECT *obj;
     s32 accent;
     char c;
@@ -336,7 +338,7 @@ void Text3D(char* txt, float x, float y, float z, float scalex, float scaley, fl
         return;
     }
     
-    f28 = 0.0f;
+    w = 0.0f;
     for (i = 0; txt[i] != 0; i++) {
         if (txt[i] == '#') {
             if (txt[i + 1] != 0) {
@@ -361,14 +363,14 @@ void Text3D(char* txt, float x, float y, float z, float scalex, float scaley, fl
                         i = i + 2;
                     }
                 }
-                f28 += f;
+                w += f;
                 i++;
             }
         } else {
             if ((txt[i] == ':') || (txt[i] == '.')) {
-                f28 += 0.5f;
+                w += 0.5f;
             } else {
-                f28 += 1.0f;
+                w += 1.0f;
             }
         }
     }
@@ -376,14 +378,14 @@ void Text3D(char* txt, float x, float y, float z, float scalex, float scaley, fl
     i = align & 0x14;
     switch (i) {
         case 0x10:
-            x0 = orig_x - ((dx_scale * f28) - (dx_scale * 0.5f));
+            x0 = orig_x - ((dx_scale * w) - (dx_scale * 0.5f));
             break;
         default:
             if (i == 4) {
                 x0 = orig_x + (dx_scale * 0.5f);
                 break;
             }
-            x0 = orig_x - (((dx_scale * f28) * 0.5f) - (dx_scale * 0.5f));
+            x0 = orig_x - (((dx_scale * w) * 0.5f) - (dx_scale * 0.5f));
             break;
     }
     x0 -= (dx_scale * 0.5f);
@@ -398,26 +400,28 @@ void Text3D(char* txt, float x, float y, float z, float scalex, float scaley, fl
         scaley = (scaley * menu_pulsate);
         scalez = (scalez * menu_pulsate);
     }
-    font3d_dx = (scalex * 0.1f);
+    dx = (scalex * 0.1f);
+    font3d_dx = dx;
     x = orig_x;
     if (i == 0x10) {
-        dx_scale = (font3d_dx * f28) - (font3d_dx * 0.5f);
+        dx_scale = (dx * w) - (dx * 0.5f);
     } else {
         if (i == 4) {
-            x = font3d_dx * 0.5f + x;
+            x = dx * 0.5f + x;
             goto Skip;
         } else {
-            dx_scale = (font3d_dx * f28) * 0.5f - (font3d_dx * 0.5f);
+            dx_scale = (dx * w) * 0.5f - (dx * 0.5f);
         }
     } 
     x -= dx_scale;
 Skip:
-    font3d_dy = (scaley * 0.1f) * FONT3DYMUL;
-    font3d_xleft = (x - (font3d_dx * 0.5f));
+    dy = (scaley * 0.1f) * FONT3DYMUL;
+    font3d_dy = dy;
+    font3d_xleft = (x - (dx * 0.5f));
     if ((align & 10U) == 8) {
-        y += (font3d_dy * 0.5f);
+        y += (dy * 0.5f);
     } else if ((align & 10U) == 2) {
-        y -= (font3d_dy * 0.5f);
+        y -= (dy * 0.5f);
     }
     i = ((u32)colour < 5) ? colour : 0;
     nurndr_forced_mtl_table = (struct numtl_s **)&Font3DMtlTab[i][0];
@@ -494,14 +498,14 @@ Skip:
                         }
 
                         if ((c == ':') || (c == '.')) {
-                            x0 = (x - (font3d_dx * 0.25f));
+                            x0 = (x - (dx * 0.25f));
                         } else {
                             x0 = x;
                         }
 
                         if (c == '\xFE') {
-                            x0 -= (font3d_dx * 0.2f);
-                            y0 = (font3d_dy * 0.3f + y);
+                            x0 -= (dx * 0.2f);
+                            y0 = (dy * 0.3f + y);
                         } else {
                             y0 = y;
                         }
@@ -540,9 +544,9 @@ Skip:
         }
 Skip_2:
         if ((c == ':') || (c == '.')) {
-            x += (font3d_dx * 0.5f);
+            x += (dx * 0.5f);
         } else {
-            x += font3d_dx;
+            x += dx;
         }
         if (Game.language == 0x63) {
 SkipAdvance:
@@ -552,10 +556,10 @@ SkipAdvance:
     }
 Finish:
     nurndr_forced_mtl_table = NULL;
-    y0 = font3d_dy * 0.5f;
+    y0 = dy * 0.5f;
     font3d_ybottom = y - y0;
     font3d_ytop = y + y0;
-    x0 = x - (font3d_dx * 0.5f);
+    x0 = x - (dx * 0.5f);
     font3d_xright = x0;
     font3d_ymid = (font3d_ytop + font3d_ybottom) * 0.5f;
     font3d_xmid = (font3d_xleft + font3d_xright) * 0.5f;
@@ -567,16 +571,17 @@ void Text3D2(char* txt, float x, float y, float z, float scalex, float scaley, f
     s32 l;
     float xpulsescale;
     float orig_x;
-    float dx_scale;
-    float f28;
+    float dx;
+    float dy;
+    float w;
     float f;
     float x0;
     float y0;
+    float dx_scale;
     volatile FONT3DOBJECT *obj;
     s32 accent;
     char c;
     char c1;
-    u16 yrot;
 
     rrrt += rrri;
     orig_x = x;
@@ -606,7 +611,7 @@ void Text3D2(char* txt, float x, float y, float z, float scalex, float scaley, f
         return;
     }
     
-    f28 = 0.0f;
+    w = 0.0f;
     for (i = 0; txt[i] != 0; i++) {
         if (txt[i] == '#') {
             if (txt[i + 1] != 0) {
@@ -631,14 +636,14 @@ void Text3D2(char* txt, float x, float y, float z, float scalex, float scaley, f
                         i = i + 2;
                     }
                 }
-                f28 += f;
+                w += f;
                 i++;
             }
         } else {
             if ((txt[i] == ':') || (txt[i] == '.')) {
-                f28 += 0.5f;
+                w += 0.5f;
             } else {
-                f28 += 1.0f;
+                w += 1.0f;
             }
         }
     }
@@ -646,14 +651,14 @@ void Text3D2(char* txt, float x, float y, float z, float scalex, float scaley, f
     i = align & 0x14;
     switch (i) {
         case 0x10:
-            x0 = orig_x - ((dx_scale * f28) - (dx_scale * 0.5f));
+            x0 = orig_x - ((dx_scale * w) - (dx_scale * 0.5f));
             break;
         default:
             if (i == 4) {
                 x0 = orig_x + (dx_scale * 0.5f);
                 break;
             }
-            x0 = orig_x - (((dx_scale * f28) * 0.5f) - (dx_scale * 0.5f));
+            x0 = orig_x - (((dx_scale * w) * 0.5f) - (dx_scale * 0.5f));
             break;
     }
     x0 -= (dx_scale * 0.5f);
@@ -668,26 +673,28 @@ void Text3D2(char* txt, float x, float y, float z, float scalex, float scaley, f
         scaley = (scaley * menu_pulsate);
         scalez = (scalez * menu_pulsate);
     }
-    font3d_dx = (scalex * 0.1f);
+    dx = (scalex * 0.1f);
+    font3d_dx = dx;
     x = orig_x;
     if (i == 0x10) {
-        dx_scale = (font3d_dx * f28) - (font3d_dx * 0.5f);
+        dx_scale = (dx * w) - (dx * 0.5f);
     } else {
         if (i == 4) {
-            x = font3d_dx * 0.5f + x;
+            x = dx * 0.5f + x;
             goto Skip2;
         } else {
-            dx_scale = (font3d_dx * f28) * 0.5f - (font3d_dx * 0.5f);
+            dx_scale = (dx * w) * 0.5f - (dx * 0.5f);
         }
     } 
     x -= dx_scale;
 Skip2:
-    font3d_dy = (scaley * 0.1f) * FONT3DYMUL;
-    font3d_xleft = (x - (font3d_dx * 0.5f));
+    dy = (scaley * 0.1f) * FONT3DYMUL;
+    font3d_dy = dy;
+    font3d_xleft = (x - (dx * 0.5f));
     if ((align & 10U) == 8) {
-        y += (font3d_dy * 0.5f);
+        y += (dy * 0.5f);
     } else if ((align & 10U) == 2) {
-        y -= (font3d_dy * 0.5f);
+        y -= (dy * 0.5f);
     }
     i = ((u32)colour < 5) ? colour : 0;
     nurndr_forced_mtl_table = (struct numtl_s **)&Font3DMtlTab[i][0];
@@ -736,20 +743,24 @@ Skip2:
                     if (obj->i != -1) {
                         if ((obj->flags & 2) != 0) {
                             if (ObjTab[obj->i].special != NULL) {
-                                yrot = (u16)(s32)((float)(s16)rrrt + x * 32768.0f + y * 32768.0f);
-                                DrawPanel3DObject(obj->i, x, y, z, (obj->scale * scalex), (obj->scale * scaley), (obj->scale * scalez), 0, yrot, 0, ObjTab[obj->i].scene, ObjTab[obj->i].special, 1);
+                                {
+                                    int rot = (u16)(s32)((float)(s16)rrrt + x * 32768.0f + y * 32768.0f);
+                                    DrawPanel3DObject(obj->i, x, y, z, (obj->scale * scalex), (obj->scale * scaley), (obj->scale * scalez), 0, rot, 0, ObjTab[obj->i].scene, ObjTab[obj->i].special, 1);
+                                }
                                 goto Skip_2b;
                             }
                         } else if ((obj->flags & 1) != 0) {
-                            yrot = (u16)(s32)((float)(s16)rrrt + x * 32768.0f + y * 32768.0f);
-                            DrawPanel3DCharacter(
-                                obj->i, x, y, z,
-                                (obj->scale * scalex),
-                                (obj->scale * scaley),
-                                (obj->scale * scalez), 0, yrot, 0,
-                                obj->action,
-                                obj->anim_time, 1
-                            );
+                            {
+                                int rot = (u16)(s32)((float)(s16)rrrt + x * 32768.0f + y * 32768.0f);
+                                DrawPanel3DCharacter(
+                                    obj->i, x, y, z,
+                                    (obj->scale * scalex),
+                                    (obj->scale * scaley),
+                                    (obj->scale * scalez), 0, rot, 0,
+                                    obj->action,
+                                    obj->anim_time, 1
+                                );
+                            }
                         }
                     }
                     goto Skip_2b;
@@ -766,22 +777,31 @@ Skip2:
                         }
 
                         if ((c == ':') || (c == '.')) {
-                            x0 = (x - (font3d_dx * 0.25f));
+                            x0 = (x - (dx * 0.25f));
                         } else {
                             x0 = x;
                         }
 
                         if (c == '\xFE') {
-                            x0 -= (font3d_dx * 0.2f);
-                            y0 = (font3d_dy * 0.3f + y);
+                            x0 -= (dx * 0.2f);
+                            y0 = (dy * 0.3f + y);
                         } else {
                             y0 = y;
                         }
 
-                        DrawPanel3DObject(
-                            -1, x0, y0, z, (FONT3DSIZE * scalex), (FONT3DSIZE * scaley), (FONT3DSIZE * scalez) * f, 0,
-                            0, 0, font3d_scene, Font3DTab[i].obj.special, 1
-                        );
+                        {
+                            int rot = 0;
+                            if (j == 0) {
+                                rot = (c == '?') ? 0x8000 : 0;
+                                if (c == '!') {
+                                    rot = 0x8000;
+                                }
+                            }
+                            DrawPanel3DObject(
+                                -1, x0, y0, z, (FONT3DSIZE * scalex), (FONT3DSIZE * scaley), (FONT3DSIZE * scalez) * f, 0,
+                                0, rot, font3d_scene, Font3DTab[i].obj.special, 1
+                            );
+                        }
                     }
                 }
                 goto Skip_2b;
@@ -805,9 +825,9 @@ Skip2:
         }
 Skip_2b:
         if ((c == ':') || (c == '.')) {
-            x += (font3d_dx * 0.5f);
+            x += (dx * 0.5f);
         } else {
-            x += font3d_dx;
+            x += dx;
         }
         if (Game.language == 0x63) {
 SkipAdvance2:
@@ -817,10 +837,10 @@ SkipAdvance2:
     }
 Finish2:
     nurndr_forced_mtl_table = NULL;
-    y0 = font3d_dy * 0.5f;
+    y0 = dy * 0.5f;
     font3d_ybottom = y - y0;
     font3d_ytop = y + y0;
-    x0 = x - (font3d_dx * 0.5f);
+    x0 = x - (dx * 0.5f);
     font3d_xright = x0;
     font3d_ymid = (font3d_ytop + font3d_ybottom) * 0.5f;
     font3d_xmid = (font3d_xleft + font3d_xright) * 0.5f;

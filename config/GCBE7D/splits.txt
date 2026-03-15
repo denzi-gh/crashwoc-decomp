@@ -8,11 +8,6 @@ Sections:
 	.sbss       type:bss align:8
 	.data5      type:data align:8
 
-OSFont.c:
-	.init       start:0x80003100 end:0x8000319C
-	.rodata     start:0x80104920 end:0x80104940
-	.rodata     start:0x80104940 end:0x80104960
-
 ai.c:
 	.text       start:0x800032A0 end:0x80008F3C
 	.rodata     start:0x80104960 end:0x80104CD0

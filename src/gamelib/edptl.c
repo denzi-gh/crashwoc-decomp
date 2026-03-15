@@ -29,7 +29,6 @@ extern s32 edpp_nearest;
 extern struct debinftype effecttypes[128];
 extern s32 effect_types_used;
 
-void edmainRegisterLocVec(struct nuvec_s *loc);
 void DebFreeInstantly(s32 *key);
 void DebReAlloc(struct debkeydatatype_s *debkey, s32 newdebcount);
 s32 LookupDebrisEffect(char *name);
@@ -101,6 +100,42 @@ void edppDetermineNearest(float ndist) {
         }
   }
   return;
+}
+
+//NGC MATCH
+void TidyAllEffects(void) {
+  s32 i, j, n;
+
+  for (i = 1; i < effect_types_used; i++) {
+    j = i;
+    if (debtab[i] == NULL) {
+      do {
+        j++;
+      } while (debtab[j] == NULL);
+    }
+
+    if (j == i) continue;
+
+    for (n = 0; n < 256; n++) {
+      if (edpp_ptls[n].handle != -1 && edpp_ptls[n].type == j) {
+        edpp_ptls[n].type = i;
+        debkeydata[edpp_ptls[n].handle].type = i;
+      }
+    }
+
+    debtab[i] = &effecttypes[i];
+
+    for (n = 0; n < 256; n++) {
+      if (ParticleChunkRenderStack[n].chunk != NULL &&
+          ParticleChunkRenderStack[n].debinfo == debtab[j]) {
+        ParticleChunkRenderStack[n].debinfo = debtab[i];
+      }
+    }
+
+    *debtab[i] = *debtab[j];
+    *debtab[j] = *debtab[0];
+    debtab[j] = NULL;
+  }
 }
 
 //NGC MATCH
@@ -450,7 +485,7 @@ void edppRestartAllEffectsInLevel(void) {
   return;
 }
 
-//NGC MATCH //PS2 99% (extra nop)
+//NGC 97% //PS2 99% (extra nop)
 s32 edppMergeEffects(char* file, char list) {
     struct debinftype dummy;
     s32 i;

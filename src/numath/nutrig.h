@@ -31,7 +31,7 @@ extern angle ang[UNIT_CIRCLE_PRECISION];
 void NuTrigInit();
 
 // If fixed-point x and y represent a unit vector of magnitude <= 1 in the unit circle, return the angle it produces.
-angle xy(fxi x, fxi y);
+// angle xy(fxi x, fxi y); // local to nutrig.c
 
 // Return the tan-1 with x and y fixed-point sizes.
 angle NuAtani(fxi x, fxi y);
@@ -40,7 +40,7 @@ angle NuAtani(fxi x, fxi y);
 f32 NuAtan2(f32 x, f32 y);
 
 // If x and y represent a unit vector of magnitude <= 1 in the unit circle, return the angle it produces.
-angle fxyd(f32 x, f32 y);
+// angle fxyd(f32 x, f32 y); // local to nutrig.c
 
 // Return the tan-1 with x and y sizes.
 angle NuAtan2D(f32 x, f32 y);
