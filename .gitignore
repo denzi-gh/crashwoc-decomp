@@ -31,6 +31,7 @@ objdiff.json
 compile_commands.json
 
 # Miscellaneous
+tmp/
 /*.txt
 *.exe
 config/*/config.generated.yml

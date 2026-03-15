@@ -69,7 +69,7 @@ struct nulnkhdr_s * NuLstAlloc(struct nulsthdr_s *hdr)
     }
     rv->prev = NULL;
     hdr->head = rv;
-    *(u32 *)&rv->id = *(u32 *)&rv->id | 0x10000;
+    *(u32 *)&rv->id = *(u32 *)&rv->id | 0x8000;
     return rv + 1;
   }
   return NULL;
@@ -98,7 +98,7 @@ void NuLstFree(struct nulnkhdr_s *lnk)
   }
   lnk->succ = hdr->free;
   hdr->free = lnk;
-  *(u32 *)&lnk->id = *(u32 *)&lnk->id & 0xfffeffff;
+  *(u32 *)&lnk->id = *(u32 *)&lnk->id & 0xffff7fff;
   return;
 }
 
@@ -108,16 +108,15 @@ struct nulnkhdr_s * NuLstGetNext(struct nulsthdr_s *hdr,struct nulnkhdr_s *lnk)
   struct nulnkhdr_s *rv;
 
   if (lnk != NULL) {
-    lnk -= 1;
-    rv = lnk->succ;
+    rv = (lnk - 1)->succ;
+    if (rv == NULL) goto null_ret;
+    return rv + 1;
   }
-  else {
-    rv = hdr->head;
-  }
-  if (rv == NULL) {
-    return NULL;
-  }
+  rv = hdr->head;
+  if (rv == NULL) goto null_ret;
   return rv + 1;
+null_ret:
+  return NULL;
 }
 
 

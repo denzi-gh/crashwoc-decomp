@@ -9,6 +9,10 @@
 static s32 spectid;
 extern s32 Level;
 
+void NuShaderSetGlassMix(float mix);
+s32 NuTexReadBitmapMM(char* fileName, s32 mmlevel, struct nutex_s* tex);
+s32 NuTexCreate(struct nutex_s *nutex);
+
 //MATCH NGC
 void InitSpecular() {
   struct nutex_s tex;
@@ -247,7 +251,7 @@ void ProcessGlass(s32 paused) {
         glass_mtl_blendskin->attrib.alpha = 0;
         glass_mtl_blendskin2->attrib.alpha = 0;
     }
-    //NuShaderSetGlassMix(glass_mix);
+    NuShaderSetGlassMix(glass_mix);
     glass_mtl->diffuse = glass_col[0];
     NuMtlUpdate(glass_mtl);
     NuMtlUpdate(glass_mtl_blendskin);
@@ -259,17 +263,16 @@ void ProcessGlass(s32 paused) {
 void DrawGlassCreatures(s32 solid) {
     if (Level != 0x17) {
         if ((GLASSPLAYER != 0) && (plr_invisibility_time < 5.0f)) {
-        glass_phase = 1;
-        glass_draw = solid;
-        //DrawCreatures(Character,1,1,0);
-        force_glass_screencopy_enable = 0;
-    }
-
+            glass_phase = 1;
+            glass_draw = solid;
+            DrawCreatures(Character, 1, 1, 0);
+            force_glass_screencopy_enable = 0;
+        }
     }
     else {
         glass_draw = solid;
         glass_phase = 1;
-        //DrawCreatures(Character + 1,8,1,1);
+        DrawCreatures(Character + 1, 8, 1, 1);
     }
     return;
 }

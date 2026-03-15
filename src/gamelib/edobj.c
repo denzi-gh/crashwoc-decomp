@@ -1,6 +1,16 @@
 #include "edobj.h"
 #include "../nu.h"
 
+extern struct nuanimdata_s *ObjectAnim[64];
+extern u8 object_switches[128];
+extern const struct numtx_s numtx_identity;
+
+s32 PlatImpactInfo(struct nuvec_s *norm, s32 *info, s32 *extra);
+s32 LookupDebrisEffect(char *name);
+void AddVariableShotDebrisEffectMtx2(s32 type, struct nuvec_s *pos, s32 numdeb, struct numtx_s *emitrotmtx, struct numtx_s *rotmtx);
+void edbitsSoundPlay(struct nuvec_s *pos, s32 sid);
+s32 edbitsLookupSoundFX(char *name);
+
 //NGC MATCH
 float edobjPlayerObjectDistance(s32 objid) {
   if (edmainQueryLocVec() != NULL) {
@@ -9,6 +19,344 @@ float edobjPlayerObjectDistance(s32 objid) {
   else {
     return 0.0f;
   }
+}
+
+void edobjUpdateObjects(float frametime) {
+    static float localframecount;
+    struct nuvec_s norm;
+    struct nuanimtime_s atime;
+    struct numtx_s animtx;
+    struct numtx_s emitrotmtx;
+    struct numtx_s rotmtx;
+    s32 platinfo;
+    s32 platextra;
+    s32 platid;
+    struct nuvec_s *pnorm;
+    s32 i;
+    s32 j;
+    s32 k;
+    struct nuinstance_s *instance;
+    struct nuinstanim_s *instanim;
+    struct nuanimdata_s *animdata;
+    float ltime;
+    float totaltime;
+    s32 pathoffset;
+
+    platid = PlatImpactInfo(&norm, &platinfo, &platextra);
+    pnorm = &norm;
+
+    for (i = 0; i < 64; i++) {
+        instance = &ObjectInstance[i];
+        ltime = 0.0f;
+
+        if (instance->objid == -1) goto next_object;
+
+        instanim = instance->anim;
+        NuMtxSetIdentity(&instance->mtx);
+        totaltime = frametime;
+
+        pathoffset = i * sizeof(struct object_path_s);
+
+        instance->mtx._30 = ObjectPath[i].waypoint[0].x;
+        instance->mtx._31 = ObjectPath[i].waypoint[0].y;
+        instance->mtx._32 = ObjectPath[i].waypoint[0].z;
+
+        if (instanim == NULL) goto skip_anim;
+        if (ObjectAnim[instanim->anim_ix] == NULL) goto skip_anim;
+
+        /* trigger type switch */
+        switch (ObjectPath[i].trigger_type) {
+        case 0:
+            instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+            break;
+        case 1:
+            instanim->ipad[0] = instanim->ipad[0] & 0x7FFFFFFF;
+            if (ObjectPath[i].trigger_id == -1) goto trigger_done;
+            if (object_switches[ObjectPath[i].trigger_id] == 0) goto trigger_done;
+            instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+            break;
+        case 2:
+            instanim->ipad[0] = instanim->ipad[0] & ~0x10000000;
+            if (ObjectPath[i].trigger_id == -1) goto trigger_done;
+            if (object_switches[ObjectPath[i].trigger_id] == 0) goto trigger_done;
+            if (instanim->ipad[0] < 0) goto trigger_done;
+            instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+            instanim->ltime = 0.0f;
+            instanim->ipad[0] = instanim->ipad[0] & ~0x40000000;
+            break;
+        case 3:
+            instanim->ipad[0] = instanim->ipad[0] | 0x10000000;
+            if (ObjectPath[i].trigger_id == -1) goto trigger_done;
+            if (object_switches[ObjectPath[i].trigger_id] == 0) goto trigger_done;
+            instanim->ipad[0] = instanim->ipad[0] | 0x90000000;
+            break;
+        case 4:
+            if (edobjPlayerObjectDistance(i) < ObjectPath[i].trigger_var) {
+                instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+            } else {
+                instanim->ipad[0] = instanim->ipad[0] & 0x7FFFFFFF;
+            }
+            break;
+        case 5:
+            instanim->ipad[0] = instanim->ipad[0] & ~0x10000000;
+            if (edobjPlayerObjectDistance(i) < ObjectPath[i].trigger_var) {
+                if (instanim->ipad[0] < 0) goto trigger_done;
+                instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+                instanim->ltime = 0.0f;
+                instanim->ipad[0] = instanim->ipad[0] & ~0x40000000;
+            }
+            break;
+        case 6:
+            instanim->ipad[0] = instanim->ipad[0] | 0x10000000;
+            if (edobjPlayerObjectDistance(i) < ObjectPath[i].trigger_var) {
+                instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+            }
+            break;
+        case 7:
+            if (ObjectPath[i].terrplatid == platid) {
+                ObjectPath[i].trigger_var = 10.0f;
+            }
+            if (ObjectPath[i].trigger_var > 0.0f) {
+                ObjectPath[i].trigger_var -= frametime;
+                instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+            } else {
+                instanim->ipad[0] = instanim->ipad[0] & 0x7FFFFFFF;
+            }
+            break;
+        case 8:
+            instanim->ipad[0] = instanim->ipad[0] & ~0x10000000;
+            if (ObjectPath[i].terrplatid == platid) {
+                if (instanim->ipad[0] < 0) goto trigger_done;
+                instanim->ipad[0] = instanim->ipad[0] | 0x80000000;
+                instanim->ltime = 0.0f;
+                instanim->ipad[0] = instanim->ipad[0] & ~0x20000000;
+                if (ObjectPath[i].trigger_wait > 0.0f) {
+                    instanim->tfirst = ObjectPath[i].trigger_wait + ltime;
+                    instanim->ipad[0] = instanim->ipad[0] | 0x20000000;
+                }
+                instanim->ipad[0] = instanim->ipad[0] & ~0x40000000;
+            }
+            break;
+        case 9:
+            instanim->ipad[0] = instanim->ipad[0] | 0x10000000;
+            if (ObjectPath[i].terrplatid == platid) {
+                instanim->ipad[0] = instanim->ipad[0] | 0x90000000;
+            }
+            break;
+        }
+trigger_done:
+        /* animation playback */
+        animdata = ObjectAnim[instanim->anim_ix];
+        if (animdata == NULL || instanim->ipad[0] >= 0) goto get_ltime;
+
+        instanim->ltime = instanim->ltime + frametime * instanim->tfactor;
+
+        if (instanim->ipad[0] & 0x20000000) {
+            if (instanim->ltime >= instanim->tfirst) {
+                instanim->tfirst -= 1.0f;
+                instanim->ltime -= instanim->tfirst;
+                instanim->ipad[0] = instanim->ipad[0] & ~0x20000000;
+            }
+            if (instanim->ipad[0] & 0x20000000) goto anim_calc;
+        }
+
+        if (instanim->ltime >= animdata->time + instanim->tinterval) {
+            if (instanim->ipad[0] & 0x10000000) {
+                if (instanim->ipad[0] & 0x08000000) {
+                    if (instanim->ipad[0] & 0x40000000) {
+                        instanim->ipad[0] = (instanim->ipad[0] & ~0x40000000) | ((!(instanim->ipad[0] & 0x40000000)) << 30);
+                    }
+                    instanim->ltime = 1.0f;
+                } else {
+                    /* check non-oscillate, non-repeat end */
+                    instanim->ipad[0] = instanim->ipad[0] & 0x7FFFFFFF;
+                    if (ObjectPath[i].trigger_id != -1) {
+                        object_switches[ObjectPath[i].trigger_id] = 0;
+                    }
+                }
+            } else {
+                /* auto-repeat with osc */
+                if ((instanim->ipad[0] & 0x48000000) == 0x08000000) {
+                    instanim->ltime = 1.0f;
+                    instanim->ipad[0] = (instanim->ipad[0] & ~0x40000000) | ((!(instanim->ipad[0] & 0x40000000)) << 30);
+                }
+            }
+        }
+
+anim_calc:
+        ltime = instanim->ltime;
+        if (ltime > animdata->time) {
+            ltime = animdata->time;
+        }
+get_ltime:
+        if (instanim == NULL) ltime = instanim->ltime;
+
+        if (instanim->ipad[0] & 0x40000000) {
+            ltime = animdata->time + 1.0f - ltime;
+        }
+
+        NuAnimDataCalcTime(animdata, ltime, &atime);
+        totaltime = frametime;
+        NuAnimCurveSetApplyToMatrix(*animdata->chunks[atime.chunk]->animcurvesets, &atime, &animtx);
+
+        /* copy matrix */
+        {
+            struct numtx_s *src = &animtx;
+            struct numtx_s *dst = (struct numtx_s *)instanim;
+            struct nuvec_s *pos = (struct nuvec_s *)&instance->mtx._30;
+            s32 cnt = 0x30;
+            do {
+                cnt -= 0x18;
+                ((u32 *)dst)[0] = ((u32 *)src)[0];
+                ((u32 *)dst)[1] = ((u32 *)src)[1];
+                ((u32 *)dst)[2] = ((u32 *)src)[2];
+                ((u32 *)dst)[3] = ((u32 *)src)[3];
+                ((u32 *)dst)[4] = ((u32 *)src)[4];
+                ((u32 *)dst)[5] = ((u32 *)src)[5];
+                src = (struct numtx_s *)((char *)src + 0x18);
+                dst = (struct numtx_s *)((char *)dst + 0x18);
+            } while (cnt != 0);
+            ((u32 *)dst)[0] = ((u32 *)src)[0];
+            ((u32 *)dst)[1] = ((u32 *)src)[1];
+            ((u32 *)dst)[2] = ((u32 *)src)[2];
+            ((u32 *)dst)[3] = ((u32 *)src)[3];
+        }
+        NuMtxTranslate((struct Mtx *)instanim, (struct nuvec_s *)&instance->mtx._30);
+
+skip_anim:
+        /* particle loop */
+        for (j = (s32)totaltime, k = 0; k < ObjectPath[i].usedpart; k++) {
+            if (ObjectPath[i].particle_type[k] == -1) {
+                /* particle_name lookup */
+                if (ObjectPath[i].particle_name[k][0] != 0) {
+                    ObjectPath[i].particle_type[k] = LookupDebrisEffect(ObjectPath[i].particle_name[k]);
+                    if (ObjectPath[i].particle_type[k] == -1) {
+                        edobjParticleDestroy(i, k);
+                        k--;
+                        continue;
+                    }
+                }
+            } else {
+                /* check if particle_switch enabled */
+                if (ObjectPath[i].particle_switch[k] != 0) {
+                    if (instanim == NULL) goto particle_next;
+                    if (instanim->ipad[0] >= 0) goto particle_next;
+                    if (instanim->ltime >= ObjectAnim[instanim->anim_ix]->time) goto particle_next;
+                }
+
+                {
+                    struct nuinstanim_s *mtxsrc;
+
+                    if (instanim != NULL) {
+                        mtxsrc = instanim;
+                    } else {
+                        mtxsrc = (struct nuinstanim_s *)instance;
+                    }
+
+                    if ((edobj_particle_mode != 0 || edobj_sound_mode != 0) && edobj_nearest == i) {
+                        mtxsrc = (struct nuinstanim_s *)instance;
+                    }
+
+                    NuVecMtxTransform(&norm, &ObjectPath[i].particle_offset[k], (struct Mtx *)mtxsrc);
+
+                    emitrotmtx = numtx_identity;
+
+                    NuMtxRotateZ((struct Mtx *)&emitrotmtx, (s32)ObjectPath[i].particle_emitrotz[k]);
+                    NuMtxRotateY((struct Mtx *)&emitrotmtx, (s32)ObjectPath[i].particle_emitroty[k]);
+                    NuMtxMul((struct Mtx *)&rotmtx, (struct Mtx *)&emitrotmtx, (struct Mtx *)mtxsrc);
+
+                    if (ObjectPath[i].particle_rate[k] > 0) {
+                        AddVariableShotDebrisEffectMtx2(ObjectPath[i].particle_type[k], &norm, ObjectPath[i].particle_rate[k], &rotmtx, (struct numtx_s *)&numtx_identity);
+                    } else if (ObjectPath[i].particle_rate[k] < 0) {
+                        s32 rate = ObjectPath[i].particle_rate[k];
+                        s32 absrate;
+                        s32 rem;
+                        s32 frame;
+                        s32 prevframe;
+
+                        absrate = rate < 0 ? -rate : rate;
+                        frame = (s32)(localframecount + frametime);
+                        prevframe = (s32)localframecount;
+                        frame = frame / absrate;
+                        prevframe = prevframe / absrate;
+                        if (frame != prevframe) {
+                            AddVariableShotDebrisEffectMtx2(ObjectPath[i].particle_type[k], &norm, 1, &rotmtx, (struct numtx_s *)&numtx_identity);
+                        }
+                    }
+                }
+            }
+particle_next:
+            ;
+        }
+
+        /* sound loop */
+        for (j = 0; j < ObjectPath[i].usedsound; j++) {
+            if (ObjectPath[i].sound_id[j] == -1) {
+                if (ObjectPath[i].sound_name[j][0] != 0) {
+                    ObjectPath[i].sound_id[j] = edbitsLookupSoundFX(ObjectPath[i].sound_name[j]);
+                    if (ObjectPath[i].sound_id[j] == -1) {
+                        edobjSoundDestroy(i, j);
+                        j--;
+                        continue;
+                    }
+                }
+            } else {
+                s32 sound_play = -1;
+
+                if (ObjectPath[i].sound_type[j] == 1) {
+                    s32 frame_next = (s32)(localframecount + frametime);
+                    s32 period = (s32)ObjectPath[i].sound_time[j];
+                    s32 frame_cur = (s32)localframecount;
+                    if (frame_next / period > frame_cur / period) {
+                        sound_play = ObjectPath[i].sound_id[j];
+                    }
+                } else {
+                    if (ltime >= ObjectPath[i].sound_time[j]) {
+                        if (!(ltime > ObjectPath[i].sound_last_time)) goto sound_check_repeat;
+                        sound_play = ObjectPath[i].sound_id[j];
+                    }
+sound_check_repeat:
+                    if (ObjectPath[i].oscillate != 0) {
+                        float prevtime = ObjectPath[i].sound_last_time + 0.0f;  // just load
+                        if (ltime <= prevtime) {
+                            float abstime;
+                            abstime = (float)((s32)ObjectPath[i].sound_last_time < 0 ? -(s32)ObjectPath[i].sound_last_time : (s32)ObjectPath[i].sound_last_time);
+                            if (prevtime < abstime) {
+                                sound_play = ObjectPath[i].sound_id[j + 0]; // ???
+                            }
+                        }
+                    }
+                }
+
+                if (sound_play != -1) {
+                    struct nuinstanim_s *mtxsrc;
+
+                    if (instanim != NULL) {
+                        mtxsrc = instanim;
+                    } else {
+                        mtxsrc = (struct nuinstanim_s *)instance;
+                    }
+
+                    if ((edobj_particle_mode != 0 || edobj_sound_mode != 0) && edobj_nearest == i) {
+                        mtxsrc = (struct nuinstanim_s *)instance;
+                    }
+
+                    NuVecMtxTransform(&norm, &ObjectPath[i].sound_offset[j], (struct Mtx *)mtxsrc);
+                    edbitsSoundPlay(&norm, sound_play);
+                }
+            }
+        }
+
+        if (ObjectPath[i].oscillate != 0) {
+            ObjectPath[i].sound_last_time = -ltime;
+        } else {
+            ObjectPath[i].sound_last_time = ltime;
+        }
+
+next_object:
+        ;
+    }
+    localframecount += frametime;
 }
 
 //NGC MATCH

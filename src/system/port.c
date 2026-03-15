@@ -3,6 +3,8 @@
 
 void ResetShaders(void);
 void SetupShaders(struct nugeomitem_s* geomitem);
+void* makenuvec4(float x, float y, float z, float w);
+struct nuvec_s* GetLightPosition(s32 index);
 
 const struct nucolour3_s lbl_80123138 = {
     0.2f,
@@ -140,13 +142,21 @@ void NuShaderSetLightConstants(struct numtl_s *mtl) {
         newCV_LIGHTS_OFF = 0;
     }
 
-   // GS_Set3Lights(&CV_LIGHT1_POS,&CV_LIGHT2_POS,&CV_LIGHT3_POS,&CV_LIGHT1_COLOR,&CV_LIGHT2_COLOR,
-    //              &CV_LIGHT3_COLOR,&CV_AMBIENT_COLOR);
+   GS_Set3Lights(&CV_LIGHT1_POS,&CV_LIGHT2_POS,&CV_LIGHT3_POS,&CV_LIGHT1_COLOR,&CV_LIGHT2_COLOR,
+                &CV_LIGHT3_COLOR,&CV_AMBIENT_COLOR);
 }
 
 void NuShaderSetGlassMix(float mix) {
     glassmix = mix;
     return;
+}
+
+struct nudathdr_s* NuDatOpenMem(char *fname, union variptr_u *buff, int *req) {
+    return NULL;
+}
+
+s32 NuDatSet(struct nudathdr_s *dh) {
+    return 0;
 }
 
 //EMPTY FUNCTION
@@ -255,7 +265,6 @@ void UnSetupShaders(enum shadertypes_e shader) {
     NudxFw_SetTextureState(3,D3DTSS_COLOROP,1);
     switch (shader) {     
     case NO_SHADER:
-    //case BLENDSKIN2:
         return;
     case GLASS:
         NudxFw_SetRenderState(0x5D, 0);
@@ -367,7 +376,7 @@ void SetupShaders(struct nugeomitem_s* geomitem) {
     NuMtxTranspose(&matViewProj, &matViewProj);
     NuMtxTranspose(&matWorldView, &matWorldView);
     NuMtxTranspose(&matWorld, &matWorld);
-    //GS_SetLightingNone();
+    GS_SetLightingNone();
     currentshader = shader;
 
     switch(shader) {
@@ -582,7 +591,7 @@ void SetupShaders(struct nugeomitem_s* geomitem) {
             }
             else {
                 for (i = 0; i < lights; i++) {
-                   // lightpos = *(struct nuvec_s *) GetLightPosition((s32)geomitem->instancelights_index[i]);
+                    lightpos = *(struct nuvec_s *) GetLightPosition((s32)geomitem->instancelights_index[i]);
                     NuVecMtxTransform(&lightpos, &lightpos, &invWorld);
                     CV_LIGHT_POSITION = *(struct _GS_VECTOR4*)makenuvec4(lightpos.x, lightpos.y, lightpos.z, 0.0f);
                     
@@ -613,7 +622,7 @@ void SetupShaders(struct nugeomitem_s* geomitem) {
             lightcol = mtl->next->diffuse;
             currentLevel = 0x1b;
             lightpos = *(struct nuvec_s *)GetBugPosition();
-            //GS_SetPointLighting(&invWorld, &lightpos, &lightcol);
+            GS_SetPointLighting(&invWorld, &lightpos, &lightcol);
             NuVecMtxTransform(&lightpos, &lightpos, &invWorld);
             CV_LIGHT_POSITION = *(struct _GS_VECTOR4 *)makenuvec4(lightpos.x, lightpos.y, lightpos.z, 0.0f);
         break;
@@ -626,7 +635,7 @@ void SetupShaders(struct nugeomitem_s* geomitem) {
             currentLevel = 0x1b;
             lightpos = *(struct nuvec_s *)GetBugPosition();
             NuVecMtxTransform(&lightpos, &lightpos, &invWorld);
-            //GS_SetPointLighting(&invWorld, &lightpos, &lightcol);
+            GS_SetPointLighting(&invWorld, &lightpos, &lightcol);
             CV_LIGHT_POSITION = *(struct _GS_VECTOR4 *)makenuvec4(lightpos.x, lightpos.y, lightpos.z, 0.0f);
             CV_AMBIENT_COLOR = *(struct _GS_VECTOR4 *)makenuvec4(0.2f, 0.2f, 0.2f, 0.2f);
         break;

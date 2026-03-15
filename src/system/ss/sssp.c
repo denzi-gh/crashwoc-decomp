@@ -84,8 +84,8 @@ void SPInitSoundTable(SPSoundTable *table, u32 aramBase, u32 zeroBase) {
 }
 
 SPSoundEntry *SPGetSoundEntry(SPSoundTable *table, u32 index) {
-    if (table->entries <= index) return 0;
-    return &table->sound[index];
+    if (table->entries > index) return &table->sound[index];
+    return 0;
 }
 
 void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
@@ -105,9 +105,9 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
     case 0: {
         u16 *p;
         p = (u16 *)sound->adpcm;
-        loopAddr = sound->loopAddr;
         endAddr = sound->endAddr;
         currentAddr = sound->currentAddr;
+        loopAddr = sound->loopAddr;
         old = OSDisableInterrupts();
         axvpb->pb.addr.loopAddressHi = (u16)(loopAddr >> 16);
         axvpb->pb.addr.currentAddressHi = (u16)(currentAddr >> 16);
@@ -131,7 +131,7 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.adpcm.a[1][3] = *++p;
         axvpb->pb.adpcm.a[1][4] = *++p;
         axvpb->pb.adpcm.a[1][5] = *++p;
-        axvpb->sync |= 0x00061000;
+        sync = axvpb->sync;
         axvpb->pb.adpcm.a[1][6] = *++p;
         axvpb->pb.adpcm.a[1][7] = *++p;
         axvpb->pb.adpcm.gain = *++p;
@@ -144,6 +144,8 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.src.last_samples[0] = type;
         axvpb->pb.src.last_samples[1] = type;
         axvpb->pb.src.last_samples[2] = type;
+        sync |= 0x00061000;
+        axvpb->sync = sync;
         axvpb->pb.src.ratioHi = (u16)(srcBits >> 16);
         OSRestoreInterrupts(old);
         break;
@@ -151,9 +153,9 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
     case 1: {
         u16 *p1;
         p1 = (u16 *)sound->adpcm;
-        loopAddr = sound->loopAddr;
         endAddr = sound->loopEndAddr;
         currentAddr = sound->currentAddr;
+        loopAddr = sound->loopAddr;
         old = OSDisableInterrupts();
         axvpb->pb.addr.loopAddressHi = (u16)(loopAddr >> 16);
         axvpb->pb.addr.currentAddressHi = (u16)(currentAddr >> 16);
@@ -177,7 +179,7 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.adpcm.a[1][3] = *++p1;
         axvpb->pb.adpcm.a[1][4] = *++p1;
         axvpb->pb.adpcm.a[1][5] = *++p1;
-        axvpb->sync |= 0x00161000;
+        sync = axvpb->sync;
         axvpb->pb.adpcm.a[1][6] = *++p1;
         axvpb->pb.adpcm.a[1][7] = *++p1;
         axvpb->pb.adpcm.gain = *++p1;
@@ -194,13 +196,15 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.adpcmLoop.loop_pred_scale = *++p1;
         axvpb->pb.adpcmLoop.loop_yn1 = *++p1;
         axvpb->pb.adpcmLoop.loop_yn2 = *++p1;
+        sync |= 0x00161000;
+        axvpb->sync = sync;
         OSRestoreInterrupts(old);
         break;
     }
     case 2:
-        currentAddr = sound->currentAddr;
-        loopAddr = sound->loopAddr;
         endAddr = sound->endAddr;
+        loopAddr = sound->loopAddr;
+        currentAddr = sound->currentAddr;
         old = OSDisableInterrupts();
         zero = 0;
         axvpb->pb.addr.format = 0x0A;
@@ -216,9 +220,9 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.addr.loopFlag = zero;
         goto zero_adpcm;
     case 3:
-        currentAddr = sound->currentAddr;
-        loopAddr = sound->loopAddr;
         endAddr = sound->loopEndAddr;
+        loopAddr = sound->loopAddr;
+        currentAddr = sound->currentAddr;
         old = OSDisableInterrupts();
         zero = 0;
         axvpb->pb.addr.loopFlag = 1;
@@ -234,9 +238,9 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.src.ratioLo = (u16)srcBits;
         goto zero_adpcm;
     case 4:
-        currentAddr = sound->currentAddr;
-        loopAddr = sound->loopAddr;
         endAddr = sound->endAddr;
+        loopAddr = sound->loopAddr;
+        currentAddr = sound->currentAddr;
         old = OSDisableInterrupts();
         zero = 0;
         axvpb->pb.addr.format = 0x19;
@@ -281,9 +285,9 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         OSRestoreInterrupts(old);
         break;
     case 5:
-        currentAddr = sound->currentAddr;
-        loopAddr = sound->loopAddr;
         endAddr = sound->loopEndAddr;
+        loopAddr = sound->loopAddr;
+        currentAddr = sound->currentAddr;
         old = OSDisableInterrupts();
         zero = 0;
         axvpb->pb.addr.loopFlag = 1;

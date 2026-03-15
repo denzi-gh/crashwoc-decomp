@@ -1,10 +1,11 @@
 #include "system/gs.h"
 
+#define halt_baddata() //asm(".long 1")
+
 char Lockupbuffer1[256];
 char Lockupbuffer2[256];
 char Lockupbuffer3[256];
 
-//CHECK!
 void DisplayErrorAndLockup(char *nufile,int line,char *txt) {
     int i;
 
@@ -16,6 +17,5 @@ void DisplayErrorAndLockup(char *nufile,int line,char *txt) {
         GS_EndScene();
         GS_FlipScreen();
     }
-                    /* WARNING: Bad instruction - Truncating control flow here */
-    //halt_baddata();
+    halt_baddata();
 }

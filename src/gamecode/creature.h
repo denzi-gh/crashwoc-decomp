@@ -344,4 +344,6 @@ struct creature_s Character[9];
 struct CharacterModel CModel[49];
 signed char CRemap[191];
 
+void DrawCreatures(struct creature_s *c, s32 count, s32 render, s32 shadow);
+
 #endif // !CREATURE_H

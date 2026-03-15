@@ -28,6 +28,7 @@ jobs:
         uses: actions/github-script@v7
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL_2: ${{ secrets.DISCORD_WEBHOOK_URL_2 }}
           BOT_LOGIN: decomp-dev[bot]
           INPUT_PR_NUMBER: ${{ inputs.pr_number }}
           INPUT_DRY_RUN: ${{ inputs.dry_run }}
@@ -300,27 +301,43 @@ jobs:
             core.info("Discord message preview:");
             core.info(JSON.stringify(chunks, null, 2));
 
+            const webhookTargets = [
+              { name: "primary", url: safe(process.env.DISCORD_WEBHOOK_URL).trim() },
+              { name: "secondary", url: safe(process.env.DISCORD_WEBHOOK_URL_2).trim() },
+            ].filter(target => target.url);
+
+            if (webhookTargets.length === 0) {
+              core.setFailed("No Discord webhook configured.");
+              return;
+            }
+
+            core.info(`Prepared ${chunks.length} Discord chunk(s) for ${webhookTargets.length} webhook target(s).`);
+
             if (process.env.INPUT_DRY_RUN === "true") {
               core.info("Dry run enabled. Nothing will be sent to Discord.");
               return;
             }
 
-            for (let index = 0; index < chunks.length; index++) {
-              const payload = {
-                content: chunks[index],
-                username: `Crash: Wrath of Cortex Decompilation Report • PR #${safe(pr.number)}`,
-                avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
-              };
+            for (const target of webhookTargets) {
+              for (let index = 0; index < chunks.length; index++) {
+                const payload = {
+                  content: chunks[index],
+                  username: `Crash: Wrath of Cortex Decompilation Report • PR #${safe(pr.number)}`,
+                  avatar_url: "https://cdn2.steamgriddb.com/icon_thumb/3c6d4f6a20e08ad47557b4fc5e67dbc8.png"
+                };
 
-              const res = await fetch(process.env.DISCORD_WEBHOOK_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-              });
+                const res = await fetch(target.url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload)
+                });
 
-              if (!res.ok) {
-                const text = await res.text();
-                core.setFailed(`Discord webhook failed on chunk ${index + 1}: ${res.status} ${text}`);
-                return;
+                if (!res.ok) {
+                  const text = await res.text();
+                  core.setFailed(
+                    `Discord webhook '${target.name}' failed on chunk ${index + 1}: ${res.status} ${text}`
+                  );
+                  return;
+                }
               }
             }

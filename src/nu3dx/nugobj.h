@@ -44,7 +44,7 @@ void NuGeomAddPrim(struct nugeom_s* geom, struct nuprim_s* prim);
 void NuGeomAddSkin(struct nugeom_s* geom, struct nuskin_s* skin);
 struct nuprim_s* NuPrimCreate(int amount, enum nuprimtype_e type);
 void NuPrimDestroy(struct nuprim_s* prim);
-void* GS_CreateBuffer(u32 bufsize, s32 bufferType);
+void* GS_CreateBuffer();
 void GS_DeleteBuffer(void* ptr);
 int NuVtxStride(enum nuvtxtype_e type);
 void NuAnimUV(void);

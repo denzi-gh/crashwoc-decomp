@@ -22,8 +22,8 @@ void GS_ChangeTextureStates(int id);
 void GS_TexSetWrapModes(int id,enum _GXTexWrapMode mode);
 void GS_TexSetWrapModet(int id,enum _GXTexWrapMode mode);
 void GS_TexSelect(enum _GXTevStageID stage,s32 NUID);
-void GS_SetTevBlend(enum _GXTevStageID id);
-void GS_SetTevModulate(enum _GXTevStageID id);
+// GS_SetTevBlend - no prototype (K&R call convention)
+// GS_SetTevModulate - no prototype (K&R call convention)
 void GS_SetTextureStageState(void);
 
 #endif

@@ -4,6 +4,7 @@
 #include <string.h>
 
 void exit(int);
+void _assert(const char* expr, const char* file, int line);
 
 s32 NuFileOpen(char* filename, s32 mode);
 void NuFileClose(fileHandle handle);
@@ -27,13 +28,11 @@ static void NuErrorFunction(char* msg, ...)
 {
 	va_list aptr;
 
-	printf(captxt, "NuError - %s Line %d : ", nufile, nuline);
-	puts(captxt);
+	sprintf(captxt, "NuError - %s Line %d : ", nufile, nuline);
 	va_start(aptr, msg);
 	vsprintf(txt, msg, aptr);
-	puts(txt);
 	va_end(aptr);
-	exit(1);
+	_assert(txt, nufile, nuline);
 }
 
 // PS2 MATCH

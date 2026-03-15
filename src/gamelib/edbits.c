@@ -48,7 +48,7 @@ s32 edbitsLookupSoundFX(char *name)	//CHECK
   s32 i;
   s32 j;
   
-  if ((edSfxLevelTab != NULL) && (j = 0, 0 < edSfxAllCount - edSfxGlobalCount)) {
+  if ((edSfxLevelTab != NULL) && (j = 0, 0 < (s32)edSfxAllCount - (s32)edSfxGlobalCount)) {
     i = 0;
     do {
       cmp = strncmp((char *)edSfxLevelTab + i, name, 0xf);
@@ -57,18 +57,18 @@ s32 edbitsLookupSoundFX(char *name)	//CHECK
       }
       j = j + 1;
       i = i + 0x30;
-    } while (j < edSfxAllCount - edSfxGlobalCount);
+    } while (j < (s32)edSfxAllCount - (s32)edSfxGlobalCount);
   }
-  if ((edSfxGlobalTab != 0) && (j = 0, 0 < edSfxGlobalCount)) {
+  if ((edSfxGlobalTab != 0) && (j = 0, j < (s32)edSfxGlobalCount)) {
     i = 0;
     do {
-      cmp = strncmp((char *)(edSfxGlobalTab + i),name,0xf);
+      cmp = strncmp((char *)edSfxGlobalTab + i, name, 0xf);
       if (cmp == 0) {
         return j;
       }
       j = j + 1;
       i = i + 0x30;
-    } while (j < edSfxGlobalCount);
+    } while (j < (s32)edSfxGlobalCount);
   }
   return -1;
 }
@@ -80,27 +80,30 @@ void edbitsSoundPlay(struct nuvec_s *pos, s32 sid)		//CHECK
   s32 tsid;
   
   if (edbits_what_game == '\x02') {
-    if (sid < edSfxGlobalCount) {
+    if (sid < (s32)edSfxGlobalCount) {
       tsid = sid * 0x30;
       SFXTab = edSfxGlobalTab;
     }
     else {
-      tsid = (sid - edSfxGlobalCount) * 0x30;
+      tsid = (sid - (s32)edSfxGlobalCount) * 0x30;
       SFXTab = edSfxLevelTab;
     }
-    gamesfx_pitch = (s32)*(u16 *)((char *)SFXTab + tsid + 0x10);
-    gamesfx_effect_volume = (s32)*(u16 *)((char *)SFXTab + tsid + 0x12);
+    {
+      struct pSFX *entry = (struct pSFX *)((char *)SFXTab + tsid);
+      gamesfx_pitch = entry->pitch;
+      gamesfx_effect_volume = entry->volume;
+    }
     gamesfx_edbits = 1;
     GameSfx(sid, pos);
     debris_sfx = 0;
   }
-  else if (sid < edSfxGlobalCount) {
+  else if (sid < (s32)edSfxGlobalCount) {
     tsid = (s32)((u32)edSfxGlobalTab[sid].volume * edbitsSfxVol) / 100;
     NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxGlobalTab[sid].pitch);
   }
   else {
-    tsid = (s32)((u32)edSfxLevelTab[sid - edSfxGlobalCount].volume * edbitsSfxVol) / 100;
-    NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxLevelTab[sid - edSfxGlobalCount].pitch);
+    tsid = (s32)((u32)edSfxLevelTab[sid - (s32)edSfxGlobalCount].volume * edbitsSfxVol) / 100;
+    NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxLevelTab[sid - (s32)edSfxGlobalCount].pitch);
   }
   return;
 }
@@ -112,14 +115,17 @@ s32 edbitsLookupInstance(char *name)		//CHECK
   s32 cmp;
   s32 cnt;
   
-  if ((edbits_base_scene != NULL) && (cnt = 0, 0 < edbits_base_scene->numspecial)) {
-    do {
-      cmp = strncmp(edbits_base_scene->specials[cnt].name, name, 0x13);
-      if (cmp == 0) {
-        return cnt;
-      }
-      cnt = cnt + 1;
-    } while (cnt < edbits_base_scene->numspecial);
+  if (edbits_base_scene != NULL) {
+    cnt = 0;
+    if (cnt < edbits_base_scene->numspecial) {
+      do {
+        cmp = strncmp(edbits_base_scene->specials[cnt].name, name, 0x13);
+        if (cmp == 0) {
+          return cnt;
+        }
+        cnt = cnt + 1;
+      } while (cnt < edbits_base_scene->numspecial);
+    }
   }
   return -1;
 }

@@ -5,6 +5,8 @@
 #include "nu3dxtypes.h"
 #include "nugobj.h"
 
+void NuPs2CreateSkin(struct nugobj_s* gobj);
+
 
 /*
   800ad8e8 00003c 800ad8e8  4 InitSkinning 	Global

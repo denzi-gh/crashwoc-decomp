@@ -31,10 +31,8 @@ void* memset(void* dest, int c, size_t count)
         p = (unsigned char*)aligned_p;
     }
 
-    if (count-- != 0) {
-        do {
-            *p++ = c;
-        } while (count-- != 0);
+    while (count-- != 0) {
+        *p++ = c;
     }
 
     return dest;

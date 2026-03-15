@@ -114,11 +114,261 @@ s32 water2;
 s32 wdir;
 s32 wtimer;
 
+struct deb3emit_s {
+  float yoff;
+  float grav;
+  float px;
+  float py;
+  float pz;
+  float vx;
+  float vy;
+  float vz;
+  float ang;
+};
+
+extern struct deb3emit_s Deb3Emit[7];
+extern struct deb3info Deb3Info[27];
+
+struct deb3_s *AddDeb3Ang(struct nuvec_s *pos, s32 db, s32 emit, struct nuangvec_s *angle, s32 rotx, s32 roty) {
+  s32 loop;
+  s32 flag;
+  struct deb3_s *deb;
+  float dist;
+  float ang2;
+  struct nuvec_s vec;
+  struct nuvec_s t;
+  struct nuangvec_s ang;
+
+  for (loop = 0; loop <= 0x3f; loop++) {
+    deb = &deb3[debpt & 0x3f];
+    if ((float)deb->timer == 0.0f) {
+      pos->x += Deb3Emit[emit].px * (float)((qrand() - 0x8000) >> 8) * 0.0078125f;
+      pos->y += Deb3Emit[emit].py * (float)((qrand() - 0x8000) >> 8) * 0.0078125f;
+      pos->z += Deb3Emit[emit].pz * (float)((qrand() - 0x8000) >> 8) * 0.0078125f;
+
+      if (angle != NULL) {
+        ang = *angle;
+      } else {
+        ang.x = qrand();
+        ang.y = qrand();
+        ang.z = qrand();
+      }
+
+      NuMtxSetRotateXYZ(&deb->mtx, (s32 *)&ang);
+      NuMtxTranslate(&deb->mtx, pos);
+
+      vec.x = Deb3Emit[emit].vx * (float)((qrand() - 0x8000) >> 8) / 120.0f;
+      vec.y = (Deb3Emit[emit].vy * (float)((qrand() - 0x8000) >> 8) + Deb3Emit[emit].yoff * 128.0f) / 120.0f;
+      vec.z = Deb3Emit[emit].vz * (float)((qrand() - 0x8000) >> 8) / 120.0f;
+
+      NuVecRotateX(&vec, &vec, rotx);
+      NuVecRotateY(&vec, &vec, roty);
+
+      deb->velocity.x = vec.x;
+      deb->velocity.y = vec.y;
+      deb->velocity.z = vec.z;
+      deb->grav = Deb3Emit[emit].grav + Deb3Emit[emit].grav;
+      deb->angularvelocity.x = 0.0f;
+      deb->angularvelocity.y = 0.0f;
+      deb->angularvelocity.z = 0.0f;
+      deb->info = &Deb3Info[db];
+
+      ang2 = Deb3Emit[emit].ang;
+      if (ang2 != 0.0f) {
+        if (rbclass[deb->info->classid].mass != 0.0f) {
+          ang2 = ang2 / 2560.0f;
+        }
+        deb->angularMomentum.x = (float)((qrand() - 0x8000) >> 8) * ang2;
+        deb->angularMomentum.y = (float)((qrand() - 0x8000) >> 8) * ang2;
+        deb->angularMomentum.z = (float)((qrand() - 0x8000) >> 8) * ang2;
+      } else {
+        deb->angularMomentum.z = 0.0f;
+        deb->angularMomentum.x = 0.0f;
+        deb->angularMomentum.y = 0.0f;
+      }
+
+      vec.x = deb->velocity.x * 8.0f / 60.0f;
+      vec.y = deb->velocity.y * 8.0f / 60.0f;
+      deb->status = 0;
+      vec.z = deb->velocity.z * 8.0f / 60.0f;
+      t.x = deb->mtx._30;
+      deb->timer = (s16)(deb->info->timer * 60.0f);
+      deb->count = 0;
+      deb->diff.x = 0.0f;
+      deb->diff.y = 0.0f;
+      deb->diff.z = 0.0f;
+      t.y = deb->mtx._31;
+      t.z = deb->mtx._32;
+      deb->data = deb->info->data;
+      dist = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
+
+      if ((deb->info->info & 8U) != 0) {
+        flag = 0;
+      } else {
+        flag = NewRayCast(&t, &vec, deb->info->size);
+      }
+
+      if (flag == 0) {
+        deb->status |= 2;
+      }
+
+      if (((flag - 1) <= 0xeU) ||
+          ((flag > 0xf) && ((deb->status & 2U) != 0))) {
+        deb->impact.x = t.x + vec.x;
+        deb->impact.y = t.y + vec.y;
+        deb->impact.z = t.z + vec.z;
+        deb->norm = ShadNorm;
+
+        ang2 = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
+        ang2 = NuFsqrt(ang2);
+        dist = NuFsqrt(dist);
+
+        if (dist == 0.0f) {
+          deb->check = 0;
+        } else {
+          deb->check = (s16)(ang2 * 8.0f / dist);
+        }
+
+        if (deb->check == 0) {
+          deb->mtx._30 = deb->impact.x;
+          deb->mtx._31 = deb->impact.y;
+          deb->mtx._32 = deb->impact.z;
+        }
+      } else {
+        deb->check = 8;
+        deb->norm.y = 100.0f;
+      }
+
+      return deb;
+    }
+    debpt++;
+  }
+  debpt &= 0x3f;
+  return NULL;
+}
+
 /*
-	AddDeb3Ang     73%
 	AddDeb3           65%
 	LaunchObjects  86%
 */
+
+struct deb3_s *AddDeb3(struct nuvec_s *pos, s32 db, s32 emit, struct nuangvec_s *angle) {
+  s32 loop;
+  s32 flag;
+  struct deb3_s *deb;
+  float dist;
+  float ang2;
+  struct nuvec_s vec;
+  struct nuvec_s t;
+  struct nuangvec_s ang;
+
+  for (loop = 0; loop <= 0x3f; loop++) {
+    deb = &deb3[debpt & 0x3f];
+    if ((float)deb->timer == 0.0f) {
+      pos->x += Deb3Emit[emit].px * (float)((qrand() - 0x8000) >> 8) * 0.0078125f;
+      pos->y += Deb3Emit[emit].py * (float)((qrand() - 0x8000) >> 8) * 0.0078125f;
+      pos->z += Deb3Emit[emit].pz * (float)((qrand() - 0x8000) >> 8) * 0.0078125f;
+
+      if (angle != NULL) {
+        ang = *angle;
+      } else {
+        ang.x = qrand();
+        ang.y = qrand();
+        ang.z = qrand();
+      }
+
+      NuMtxSetRotateXYZ(&deb->mtx, (s32 *)&ang);
+      NuMtxTranslate(&deb->mtx, pos);
+
+      deb->velocity.y = (Deb3Emit[emit].vy * (float)((qrand() - 0x8000) >> 8) + Deb3Emit[emit].yoff * 128.0f) / 120.0f;
+
+      if (Deb3Emit[emit].vx >= 0.0f) {
+        deb->velocity.x = Deb3Emit[emit].vx * (float)((qrand() - 0x8000) >> 8) / 120.0f;
+        deb->velocity.z = Deb3Emit[emit].vz * (float)((qrand() - 0x8000) >> 8) / 120.0f;
+      } else {
+        deb->velocity.x = Deb3Emit[emit].vz * NuTrigTable[(u16)angle->y];
+        deb->velocity.z = Deb3Emit[emit].vz * NuTrigTable[(u16)(angle->y + 0x4000)];
+      }
+
+      deb->grav = Deb3Emit[emit].grav + Deb3Emit[emit].grav;
+      deb->angularvelocity.x = 0.0f;
+      deb->angularvelocity.y = 0.0f;
+      deb->angularvelocity.z = 0.0f;
+      deb->info = &Deb3Info[db];
+
+      ang2 = Deb3Emit[emit].ang;
+      if (ang2 != 0.0f) {
+        if (rbclass[deb->info->classid].mass != 0.0f) {
+          ang2 = ang2 / 2560.0f;
+        }
+        deb->angularMomentum.x = (float)((qrand() - 0x8000) >> 8) * ang2;
+        deb->angularMomentum.y = (float)((qrand() - 0x8000) >> 8) * ang2;
+        deb->angularMomentum.z = (float)((qrand() - 0x8000) >> 8) * ang2;
+      } else {
+        deb->angularMomentum.z = 0.0f;
+        deb->angularMomentum.x = 0.0f;
+        deb->angularMomentum.y = 0.0f;
+      }
+
+      vec.x = deb->velocity.x * 8.0f / 60.0f;
+      vec.y = deb->velocity.y * 8.0f / 60.0f;
+      deb->status = 0;
+      vec.z = deb->velocity.z * 8.0f / 60.0f;
+      t.x = deb->mtx._30;
+      deb->timer = (s16)(deb->info->timer * 60.0f);
+      deb->count = 0;
+      deb->diff.x = 0.0f;
+      deb->diff.y = 0.0f;
+      deb->diff.z = 0.0f;
+      t.y = deb->mtx._31;
+      t.z = deb->mtx._32;
+      deb->data = deb->info->data;
+      dist = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
+
+      if ((deb->info->info & 8U) != 0) {
+        flag = 0;
+      } else {
+        flag = NewRayCast(&t, &vec, deb->info->size);
+      }
+
+      if (flag == 0) {
+        deb->status |= 2;
+      }
+
+      if (((flag - 1) <= 0xeU) ||
+          ((flag > 0xf) && ((deb->status & 2U) != 0))) {
+        deb->impact.x = t.x + vec.x;
+        deb->impact.y = t.y + vec.y;
+        deb->impact.z = t.z + vec.z;
+        deb->norm = ShadNorm;
+
+        ang2 = vec.x * vec.x + vec.y * vec.y + vec.z * vec.z;
+        ang2 = NuFsqrt(ang2);
+        dist = NuFsqrt(dist);
+
+        if (dist == 0.0f) {
+          deb->check = 0;
+        } else {
+          deb->check = (s16)(ang2 * 8.0f / dist);
+        }
+
+        if (deb->check == 0) {
+          deb->mtx._30 = deb->impact.x;
+          deb->mtx._31 = deb->impact.y;
+          deb->mtx._32 = deb->impact.z;
+        }
+      } else {
+        deb->check = 8;
+        deb->norm.y = 100.0f;
+      }
+
+      return deb;
+    }
+    debpt++;
+  }
+  debpt &= 0x3f;
+  return NULL;
+}
 
 //NGC MATCH
 void InitRandSFX(void) {

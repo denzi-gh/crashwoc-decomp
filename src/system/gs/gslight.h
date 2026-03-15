@@ -7,7 +7,7 @@ s32 GS_SetLight(s32 Index, const struct _D3DLIGHT8 *pLight);
 s32 GS_LightEnable(s32 Index, s32 Enable);
 void GS_XFormLightVec(struct _GS_VECTOR3 *XFlight_pos, struct _GS_VECTOR4 *light_pos, struct _GSMATRIX *curmat);
 void GS_SetLightingNone(void);
-void GS_SetPointLighting(void);
+void GS_SetPointLighting(struct numtx_s *invWorld, struct nuvec_s *lightpos, struct nucolour3_s *lightcol);
 void GS_EnableLighting(int flag);
 void GS_SetMaterialSourceAmbient(s32 src);
 void GS_SetMaterialSourceEmissive(int src);

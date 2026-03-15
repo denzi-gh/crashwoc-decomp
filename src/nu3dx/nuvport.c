@@ -8,18 +8,18 @@ static struct nuviewport_s vpCurrent;
 static s32 vport_inval;
 static struct numtx_s smtx;
 
-//PS2
+//NGC
 void NuVpInit(void)
 {
-    //GS_GetViewport(&vpDevice);  //NuPs2GetViewport(&vpDevice);
-    vpDevice.centre_x = 0.5f;
-    vpDevice.centre_y = 0.5f;
-    vpDevice.clipmin_x = 0.0f;
-    vpDevice.clipmin_y = 0.0f;
-    vpDevice.clipmax_x = 1.0f;
-    vpDevice.clipmax_y = 1.0f;
+    GS_GetViewport(&vpDevice);
+    vpDevice.clipmin_x = (float)vpDevice.x;
+    vpDevice.centre_x = (float)vpDevice.x + (float)vpDevice.width * 0.5f;
+    vpDevice.clipmax_x = (float)vpDevice.x + (float)vpDevice.width;
+    vpDevice.clipmin_y = (float)vpDevice.y;
+    vpDevice.centre_y = (float)vpDevice.y + (float)vpDevice.height * 0.5f;
+    vpDevice.clipmax_y = (float)vpDevice.y + (float)vpDevice.height;
 
-    memcpy(&vpDevice, &vpCurrent, sizeof(struct nuviewport_s));
+    memcpy(&vpCurrent, &vpDevice, sizeof(struct nuviewport_s));
     vport_inval = 1;
 
     NuVpUpdate();
@@ -27,7 +27,7 @@ void NuVpInit(void)
 }
 
 
-//PS2
+//NGC
 static void NuVpSetScalingMtx(void)
 {
   smtx._00 = (float)vpCurrent.width * 0.5f;
@@ -42,35 +42,21 @@ static void NuVpSetScalingMtx(void)
   smtx._21 = 0.0f;
   smtx._22 = vpCurrent.zmax - vpCurrent.zmin;
   smtx._23 = 0.0f;
-  smtx._30 = (float)vpCurrent.x + (float)vpCurrent.width * vpCurrent.centre_x;
-  smtx._31 = (float)vpCurrent.y + (float)vpCurrent.height * vpCurrent.centre_y;
+  smtx._30 = (float)vpCurrent.x + (float)vpCurrent.width * 0.5f;
+  smtx._31 = (float)vpCurrent.y + (float)vpCurrent.height * 0.5f;
   smtx._32 = vpCurrent.zmin;
   smtx._33 = 1.0f;
   return;
 }
 
-//PS2
+//NGC
 void NuVpUpdate(void)
 {
   if (vport_inval != 0) {
     vport_inval = 0;
+    GS_SetViewport(&vpCurrent);
+    NuVpSetClippingMtx();
     NuVpSetScalingMtx();
-    if ((vpCurrent.clipmin_x == 0.0f) && (vpCurrent.clipmax_x == 1.0f)) {
-      vpCurrent.clip_w = 1.0f;
-      vpCurrent.scis_w = (float)vpCurrent.width / 57600.0f;
-    }
-    else {
-      vpCurrent.scis_w = 1.0f / (vpCurrent.clipmax_x - vpCurrent.clipmin_x);
-      vpCurrent.clip_w = vpCurrent.scis_w;
-    }
-    if ((vpCurrent.clipmin_y == 0.0f) && (vpCurrent.clipmax_y == 1.0f)) {
-      vpCurrent.clip_h = 1.0f;
-      vpCurrent.scis_h = (float)vpCurrent.height / 57600.0f;
-    }
-    else {
-      vpCurrent.scis_h = 1.0f / (vpCurrent.clipmax_y - vpCurrent.clipmin_y);
-      vpCurrent.clip_h = vpCurrent.scis_h;
-    }
   }
   return;
 }
@@ -81,12 +67,12 @@ void NuVpSetClippingMtx(void)
   return;
 }
 
-//PS2
+//NGC
 void NuVpSetSize(float w,float h)
 {
+  vpCurrent.width = (u32)w;
+  vpCurrent.height = (u32)h;
   vport_inval = 1;
-  vpCurrent.width = (int)w;
-  vpCurrent.height = (int)h;
   return;
 }
 

@@ -16,13 +16,13 @@ struct memexternal_s *memexternal;
 //MATCH NGC
 void NuMemSetExternal(union variptr_u* ptr, union variptr_u* end) {
 	if (ptr != NULL) {
-		memexternal = &memext; // Is it the reference to it or not?
-		memext.ptr = ptr;
-		memext.end = end;
+		struct memexternal_s *p = &memext;
+		p->end = end;
+		p->ptr = ptr;
+		memexternal = p;
         return;
 	}
 	memexternal = NULL;
-    return;
 }
 
 //MATCH NGC
@@ -48,7 +48,7 @@ void* NuMemAlloc(s32 size) {
         // Attempt to allocate
         ret = malloc(size);
         if (ret == NULL) {
-            NuErrorProlog("OpenCrashWOC/code/nucore/numem.c", 57)("NuMemAlloc : Failed to alloc %d bytes!", size);
+            NuErrorProlog("C:/source/crashwoc/code/nucore/numem.c", 0xBF)("NuMemAlloc : Failed to alloc %d bytes!", size);
         }
 
         // Clear buffer

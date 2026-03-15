@@ -204,6 +204,174 @@ struct nugspline_s * NuSplineFindPartial(struct nugscn_s *scene,char *name,char 
   return NULL;
 }
 
+void InitChases(void) {
+    struct pCHASE *pc;
+    CHASE *chase;
+    char buf[64];
+    char name[64];
+    char chname[64];
+    char txt[256];
+    char parsebuf[32];
+    struct nuvec_s pos;
+    struct nugspline_s *spl;
+    s32 j, k, l;
+    s32 count;
+    s32 base_len;
+    s32 name_len;
+    s32 char_idx;
+
+    chase = Chase;
+    for (j = 0; j < 3; j++) {
+        chase->status = 0;
+        chase++;
+    }
+
+    pc = LDATA->pChase;
+    if (pc == NULL) return;
+    if (world_scene[0] == NULL) return;
+    if ((s8)pc->i == -1) return;
+
+    do {
+        sprintf(buf, "chase_%.2i_", (s8)pc->i);
+        strcpy(chname, buf);
+
+        chase = &Chase[(s8)pc->i];
+
+        strcpy(tbuf, chname);
+        strcat(tbuf, "trigger");
+
+        spl = NuSplineFind(world_scene[0], tbuf);
+        chase->spl_START = spl;
+        if (spl == NULL) goto next_pc;
+
+        if (spl->len != 2) {
+            chase->spl_START = NULL;
+        }
+        if (chase->spl_START == NULL) goto next_pc;
+
+        count = 0;
+
+        for (j = 0; j <= 5; j++) {
+            chase->ok[j] = 0;
+            chase->character[j] = -1;
+            chase->obj[j].special = NULL;
+
+            if (pc->character[j] == -1) continue;
+
+            sprintf(tbuf, "%s%.2i", buf, j);
+            spl = NuSplineFind(world_scene[0], tbuf);
+            chase->spl_CHASER[j] = spl;
+            if (spl == NULL) continue;
+
+            {
+                u16 c_raw = pc->character[j];
+                s16 c = (s16)c_raw;
+                if (c > 0x3E6) {
+                    s32 idx = c - 0x3E7;
+                    if ((u32)idx > 0xC8) continue;
+                    if (ObjTab[idx].obj.special == NULL) continue;
+                    chase->obj[j].scene = ObjTab[idx].obj.scene;
+                    chase->obj[j].special = ObjTab[idx].obj.special;
+                } else {
+                    if ((s8)CRemap[c] == -1) continue;
+                    chase->character[j] = c;
+                    chase->action[j] = pc->action[j];
+                }
+            }
+
+            chase->scale[j] = pc->scale[j];
+
+            sprintf(name, "%s%.2i_", buf, j);
+            strcat(name, "trigger_event_");
+
+            for (k = 0; k <= 23; k++) {
+                sprintf(tbuf, "%s%.2i_", name, k);
+                base_len = strlen(tbuf);
+                spl = NuSplineFindPartial(world_scene[0], tbuf, txt);
+                chase->event[j][k].spl = spl;
+                if (spl == NULL) goto next_event;
+                if (spl->len != 2) {
+                    chase->event[j][k].spl = NULL;
+                }
+                if (chase->event[j][k].spl == NULL) goto next_event;
+
+                for (l = 0; l < 24; l++) {
+                    chase->event[j][k].obj[l].special = NULL;
+                }
+
+                count = 0;
+                name_len = strlen(txt);
+                char_idx = 0;
+
+                if (base_len < name_len) {
+                    for (l = base_len; l < name_len; l++) {
+                        s8 c = txt[l];
+                        if (c == 'X' || c == 'x' || l == name_len - 1) {
+                            if (l == name_len - 1) {
+                                parsebuf[char_idx] = c;
+                                char_idx++;
+                            }
+                            parsebuf[char_idx] = '\0';
+                            if (NuSpecialFind(world_scene[0], &chase->event[j][k].obj[count], parsebuf) != 0) {
+                                count++;
+                                if (count == 24) goto next_event;
+                            }
+                            char_idx = 0;
+                        } else {
+                            parsebuf[char_idx] = c;
+                            char_idx++;
+                        }
+                    }
+                }
+
+            next_event:
+                ;
+            }
+
+            sprintf(name, "%s%.2i_", buf, j);
+            count = count + 1;
+            strcat(name, "trigger_misc_");
+
+            for (l = 0; l <= 3; l++) {
+                sprintf(tbuf, "%s%.2i", name, l);
+                spl = NuSplineFind(world_scene[0], tbuf);
+                chase->spl_MISC[j][l] = spl;
+                if (spl != NULL && spl->len != 2) {
+                    chase->spl_MISC[j][l] = NULL;
+                }
+            }
+
+            chase->ok[j] = 1;
+        }
+
+        if (count == 0) goto next_pc;
+
+        {
+            struct nugspline_s *ts = chase->spl_START;
+            struct nuvec_s *p0 = (struct nuvec_s *)ts->pts;
+            struct nuvec_s *p1 = (struct nuvec_s *)(ts->pts + (s32)ts->ptsize);
+            pos.x = (p0->x + p1->x) * 0.5f;
+            pos.y = (p0->y + p1->y) * 0.5f;
+            pos.z = (p0->z + p1->z) * 0.5f;
+        }
+
+        GetALONG(&pos, NULL, -1, -1, 1);
+
+        chase->iRAIL = temp_iRAIL;
+        chase->iALONG = temp_iALONG;
+        chase->fALONG = temp_fALONG;
+        chase->duration = pc->duration;
+        chase->i = pc->i;
+        chase->i_last = pc->i_last;
+        chase->i_next = pc->i_next;
+        chase->status = 1;
+        chase->cuboid = pc->cuboid;
+
+    next_pc:
+        pc++;
+    } while ((s8)pc->i != -1);
+}
+
 //NGC MATCH
 void UpdateCrateBallsOfFireDoors(void) {
     struct nuhspecial_s obj[8];

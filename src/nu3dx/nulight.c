@@ -340,7 +340,7 @@ void NuLgtArcLaser(s32 type,struct nuvec_s *start,struct nuvec_s *target,struct 
     return;
 }
 
-//91% NGC (struct problem??)
+//94% NGC (compiler scheduling/regalloc differences)
 void NuLgtArcLaserDraw(s32 paused)
 {
   s32 id;
@@ -386,14 +386,16 @@ void NuLgtArcLaserDraw(s32 paused)
       pnts[5].w = 1.0f;
       NuVec4MtxTransformVU0(&pnts[5], &pnts[5], vpcsmtx);
       if (0.5f <= pnts[4].w) {
-        pnts[6].x = NuLgtArcLaserData[id].target.x + (((NuLgtArcLaserData[id].start.x - NuLgtArcLaserData[id].target.x) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
-        pnts[6].y = NuLgtArcLaserData[id].target.y + (((NuLgtArcLaserData[id].start.y - NuLgtArcLaserData[id].target.y) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
-        pnts[6].z = NuLgtArcLaserData[id].target.z + (((NuLgtArcLaserData[id].start.z - NuLgtArcLaserData[id].target.z) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
-        pnts[6].w = 1.0f;
-      } else {
         pnts[6].x = NuLgtArcLaserData[id].start.x;
         pnts[6].y = NuLgtArcLaserData[id].start.y;
         pnts[6].z = NuLgtArcLaserData[id].start.z;
+        pnts[6].w = 1.0f;
+      } else if (0.5f > pnts[5].w) {
+        continue;
+      } else {
+        pnts[6].x = NuLgtArcLaserData[id].target.x + (((NuLgtArcLaserData[id].start.x - NuLgtArcLaserData[id].target.x) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
+        pnts[6].y = NuLgtArcLaserData[id].target.y + (((NuLgtArcLaserData[id].start.y - NuLgtArcLaserData[id].target.y) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
+        pnts[6].z = NuLgtArcLaserData[id].target.z + (((NuLgtArcLaserData[id].start.z - NuLgtArcLaserData[id].target.z) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
         pnts[6].w = 1.0f;
       }
       sqrt(POW2(pnts[6].x - NuLgtArcLaserData[id].target.x) + POW2(pnts[6].y - NuLgtArcLaserData[id].target.y) + POW2(pnts[6].z - NuLgtArcLaserData[id].target.z));
@@ -433,7 +435,7 @@ void NuLgtArcLaserDraw(s32 paused)
         pnts[10].z = NuLgtArcLaserData[id].lasdir.z;
         arcscale = POW2(pnts[10].x) + POW2(pnts[10].y) + POW2(pnts[10].z);
         if (arcscale > 0.0f) {
-          arcscale = NuLgtArcLaserData[id].arcsize / NuFsqrt(pnts[6].w);
+          arcscale = NuLgtArcLaserData[id].arcsize / NuFsqrt(arcscale);
         }
         pnts[10].x = pnts[10].x * arcscale;
         pnts[10].y = pnts[10].y * arcscale;
@@ -480,7 +482,7 @@ void NuLgtArcLaserDraw(s32 paused)
           NuVec4MtxTransformVU0(&pnts[5], &pnts[5], vpcsmtx);
           rhw2 = 1.0f / pnts[5].w;
           NuVec4Scale(&pnts[5], &pnts[5], rhw2);
-          if ((lp > (1.0f - (step * 1.5f))) && (NuLgtSeed != 0)) {
+          if ((lp < (1.0f - (step * 1.5f))) && (NuLgtSeed != 0)) {
             rnd = NuLgtRand();
             rx = ((norm.x * (rnd - 0x80)) * NuLgtArcLaserData[id].sizewob) * rhw2;
             ry = ((norm.y * (rnd - 0x80)) * NuLgtArcLaserData[id].sizewob) * rhw2;
@@ -518,6 +520,7 @@ void NuLgtArcLaserDraw(s32 paused)
             dxpnts[2].tc[0] = uv[0].z;
             dxpnts[2].tc[1] = uv[1].z;
             NuRndrTri2d(dxpnts, NuLgtArcMtl);
+            dxpnts[0].rhw = dxpnts[1].rhw = dxpnts[2].rhw = 0.1f;
             dxpnts[0].pnt.x = pnts[1].x;
             dxpnts[0].pnt.y = pnts[1].y;
             dxpnts[0].pnt.z = pnts[1].z;
@@ -537,9 +540,9 @@ void NuLgtArcLaserDraw(s32 paused)
           }
           pnts[1].x = pnts[0].x;
           pnts[1].y = pnts[0].y;
-          pnts[1].z = pnts[0].z;
           pnts[3].x = pnts[2].x;
           pnts[3].y = pnts[2].y;
+          pnts[1].z = pnts[0].z;
           pnts[3].z = pnts[2].z;
         }
       }

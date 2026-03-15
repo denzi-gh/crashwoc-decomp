@@ -36,6 +36,8 @@ enum _GXTexWrapMode GS_TexWrapMode_s [4];
 s32 ShadowBodge = GX_TEVSTAGE0;
 enum _GXTevStageID maxstage_189 = GX_TEVSTAGE15 | GX_MAX_TEVSTAGE | 0; //GX_TEVSTAGE15 | GX_MAX_TEVSTAGE | FFFFFFE0h
 extern s32 ShadowMatBodge;
+extern s32 Motor[4];
+void PADControlAllMotors(s32 *command);
 
 //NGC MATCH
 void GS_TexInit(void) {
@@ -167,7 +169,7 @@ void GS_TexCreateNU(enum nutextype_e Format,u32 width,u32 height,u8 *bits,u32 Mi
         memcpy(newbits,(char *)(bits + 0xc),iss3cmp);
         DCFlushRange(newbits,iss3cmp);
         for (i = 0; i < 0x400; i++, pTex++) {
-            if (pTex->Flags != 0) {
+            if (pTex->Flags == 0) {
                 pTex->Flags = -1;
                 pTex->Pad = 0xe;
                 pTex->Format = Format;
@@ -494,12 +496,31 @@ void GS_SetTevBlend(enum _GXTevStageID id)
 void GS_SetTevModulate(enum _GXTevStageID id)
 
 {
-  //GXSetTevOp(id,GX_MODULATE);
-  return;
+  GXSetTevOp(id, 0);
 }
 
 void GS_SetTextureStageState(void)
 
 {
   return;
+}
+
+void RumbleController(int command, int power) {
+    int controlMotor = 0;
+    int chan = 0;
+
+    if (command == 0 && power == 0) {
+        if (Motor[0] != 0) {
+            Motor[controlMotor] = controlMotor;
+            controlMotor = 1;
+        }
+    } else {
+        if (Motor[chan] != 1) {
+            Motor[chan] = 1;
+            controlMotor = 1;
+        }
+    }
+    if (controlMotor != 0) {
+        PADControlAllMotors(Motor);
+    }
 }

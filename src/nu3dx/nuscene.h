@@ -30,6 +30,7 @@ static void ReadNuIFFSpecialObjects(s32 fh,struct nugscn_s *gsc);
 static void NuSceneCalcCulling(struct nugscn_s *scene);
 void ReadNuIFFGScene(fileHandle handle,struct nugscn_s *gscene);
 struct nuscene_s * NuSceneLoad(char *filename);
+void NuSceneDestroy(struct nuscene_s *sc);
 struct nuscene_s * NuSceneReader(union variptr_u *buffer,union variptr_u *buffend,char *filename);
 s8* ReadNuIFFNameTable(s32 handle);
 

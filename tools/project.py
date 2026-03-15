@@ -62,6 +62,7 @@ class Object:
             "extra_asflags": [],
             "extra_cflags": [],
             "extra_clang_flags": [],
+            "keep_sections": None,
             "lib": None,
             "mw_version": None,
             "progress_category": None,
@@ -802,6 +803,10 @@ def generate_build_ninja(
         f"{CHAIN}{gnu_as} $asflags -o $out $in" + f" && {dtk} elf fixup $out $out"
     )
     gnu_as_implicit = [binutils_implicit or gnu_as, dtk]
+
+    # GNU objcopy
+    objcopy = binutils / f"powerpc-eabi-objcopy{EXE}"
+    objcopy_implicit = [binutils_implicit or objcopy]
     # As a workaround for https://github.com/encounter/dtk-template/issues/51
     # include macros.inc directly as an implicit dependency
     gnu_as_implicit.append(build_path / "include" / "macros.inc")
@@ -820,6 +825,28 @@ def generate_build_ninja(
         mwcc_pch_sjis_implicit.append(transform_dep)
         mwcc_extab_implicit.append(transform_dep)
         mwcc_sjis_extab_implicit.append(transform_dep)
+
+    if is_windows():
+        objcopy_replace_cmd = "move /y $basefile.keep.o $out > nul"
+    else:
+        objcopy_replace_cmd = "mv -f $basefile.keep.o $out"
+
+    def add_objcopy_keep_sections(cmd: str) -> str:
+        return (
+            f"{cmd} && {objcopy} $objcopyflags $out $basefile.keep.o && "
+            f"{objcopy_replace_cmd}"
+        )
+
+    mwcc_keep_sections_cmd = add_objcopy_keep_sections(mwcc_cmd)
+    mwcc_keep_sections_implicit: List[Optional[Path]] = [*mwcc_implicit, *objcopy_implicit]
+    mwcc_sjis_keep_sections_cmd = add_objcopy_keep_sections(mwcc_sjis_cmd)
+    mwcc_sjis_keep_sections_implicit: List[Optional[Path]] = [*mwcc_sjis_implicit, *objcopy_implicit]
+    mwcc_extab_keep_sections_cmd = add_objcopy_keep_sections(mwcc_extab_cmd)
+    mwcc_extab_keep_sections_implicit: List[Optional[Path]] = [*mwcc_extab_implicit, *objcopy_implicit]
+    mwcc_sjis_extab_keep_sections_cmd = add_objcopy_keep_sections(mwcc_sjis_extab_cmd)
+    mwcc_sjis_extab_keep_sections_implicit: List[Optional[Path]] = [*mwcc_sjis_extab_implicit, *objcopy_implicit]
+    prodg_cc_keep_sections_cmd = add_objcopy_keep_sections(prodg_cc_cmd)
+    prodg_cc_keep_sections_implicit: List[Optional[Path]] = [*prodg_cc_implicit, *objcopy_implicit]
 
     n.comment("Link ELF file")
     if linker_family == "mw":
@@ -864,10 +891,30 @@ def generate_build_ninja(
     )
     n.newline()
 
+    n.comment("MWCC build (keep selected sections)")
+    n.rule(
+        name="mwcc_keep_sections",
+        command=mwcc_keep_sections_cmd,
+        description="MWCC $out",
+        depfile="$basefile.d",
+        deps="gcc",
+    )
+    n.newline()
+
     n.comment("MWCC build (with UTF-8 to Shift JIS wrapper)")
     n.rule(
         name="mwcc_sjis",
         command=mwcc_sjis_cmd,
+        description="MWCC $out",
+        depfile="$basefile.d",
+        deps="gcc",
+    )
+    n.newline()
+
+    n.comment("MWCC build (with UTF-8 to Shift JIS wrapper, keep selected sections)")
+    n.rule(
+        name="mwcc_sjis_keep_sections",
+        command=mwcc_sjis_keep_sections_cmd,
         description="MWCC $out",
         depfile="$basefile.d",
         deps="gcc",
@@ -884,10 +931,30 @@ def generate_build_ninja(
     )
     n.newline()
 
+    n.comment("MWCC build (with extab post-processing, keep selected sections)")
+    n.rule(
+        name="mwcc_extab_keep_sections",
+        command=mwcc_extab_keep_sections_cmd,
+        description="MWCC $out",
+        depfile="$basefile.d",
+        deps="gcc",
+    )
+    n.newline()
+
     n.comment("MWCC build (with UTF-8 to Shift JIS wrapper and extab post-processing)")
     n.rule(
         name="mwcc_sjis_extab",
         command=mwcc_sjis_extab_cmd,
+        description="MWCC $out",
+        depfile="$basefile.d",
+        deps="gcc",
+    )
+    n.newline()
+
+    n.comment("MWCC build (with UTF-8 to Shift JIS wrapper, extab post-processing, keep selected sections)")
+    n.rule(
+        name="mwcc_sjis_extab_keep_sections",
+        command=mwcc_sjis_extab_keep_sections_cmd,
         description="MWCC $out",
         depfile="$basefile.d",
         deps="gcc",
@@ -900,6 +967,15 @@ def generate_build_ninja(
         command=prodg_cc_cmd,
         description="NGCCC $out",
     )
+    n.newline()
+
+    n.comment("ProDG GCC build (keep selected sections)")
+    n.rule(
+        name="prodg_cc_keep_sections",
+        command=prodg_cc_keep_sections_cmd,
+        description="NGCCC $out",
+    )
+    n.newline()
 
     n.comment("Assemble asm")
     n.rule(
@@ -1227,6 +1303,24 @@ def generate_build_ninja(
                     variables["extab_padding"] = "".join(
                         f"{i:02x}" for i in obj.options["extab_padding"]
                     )
+            keep_sections = obj.options["keep_sections"]
+            if keep_sections:
+                variables["objcopyflags"] = " ".join(f"-j {section}" for section in keep_sections)
+                if build_rule == "prodg_cc":
+                    build_rule = "prodg_cc_keep_sections"
+                    build_implcit = prodg_cc_keep_sections_implicit
+                elif build_rule == "mwcc":
+                    build_rule = "mwcc_keep_sections"
+                    build_implcit = mwcc_keep_sections_implicit
+                elif build_rule == "mwcc_sjis":
+                    build_rule = "mwcc_sjis_keep_sections"
+                    build_implcit = mwcc_sjis_keep_sections_implicit
+                elif build_rule == "mwcc_extab":
+                    build_rule = "mwcc_extab_keep_sections"
+                    build_implcit = mwcc_extab_keep_sections_implicit
+                elif build_rule == "mwcc_sjis_extab":
+                    build_rule = "mwcc_sjis_extab_keep_sections"
+                    build_implcit = mwcc_sjis_extab_keep_sections_implicit
             n.comment(f"{obj.name}: {lib_name} (linked {obj.completed})")
             n.build(
                 outputs=obj.src_obj_path,

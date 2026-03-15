@@ -163,11 +163,11 @@ short * terraininit(int LevelNum, short **store, short *endstore, int opt, char 
         c++;
         mbuf++;
     }
-    asm("nop");
+    //asm("nop");
     for (c = 0; c < 0x101; c++) {
         TempTerr->terrgroup[c].count = 0;
     }
-    asm("nop");
+    //asm("nop");
     for (c = 0; c < 0x80; c++) {
         TempTerr->platdata[c].curmtx = NULL;
         TempTerr->platdata[c].plrgrav = 0.0f;
@@ -176,7 +176,7 @@ short * terraininit(int LevelNum, short **store, short *endstore, int opt, char 
         TempTerr->platdata[c].damp = 0.0f;
         TempTerr->platdata[c].tension = 0.0f;
     }
-    asm("nop");
+    //asm("nop");
     for (c = 0; c < 4; c++) {
         TempTerr->TrackInfo[c].ptrid = NULL;
     }
@@ -526,13 +526,13 @@ void TerrainPlatformOldUpdate(void) {
   if (CurTerr == NULL) {
       return;
   }
-    asm("nop");
+    //asm("nop");
     for (i = 0; i < 0x80; i++) { 
       if (CurTerr->platdata[i].curmtx != NULL) {
           CurTerr->platdata[i].oldmtx = *CurTerr->platdata[i].curmtx;
       }
     }
-    asm("nop");
+    //asm("nop");
     for (i = 0; i < 4; i++) {
       if (CurTerr->TrackInfo[i].ptrid != NULL) {
         CurTerr->TrackInfo[i].timer--;
@@ -2235,7 +2235,7 @@ s32 HitTerrain() {
   HitWallSpline();
   TerI->vellen = NuFsqrt((TerI->curvel).x * (TerI->curvel).x + (TerI->curvel).z * (TerI->curvel).z);
 loop1: 
-asm("nop");
+//asm("nop");
     while (0 < *CurData) {
       TerI->csx = (TerI->curpos).x - CurTerr->terr[*(CurData + 1)].Location.x;
       TerI->csy = (TerI->curpos).y - CurTerr->terr[*(CurData + 1)].Location.y;
@@ -2286,7 +2286,7 @@ asm("nop");
       }
         goto loop1; //check
     } 
-        asm("nop");
+        //asm("nop");
   for (lp = 0; lp < curSphereter; lp++) {
     pos = SphereData[lp].pos;
     DeRotatePoint(&pos);
@@ -4766,7 +4766,7 @@ short* NewScanHandelFull(struct nuvec_s* vpos, struct nuvec_s* vvel, float size,
             } else {
                 c = *(unsigned short*)WallSpl;
             }
-            asm("nop");
+            //asm("nop");
             for (b = a; b < (s32)c; b++) {
                 if (((((WallSpl->spl[b].x >= minx) && (WallSpl->spl[b + 1].x <= maxx))
                       || ((WallSpl->spl[b + 1].x >= minx && (WallSpl->spl[b].x <= maxx))))
