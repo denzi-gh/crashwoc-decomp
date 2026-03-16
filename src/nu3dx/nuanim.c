@@ -127,41 +127,31 @@ struct nuanimdata_s * NuAnimDataLoadBuff(char *file,union variptr_u *buff,union 
 //PS2 Match
 struct nuanimdata2_s* NuAnimData2FixPtrs(struct nuanimdata2_s* animdata, s32 address_offset)
 {
-    s32 i;
-    s32 j;
     s32 k;
     int totncurves;
-    struct nuanimcurve2_s *curve;
+    struct nuanimcurve2_s *curves;
 
     if (isBitCountTable == 0) {
-        for(i = 0; i < 256; i++) {
-            BitCountTable[i] = 0;
-            for(j = 0; j < 8; j++) {
-                if (((i >> j) & 1) != 0) {
-                    BitCountTable[i]++;
-                }
-            }
-        }
-        isBitCountTable = 1;
+        buildBitCountTable();
     }
 
     ASSIGN_IF_SET(animdata, (struct nuanimdata2_s *)((s32)animdata + address_offset));
 
     if (animdata != NULL) {
-        totncurves = animdata->nnodes * animdata->ncurves;
-
         ASSIGN_IF_SET(animdata->curves, ((s32)animdata->curves + address_offset));
         ASSIGN_IF_SET(animdata->curveflags, ((s32)animdata->curveflags + address_offset));
         ASSIGN_IF_SET(animdata->curvesetflags, ((s32)animdata->curvesetflags + address_offset));
 
+        totncurves = animdata->nnodes * animdata->ncurves;
+
         for (k = 0; k < totncurves; k++)
         {
             if (animdata->curveflags[k] != '\0') {
-                curve = &animdata->curves[k];
-                ASSIGN_IF_SET(curve->data.curvedata, (int)curve->data.curvedata + address_offset);
-                ASSIGN_IF_SET(curve->data.curvedata->mask, (s32)curve->data.curvedata->mask + address_offset);
-                ASSIGN_IF_SET(curve->data.curvedata->key_ixs, (s32)curve->data.curvedata->key_ixs + address_offset);
-                ASSIGN_IF_SET(curve->data.curvedata->key_array, (s32)curve->data.curvedata->key_array + address_offset);
+                curves = animdata->curves;
+                ASSIGN_IF_SET(curves[k].data.curvedata, (s32)curves[k].data.curvedata + address_offset);
+                ASSIGN_IF_SET(curves[k].data.curvedata->mask, (s32)curves[k].data.curvedata->mask + address_offset);
+                ASSIGN_IF_SET(curves[k].data.curvedata->key_ixs, (s32)curves[k].data.curvedata->key_ixs + address_offset);
+                ASSIGN_IF_SET(curves[k].data.curvedata->key_array, (s32)curves[k].data.curvedata->key_array + address_offset);
             }
         }
     }
@@ -256,15 +246,7 @@ struct nuanimdata_s* NuAnimDataRead(s32 fh)
     float time;
 
     if (isBitCountTable == 0) {
-         for(i = 0; i < 256; i++){
-            BitCountTable[i] = 0;
-            for(j = 0; j < 8; j++) {
-                if (((i >> j) & 1) != 0) {
-                    BitCountTable[i]++;
-                }
-            }
-        }
-        isBitCountTable = 1;
+        buildBitCountTable();
     }
 
     k = NuFileReadInt(fh);
@@ -386,17 +368,8 @@ void NuAnimDataDestroy(struct nuanimdata_s *animdata) {
 void NuAnimDataCalcTime(struct nuanimdata_s *animdata,float time,struct nuanimtime_s *atime)
 {
     s32 iVar1;
-    s32 dVar2;
-    s32 iVar3;
 
-    if (animdata->time <= time) {
-        if (animdata->time == 1.0f) {
-          atime->time = 1.0f;
-          atime->time_byte = 0;
-          atime->time_mask = 1;
-          atime->chunk = 0;
-          return;
-        }
+    if (time >= animdata->time) {
         atime->time = animdata->time - 0.01f;
     }
     else if (time < 1.0f) {
@@ -407,7 +380,7 @@ void NuAnimDataCalcTime(struct nuanimdata_s *animdata,float time,struct nuanimti
     }
 
     atime->chunk = floor((atime->time - 1.0) / 32.0);
-    if (animdata->nchunks <= atime->chunk) {
+    if (atime->chunk >= animdata->nchunks) {
         atime->chunk = animdata->nchunks - 1;
     }
 
@@ -416,16 +389,15 @@ void NuAnimDataCalcTime(struct nuanimdata_s *animdata,float time,struct nuanimti
     iVar1--;
 
     atime->time_byte = (u8)(iVar1 / 8);
-    atime->time_mask = (u8)((1 << (iVar1 + (iVar1 / 8) * -8 + 1)) - 1);
+    atime->time_mask = (u8)((1 << (iVar1 % 8 + 1)) - 1);
     return;
 }
 
-//PS2
 void NuAnimData2CalcTime(struct nuanimdata2_s *animdata,float time,struct nuanimtime_s *atime)
 {
     s32 iVar1;
 
-    if (animdata->endframe <= time) {
+    if (time >= animdata->endframe) {
         if (animdata->endframe == 1.0f) {
             atime->time = 1.0f;
             atime->time_mask = 1;
@@ -442,13 +414,13 @@ void NuAnimData2CalcTime(struct nuanimdata2_s *animdata,float time,struct nuanim
         atime->time = time;
     }
 
-    atime->chunk = floor((atime->time - 1.0) / 32.0);
-    if (animdata->nchunks <= atime->chunk) {
+    atime->chunk = (s32)(atime->time - 1.0f) >> 5;
+    if (atime->chunk >= animdata->nchunks) {
         atime->chunk = animdata->nchunks - 1;
     }
 
     atime->time_offset = atime->time - atime->chunk * 32;
-    iVar1 = floor(atime->time_offset);
+    iVar1 = (s32)atime->time_offset;
     iVar1--;
 
     atime->time_byte = (u8)(iVar1 / 8);
