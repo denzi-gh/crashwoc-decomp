@@ -34,8 +34,8 @@ double floor(double x)
         if (j0 < 0) {
             if (x + huge > zero) {
                 if (i0 >= 0) {
-                    i0 = 0;
                     i1 = 0;
+                    i0 = 0;
                 } else if (((i0 & 0x7fffffff) | i1) != 0) {
                     i0 = 0xbff00000;
                     i1 = 0;
@@ -67,7 +67,7 @@ double floor(double x)
                     i0 += 1;
                 else {
                     j = i1 + (1 << (52 - j0));
-                    i0 += (j < (unsigned)i1);
+                    i0 += (j < (unsigned)i1); /* got a carry */
                     i1 = j;
                 }
             }

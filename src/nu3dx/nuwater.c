@@ -129,8 +129,12 @@ static void NuDynamicWaterCalcShaderUVOffsets(s32 width, s32 height, float multi
     return;
 }
 
-//96%
-static void NuDynamicWaterInit() {
+//99.5% BLOCKER - 1 instruction regalloc diff: target has extra mr r9,r0 before attrib.alpha rlwimi.
+// Target: rlwinm r0 (colour=0) -> mr r9,r0 -> rlwimi r9 (alpha=1) -> stw r9 -> lwzx r0 (tid)
+// Ours:   rlwinm r0 (colour=0) ->            rlwimi r0 (alpha=1) -> stw r0 -> lwzx r9 (tid)
+// Functionally equivalent, pure register allocator choice in ProDG/GCC 2.95.2 -O2.
+// Attempted: reordering assignments, local ptr variable, interleaving tid load, swapping fxid/alpha_sort.
+static void NuDynamicWaterInit(void) {
     s32 i;
     struct nutex_s tex;
 
@@ -306,7 +310,7 @@ static void NuDynamicWaterCycleTextures(void) {
     dynamicWaterFlipState = !dynamicWaterFlipState;
 }
 
-//97.40%
+//NGC MATCH
 static void NuDynamicWaterExcite() {
     float random;
     float x;
@@ -337,7 +341,7 @@ static void NuDynamicWaterExcite() {
             col = (dynamicWaterTurbulenceStrength << 0x18) + (dynamicWaterTurbulenceStrength << 0x10)
                 + (dynamicWaterTurbulenceStrength << 0x8) + dynamicWaterTurbulenceStrength;
             scale = dynamicWaterTurbulenceScale * 32.0f;
-            for (i = 0.0f; i < (float)dynamicWaterTurbulenceFrequency; i += (1.0f / 128.0f)) {
+            for (i = 0.0f; i < (float)dynamicWaterTurbulenceFrequency; i += 1.0f) {
                 x = randyfloat() * 128.0f;
                 y = randyfloat() * 128.0f;
                 temp = DebMat[0]->tid;

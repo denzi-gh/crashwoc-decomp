@@ -112,7 +112,7 @@ void GS_SetLightingNone(void) {
     GXSetNumChans(1);
 }
 
-void GS_SetPointLighting(void)
+void GS_SetPointLighting(struct numtx_s *invWorld, struct nuvec_s *lightpos, struct nucolour3_s *lightcol)
 
 {
   return;

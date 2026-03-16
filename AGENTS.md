@@ -10,7 +10,7 @@ Use the repo-level AI docs that match your agent:
 - `.github/copilot-instructions.md`: repository-wide GitHub Copilot instructions
 - `.github/instructions/decomp.instructions.md`: path-specific Copilot instructions for decomp source work
 - `.github/instructions/ai-tooling.instructions.md`: path-specific Copilot instructions for maintaining AI tooling docs and helpers
-- `.github/prompts/match-unit.prompt.md`: reusable Copilot prompt for "take this file/unit until done"
+- `.github/prompts/match-unit.prompt.md`: standard Copilot prompt for "take this file/unit until done"
 
 ## Build and Verify
 
@@ -89,7 +89,6 @@ Use the repo-local helpers before manual grep when possible:
 - [`tools/ai_decompme_zip.py`](tools/ai_decompme_zip.py): inspect a decomp.me-style zip or extracted directory, resolve target functions to repo units, and surface insertion/missing-declaration hints
   - `python tools/ai_decompme_zip.py C:/Users/denis/Downloads/MoveMINETUB.zip`
   - `python tools/ai_decompme_zip.py path/to/extracted_bundle_dir`
-
 Existing helper scripts:
 
 - [`tools/triage_build.py`](tools/triage_build.py): compile target triage

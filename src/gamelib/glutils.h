@@ -4,7 +4,7 @@
 #include "../nu.h"
 #include "../nu3dx/numtl.h"
 #include "../nu3dx/nutex.h"
-#include "../nucore/numem.h"
+
 
 /*
   8008c560 000118 8008c560  4 CreateAlphaBlendTexture256_32 	Global

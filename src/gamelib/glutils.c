@@ -1,3 +1,4 @@
+#define NUMEM_H
 #include "glutils.h"
 
 

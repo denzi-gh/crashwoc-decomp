@@ -183,10 +183,433 @@ s32 LineCrossed(float xold, float zold, float xnew, float znew, float x0, float 
 s32 NuHGobjRndrMtxDwa(struct NUHGOBJ_s *hgobj, struct numtx_s *wm, int nlayers, short *layers, struct numtx_s *mtx_array, float **dwa);
 s32 NuRndrGScnObj(struct nugobj_s *gobj, struct numtx_s *wm);
 s32 NuSpecialFind(struct nugscn_s *scene, struct nuhspecial_s *special, char *name);
-void UpdateChase(struct chase_s* chase, struct obj_s* obj);
 void SetLights(struct nucolour3_s *vCOL0,struct nuvec_s *vDIR0,struct nucolour3_s *vCOL1,struct nuvec_s *vDIR1, struct nucolour3_s *vCOL2,struct nuvec_s *vDIR2,struct nuvec_s *vAMB);
 void SetLevelLights(void);
 void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtx,s32 action,float time,struct numtx_s *rotmtx);
+
+struct gdeb_s {
+    s32 i;
+    char* name;
+    u64 levbits;
+};
+
+extern struct nuvec_s v000;
+extern s32 LivesLost;
+extern s32 jonframe1;
+extern struct gdeb_s GDeb[170];
+extern struct nuvec_s chase_midpos[3];
+
+float NewShadowMaskPlat(struct nuvec_s *ppos, float size, s32 extramask);
+s32 HitCreatures(struct obj_s *obj, s32 destroy, s32 type);
+s32 WipeCreatures(struct RPos_s *rpos);
+s32 WipeCrates(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1, s32 destroy);
+s32 HitWumpa(struct obj_s *obj, s32 destroy);
+s32 WipeWumpa(struct RPos_s *rpos);
+s32 CylinderCuboidOverlapXZ(struct nuvec_s *pos, float radius, struct obj_s *cub, struct nuvec_s *cub_pos);
+s32 CylinderCylinderOverlapXZ(struct nuvec_s *p0, float r0, struct nuvec_s *p1, float r1);
+void UpdateAnimPacket(struct CharacterModel *mod, struct anim_s *anim, float dt, float xz_distance);
+void LoseMask(struct obj_s *obj);
+
+float NearestChaserDistance(struct chase_s *chase, struct obj_s *obj);
+
+void UpdateChase(struct chase_s* chase, struct obj_s* obj) {
+    struct nuvec_s oldpos;
+    struct nuvec_s pos;
+    struct obj_s c_obj;
+    struct RPos_s best_RPos;
+    struct nuvec_s delta;
+    s32 holding;
+    s32 kill;
+    s32 count;
+    s32 sfx;
+    CharacterData *cdata;
+    float d;
+    float tmul;
+    float y;
+    s32 j;
+    s32 k;
+
+    d = -1.0f;
+    holding = 0;
+
+    /* Check if i_last chase has finished */
+    if ((s8)chase->i_last != -1) {
+        if (Chase[(s8)chase->i_last].status != 3) {
+            holding = 1;
+        }
+    }
+
+    /* If obj is dead and level 0x11, skip time advance */
+    if (obj->dead != 0) {
+        if (Level == 0x11) {
+            goto after_time_advance;
+        }
+    }
+
+    if (holding != 0) goto after_time_advance;
+
+    /* Compute time step */
+    {
+        float t = 1.0f / 60.0f;
+        if (LivesLost != 0) {
+            s32 ll = LivesLost;
+            if (ll > 5) ll = 5;
+            t = t - (f32)ll * t * 0.05f;
+        }
+
+        d = NearestChaserDistance(chase, obj);
+        if (chase->time < chase->duration) {
+            if (Level == 0x11) {
+                if (d == 0.0f) goto after_time_advance;
+            }
+            if (d >= 3.0f) {
+                t = t * (d / 3.0f);
+            }
+            {
+                float newtime = chase->time + t;
+                chase->time = newtime;
+                if (newtime >= chase->duration) {
+                    chase->time = chase->duration;
+                    chase->status = 3;
+                    PauseGameAudio(0);
+                    GameSfx(0x3b, NULL);
+                    JudderGameCamera(GameCam, 0.5f, NULL);
+                }
+            }
+        }
+    }
+
+after_time_advance:
+    /* Set chase_midpos for this chase */
+    chase_midpos[(s8)chase->i] = v000;
+    d = chase->time / chase->duration;
+    tmul = 0.5f;
+    best_RPos.iRAIL = -1;
+    count = 0;
+    kill = 0;
+
+    /* Per-chaser loop */
+    for (j = 0; j <= 5; j++) {
+        if (chase->ok[j] == 0) goto next_chaser;
+        if (chase->status != 2) goto after_chaser_update;
+
+        /* Save old position and interpolate along spline */
+        oldpos = chase->pos[j];
+        PointAlongSpline(chase->spl_CHASER[j], d, &pos, &chase->yrot[j], NULL);
+        chase->pos[j].x = pos.x;
+        y = NewShadowMaskPlat(&pos, 0.0f, -1);
+        chase->pos[j].z = pos.z;
+
+        if (y != 2000000.0f) {
+            FindAnglesZX(&ShadNorm);
+            if (Level == 0x8) {
+                pos.y = y;
+            }
+        } else {
+            temp_xrot = 0;
+            temp_zrot = 0;
+        }
+
+        /* Level 8: interpolate Y */
+        if (Level == 0x8) {
+            float curY = chase->pos[j].y;
+            if (curY < pos.y) {
+                pos.y = (pos.y - curY) * 0.1f + curY;
+            }
+        } else {
+            pos.y = pos.y; /* reload from stack */
+        }
+        chase->pos[j].y = pos.y;
+
+        /* Rotate xrot/zrot unless level 0xe */
+        if (Level != 0x0E) {
+            chase->xrot[j] = SeekRot(chase->xrot[j], temp_xrot, 4);
+            chase->zrot[j] = SeekRot(chase->zrot[j], temp_zrot, 4);
+        } else {
+            chase->zrot[j] = 0;
+            chase->xrot[j] = 0;
+        }
+
+        /* Update midpos and ALONG */
+        {
+            struct nuvec_s *midp = &chase_midpos[(s8)chase->i];
+            count++;
+            NuVecAdd(midp, midp, &chase->pos[j]);
+            GetALONG(&chase->pos[j], &chase->RPos[j], (s8)chase->RPos[j].iRAIL, chase->RPos[j].iALONG, 2);
+        }
+
+        /* Track furthest behind chaser */
+        if ((s8)best_RPos.iRAIL != -1) {
+            if (FurtherBEHIND((s8)chase->RPos[j].iRAIL, chase->RPos[j].iALONG, chase->RPos[j].fALONG,
+                              (s8)best_RPos.iRAIL, best_RPos.iALONG, best_RPos.fALONG) == 0) {
+                goto after_best_update;
+            }
+        }
+        best_RPos.iRAIL = chase->RPos[j].iRAIL;
+        best_RPos.iALONG = chase->RPos[j].iALONG;
+        best_RPos.fALONG = chase->RPos[j].fALONG;
+after_best_update:
+
+        /* Check events */
+        for (k = 0; k < 24; k++) {
+            struct nugspline_s *espl = chase->event[j][k].spl;
+            if (espl == NULL) continue;
+
+            {
+                struct nuvec_s *p0 = (struct nuvec_s *)espl->pts;
+                struct nuvec_s *p1 = (struct nuvec_s *)(espl->pts + (s32)espl->ptsize);
+
+                if (LineCrossed(oldpos.x, oldpos.z,
+                                chase->pos[j].x, chase->pos[j].z,
+                                p0->x, p0->z, p1->x, p1->z) != 2) continue;
+            }
+
+            /* Trigger event objects */
+            {
+                s32 started = 0;
+                s32 count2 = 24;
+                struct nuhspecial_s *eobj = &chase->event[j][k].obj[0];
+                do {
+                    if (StartHGobjAnim(eobj) != 0) {
+                        started++;
+                    }
+                    eobj++;
+                    count2--;
+                } while (count2 != 0);
+
+                if (started == 0) continue;
+            }
+
+            /* Play SFX for event */
+            sfx = -1;
+            if (Level == 0x11) {
+                sfx = 0xB4;
+                if (qrand() <= 0x7FFF) {
+                    sfx = 0xB3;
+                }
+            } else if (Level == 0x8) {
+                if (j == 0) goto set_event_sfx;
+            } else {
+            set_event_sfx:
+                sfx = 0x3B;
+            }
+
+            if (sfx != -1) {
+                GameSfx(sfx, &chase->pos[j]);
+            }
+            JudderGameCamera(GameCam, 0.3f, NULL);
+        }
+
+        /* Check misc spline triggers */
+        for (k = 0; k <= 3; k++) {
+            struct nugspline_s *mspl = chase->spl_MISC[j][k];
+            if (mspl == NULL) continue;
+            {
+                struct nuvec_s *p0 = (struct nuvec_s *)mspl->pts;
+                struct nuvec_s *p1 = (struct nuvec_s *)(mspl->pts + (s32)mspl->ptsize);
+                if (LineCrossed(oldpos.x, oldpos.z,
+                                chase->pos[j].x, chase->pos[j].z,
+                                p0->x, p0->z, p1->x, p1->z) == 2) {
+                    chase->misc_phase[j] = (u8)(k + 1);
+                }
+            }
+        }
+
+        /* Hit/Wipe and collision for characters */
+        if (chase->character[j] != -1 && chase->character[j] <= 0x3E6) {
+            cdata = &CData[chase->character[j]];
+
+            c_obj.pos = chase->pos[j];
+            c_obj.min = cdata->min;
+            c_obj.max = cdata->max;
+            c_obj.bot = cdata->min.y;
+            c_obj.top = cdata->max.y;
+            c_obj.SCALE = cdata->scale * chase->scale[j];
+            c_obj.RADIUS = cdata->radius * c_obj.SCALE;
+            c_obj.flags = 0;
+            c_obj.pLOCATOR = NULL;
+            c_obj.attack = 0x200;
+
+            HitCreatures(&c_obj, 1, 3);
+            HitCrates(&c_obj, 2);
+            HitWumpa(&c_obj, 0);
+
+            if (USELIGHTS != 0 && LIGHTCHASECHARACTERS != 0) {
+                pos.x = c_obj.pos.x;
+                pos.y = (c_obj.bot + c_obj.top) * c_obj.SCALE * tmul + c_obj.pos.y;
+                pos.z = c_obj.pos.z;
+                GetLights(&pos, &chase->lights[j], 1);
+            }
+        } else {
+            /* Non-character chaser: wipe instead */
+            WipeCreatures(&chase->RPos[j]);
+            WipeCrates((s8)chase->iRAIL, chase->iALONG, chase->fALONG,
+                       (s8)chase->RPos[j].iRAIL, chase->RPos[j].iALONG, chase->RPos[j].fALONG, 2);
+            WipeWumpa(&chase->RPos[j]);
+        }
+
+        /* Level 8: particle debris */
+        if (Level == 0x8) {
+            if ((jonframe1 & 3) == 0) {
+                AddVariableShotDebrisEffect(GDeb[131].i, &chase->pos[j], 1, 0, 0);
+            }
+        }
+
+    after_chaser_update:
+        /* Player collision with character chasers */
+        if (obj->dead != 0) goto next_chaser;
+        if (holding != 0) goto next_chaser;
+        if (kill != 0) goto next_chaser;
+        if (chase->character[j] == -1) goto next_chaser;
+        if (chase->character[j] > 0x3E6) goto next_chaser;
+
+        {
+            cdata = &CData[chase->character[j]];
+
+            c_obj.pos = chase->pos[j];
+            c_obj.min = cdata->min;
+            c_obj.max = cdata->max;
+            c_obj.bot = cdata->min.y;
+            c_obj.top = cdata->max.y;
+            c_obj.SCALE = cdata->scale * chase->scale[j];
+            {
+                float absrad = NuFabs(cdata->radius);
+                c_obj.attack = 0x200;
+                c_obj.hdg = chase->yrot[j];
+                c_obj.RADIUS = absrad * c_obj.SCALE;
+            }
+
+            if (d >= 0.0f) {
+                if ((chase->cuboid & (1 << j)) != 0) {
+                    if (CylinderCuboidOverlapXZ(&obj->pos, obj->RADIUS, &c_obj, &c_obj.pos) != 0) {
+                        goto set_kill;
+                    }
+                    goto next_chaser;
+                } else {
+                    if (CylinderCylinderOverlapXZ(&obj->pos, obj->RADIUS, &c_obj.pos, c_obj.RADIUS) == 0) {
+                        goto next_chaser;
+                    }
+                }
+            set_kill:
+                kill = 1;
+            }
+        }
+
+    next_chaser:
+        /* Update anim if character */
+        if (chase->character[j] == -1) continue;
+        {
+            struct CharacterModel *model = &CModel[CRemap[(s32)chase->character[j]]];
+            chase->anim[j].oldaction = chase->anim[j].newaction;
+            k = chase->character[j];
+
+            if (k == 0x42) {
+                if (chase->status == 3) {
+                    k = 0x33;
+                    if (chase->i == 2) goto set_action_75;
+                } else {
+                    if (obj->dead != 0) goto set_action_75;
+                    k = 0x3A;
+                    if (chase->misc_phase[j] == 1) {
+                        k = 0x40;
+                    }
+                }
+            } else {
+                k = chase->action[j];
+            }
+            goto do_update_anim;
+
+        set_action_75:
+            k = 0x75;
+
+        do_update_anim:
+            chase->anim[j].newaction = k;
+            UpdateAnimPacket(model, &chase->anim[j], 0.5f, 0.0f);
+        }
+    }
+
+    /* Normalize chase_midpos */
+    if (count > 1) {
+        float fc = (float)count;
+        chase_midpos[(s8)chase->i].x /= fc;
+        chase_midpos[(s8)chase->i].y /= fc;
+        chase_midpos[(s8)chase->i].z /= fc;
+    }
+
+    /* SFX and rumble while active */
+    if (chase->status == 2 && count != 0) {
+        sfx = -1;
+        switch (Level) {
+        case 0x05:
+            sfx = 0xB3;
+            break;
+        case 0x08:
+            {
+                sfx = 0xB6;
+                NuVecSub(&delta, &obj->pos, &chase_midpos[(s8)chase->i]);
+                delta.x *= 0.9f;
+                delta.y *= 0.9f;
+                delta.z *= 0.9f;
+                NuVecAdd(&chase_midpos[(s8)chase->i], &chase_midpos[(s8)chase->i], &delta);
+            }
+            break;
+        case 0x1F:
+            sfx = 0xB6;
+            break;
+        case 0x0E:
+            sfx = 0xBD;
+            break;
+        }
+
+        if (sfx != -1) {
+            GameSfxLoop(sfx, &chase_midpos[(s8)chase->i]);
+        }
+
+        if (qrand() <= 0x7FF) {
+            s32 rv = qrand();
+            if (rv < 0) rv += 0xFF;
+            rv >>= 8;
+            NewRumble(&player->rumble, rv);
+            JudderGameCamera(GameCam, (float)rv / 255.0f * 0.3f, NULL);
+        }
+    }
+
+    /* Kill player if hit */
+    if (obj->dead != 0) goto done;
+    if (holding != 0) goto done;
+    if (kill != 0) goto do_kill;
+    /* Check if player is ahead of closest chaser */
+    if ((s8)best_RPos.iRAIL == -1) goto done;
+    if (best_cRPos == NULL) goto done;
+    if (FurtherALONG((s8)best_RPos.iRAIL, best_RPos.iALONG, best_RPos.fALONG,
+                     (s8)best_cRPos->iRAIL, best_cRPos->iALONG, best_cRPos->fALONG) == 0) {
+        goto done;
+    }
+    kill = 1;
+
+do_kill:
+    {
+        s32 die = GetDieAnim(obj, -1);
+        if (KillGameObject(obj, die) != 0) {
+            if (Level == 0x11) {
+                GameSfx(0xB7, NULL);
+            }
+        }
+
+        if (obj->mask != NULL) {
+            if (obj->mask->active != 0) {
+                if ((LDATA->flags & 0xE00) == 0) {
+                    LoseMask(obj);
+                    obj->mask->active = 0;
+                }
+            }
+        }
+        obj->invincible = 0;
+    }
+
+done:
+    ;
+}
 
 //NGC MATCH
 struct nugspline_s * NuSplineFindPartial(struct nugscn_s *scene,char *name,char *txt) {

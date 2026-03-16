@@ -2,6 +2,17 @@
 #include <stddef.h>
 #include <string.h>
 
+s32 qrand(void);
+f32 frand(void);
+s32 LookupDebrisEffect(char *name);
+void JudderGameCamera(struct cammtx_s *cam, float time, struct nuvec_s *pos);
+void AddKaboom(s32 type, struct nuvec_s *pos, float radius);
+float NewShadowMask(struct nuvec_s *ppos, float size, int extramask);
+s32 ShadowInfo(void);
+s32 EShadowInfo(void);
+void NuRndrAddFootPrint(u16 hdg, f32 sizex, f32 sizez, s32 depth, struct nuvec_s *pos, struct nuvec_s *norm, s32 gindex, s32 color);
+void AddVariableShotDebrisEffectMtx2(s32 type, struct nuvec_s *pos, s32 numdeb, struct numtx_s *m1, struct numtx_s *m2);
+
 typedef struct {
     char ai_type;
     s8 status;
@@ -151,7 +162,7 @@ void AddMechanicalDebris(struct nuvec_s* pos, s32 vehicle) {
     }
 }
 
-//94.88% NGC
+//98.59% NGC - remaining diff: register allocation (action param spilled to stack instead of r14)
 void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 action,float time,struct obj_s *obj) {
   struct adeb_s *adeb;
   u16 xrot;
@@ -163,7 +174,7 @@ void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 a
   s32 i;
   s32 j;
   s32 count;
-  s32 list[16]; // ??
+  s32 list[16];
   s32 sfx;
   struct creature_s *c;
   struct numtx_s* mtx[16];
@@ -194,19 +205,16 @@ void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 a
           //pLoc = model->pLOCATOR;
           //ppnVar13 = mtx;
           //pnVar7 = mtxLOCATOR;
-          for(j = 0; j < 16; j++) { //pnVar15 & 0x3fU
+          for(j = 0; j < 16; j++) {
             if ((((adeb->locators >> j) & 1) != 0) && (model->pLOCATOR[j] != NULL)) {
               list[count] = j;
-              v[j] = *(struct nuvec_s *)(mtxLOCATOR);
+              v[count] = *(struct nuvec_s *)&mtxLOCATOR[j]._30;
+              mtx[count] = &mtxLOCATOR[j];
               if ((count == 0) || ((adeb->flags & 0x4000) != 0)) {
-                NuVecAdd(&pos,&pos,(struct nuvec_s *)(mtxLOCATOR));
+                NuVecAdd(&pos,&pos,(struct nuvec_s *)&mtxLOCATOR[j]._30);
               }
-              //pnVar16++;
               count++;
             }
-            //p = &p[5].y;
-            //pnVar7 = pnVar7 + 1;
-            //pLoc = pLoc + 1;
           }
           if (count > 0) {
             NuVecScale((1.0f / (float)count),&pos,&pos);
@@ -229,15 +237,13 @@ void AddAnimDebris(struct CharacterModel *model,struct numtx_s *mtxLOCATOR,s32 a
               if (obj == NULL) goto LAB_8003d550;
             if ((obj->layer_type != -1) && (pos.y < obj->layer_shadow)) continue; //goto LAB_8003dd9c;
           }
-          if ((obj == NULL) || (((((((obj->flags & 4) != 0 && (obj->dead == 1)) ||
-                   (((adeb->flags & 0x100) != 0 && (obj->xz_distance < adeb->min)))) ||
-                  (((adeb->flags & 0x200) != 0 && (obj->xz_distance > adeb->max)))) ||
-                 (((adeb->flags & 0x40000) != 0 && (obj->xyz_distance < adeb->min)))) ||
-                ((((adeb->flags & 0x80000) != 0 && (obj->xyz_distance > adeb->max)) ||
-                 (((obj->flags & 1) != 0 && (((((GemPath == 1 || (GemPath == 3)) || (Death == 1)) ||
-                    ((Death == 3 || (Bonus == 1)))) || (Bonus != 3)))))))))) {
-                //continue;//goto LAB_8003d550;
-           // } else {
+          if (obj == NULL ||
+              !(((obj->flags & 4) != 0 && obj->dead == 1) ||
+                ((adeb->flags & 0x100) != 0 && obj->xz_distance < adeb->min) ||
+                ((adeb->flags & 0x200) != 0 && obj->xz_distance > adeb->max) ||
+                ((adeb->flags & 0x40000) != 0 && obj->xyz_distance < adeb->min) ||
+                ((adeb->flags & 0x80000) != 0 && obj->xyz_distance > adeb->max) ||
+                ((obj->flags & 1) != 0 && (GemPath == 1 || GemPath == 3 || Death == 1 || Death == 3 || Bonus == 1 || Bonus == 3)))) {
 LAB_8003d550:
                if ((count != 0) && (adeb->gdeb < 0xaa)) {
                   if ((adeb->flags & 1) != 0) {
@@ -370,7 +376,7 @@ LAB_8003d850:
             }
             //0x8003D448
             DoSound = 1;
-            if (((adeb->flags & 0x400000) != 0) && (adeb->max > frand())) {
+            if (((adeb->flags & 0x400000) != 0) && (frand() > adeb->max)) {
               DoSound = 0;
             }
             if (DoSound) {
@@ -397,14 +403,14 @@ LAB_8003d850:
                 c = (struct creature_s*)obj->parent;
               }
               //cVar10 = adeb->type;
-              AddProjectile(&pos,((adeb->target != -1) && (c != NULL)) && (c->i_aitab != -1) ? &AITab[sfx].pos[adeb->target] : NULL, NULL, (s32)adeb->type,(obj != NULL) ? obj->hdg : (u16)qrand(),obj);
+              AddProjectile(&pos,((adeb->target != -1) && (c != NULL)) && (c->i_aitab != -1) ? &AITab[c->i_aitab].pos[adeb->target] : NULL, NULL, (s32)adeb->type,(obj != NULL) ? obj->hdg : (u16)qrand(),obj);
             }
           }
           if (((adeb->flags & 0x1000) != 0) && ((obj == NULL || (obj->dead == 0)))) {
             p = NULL;
             if (adeb->target != -1) {
               if (obj != NULL) {
-                  p = &AITab[c->i_aitab].pos[adeb->target];
+                  p = &AITab[((struct creature_s*)obj->parent)->i_aitab].pos[adeb->target];
               }
             }
             else if (count != 0) {

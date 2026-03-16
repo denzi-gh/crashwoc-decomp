@@ -1786,29 +1786,34 @@ void DrawCrateExplosions(void) {
     if (BoxExpList[lp].time != 0) {
       BoxFace = BoxExpList[lp].BoxPol;
       for (lpo = 0; lpo < 5; lpo++) {
-        if (BoxExpList[lp].type == 0x10) {
+        switch (BoxExpList[lp].type) {
+        case 0x10:
           if (lpo == 4) {
             col = 0x10C020;
           }
           else {
             col = 0x20FF20;
           }
-        }
-        else if (BoxExpList[lp].type == 9) {
+          break;
+        case 9:
           if (lpo == 4) {
             col = 0xFF0000;
           }
           else {
             col = 0x800000;
           }
-        }
-        else {
+          break;
+        case 10:
+        case 11:
+        case 12:
+        default:
           if (lpo == 4) {
             col = 0x808080;
           }
           else {
             col = 0x606060;
           }
+          break;
         }
         uvs_regular = uvs;
         uvs_mat2 = uvs;
@@ -1824,7 +1829,7 @@ void DrawCrateExplosions(void) {
                 if (a > 0xff) {
                   a = 0xff;
                 }
-                r = (col2 & 0xff) << 1;
+                r = (col2 & 0xe0) << 1;
                 if (r > 0xff) {
                   r = 0xff;
                 }
@@ -1847,7 +1852,7 @@ void DrawCrateExplosions(void) {
                 if (a > 0xff) {
                   a = 0xff;
                 }
-                r = (col2 & 0xff) << 1;
+                r = (col2 & 0xe0) << 1;
                 if (r > 0xff) {
                   r = 0xff;
                 }
@@ -1873,7 +1878,7 @@ void DrawCrateExplosions(void) {
                 if (a > 0xff) {
                   a = 0xff;
                 }
-                r = (col2 & 0xff) << 1;
+                r = (col2 & 0xe0) << 1;
                 if (r > 0xff) {
                   r = 0xff;
                 }
@@ -1896,7 +1901,7 @@ void DrawCrateExplosions(void) {
                 if (a > 0xff) {
                   a = 0xff;
                 }
-                r = (col2 & 0xff) << 1;
+                r = (col2 & 0xe0) << 1;
                 if (r > 0xff) {
                   r = 0xff;
                 }

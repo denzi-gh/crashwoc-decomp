@@ -58,7 +58,6 @@ void NuWindDraw(struct nugscn_s *scn) {
     struct nuwindgrp_s *grp;
     struct numtx_s *mtx;
     struct nugobj_s *gobj;
-    char pad[25];
     
     grp = &NuWindGroup[0];
     for (lp = 0; lp < NuWindGCount; lp++) {

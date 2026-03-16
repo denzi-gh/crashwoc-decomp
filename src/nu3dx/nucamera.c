@@ -194,8 +194,8 @@ s32 NuCameraClipTestExtents(struct nuvec_s* min, struct nuvec_s* max, const stru
     struct nuvec_s dest[8];
     s32 k;
     s32 iVar2;
-    s32 iVar4;
     s32 iVar6;
+    s32 iVar4;
     s32 j;
     char oc[8];
 

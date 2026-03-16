@@ -3,6 +3,10 @@
 #include "edbits.h"
 #include "edfile.h"
 
+extern void NuWindInit(void);
+extern s32* NuWindCreate(struct nuinstance_s* instance, struct nuvec4_s* pos, short count,
+                          float wind, float height, s32 collide);
+
 struct edgra_clump_s {
   s32 id;
   s32 num;
@@ -44,7 +48,7 @@ void edgraInitAllClumps(void) {
     if (GrassClumps[i].num != 0) {
       for(j = 0; j < GrassClumps[i].num; j++) {
           a = edqrand();
-          d = (float)edqrand() * (GrassClumps[i].radius * 0.000015258789f);
+          d = (float)(s32)edqrand() * (GrassClumps[i].radius * 0.000015258789f);
           pos[j].x = NuTrigTable[a & 0xffff] * d;
           pos[j].y = 0.0f;
           pos[j].z = NuTrigTable[(a + 0x4000) & 0x3fffcU / 4] * d;

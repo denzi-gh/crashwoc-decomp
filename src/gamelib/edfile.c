@@ -7,7 +7,7 @@ s32 EdFileOpen(char *filename, s32 mode)
 {
 	if (edfile_handle == -1)
 	{
-		edfile_handle = NuFileOpen(filename, mode);
+		edfile_handle = NuFileOpen(filename, 0);
 		if (edfile_handle != -1)
 		{
 			return 1;
@@ -18,12 +18,15 @@ s32 EdFileOpen(char *filename, s32 mode)
 
 s32 EdFileClose(void)
 {
-	s32 fileOpened = edfile_handle != -1;
-	if (fileOpened) {
+	s32 ret;
+	if (edfile_handle != -1) {
 		NuFileClose(edfile_handle);
 		edfile_handle = -1;
+		ret = 1;
+	} else {
+		ret = 0;
 	}
-	return fileOpened;
+	return ret;
 }
 
 void EdFileRead(void *dest, size_t size)
@@ -33,22 +36,28 @@ void EdFileRead(void *dest, size_t size)
 
 f32 EdFileReadFloat(void)
 {
-	return NuFileReadFloat(edfile_handle); // Makes more sense than not calling and doing the hard way.
+	f32 tmp = 0.0f;
+	EdFileRead(&tmp, sizeof(f32));
+	return tmp;
 }
 
 s32 EdFileReadInt(void)
 {
-	return NuFileReadInt(edfile_handle); // Makes more sense than not calling and doing the hard way.
+	s32 tmp = 0;
+	EdFileRead(&tmp, sizeof(s32));
+	return tmp;
 }
 
 s16 EdFileReadShort(void)
 {
-	return NuFileReadShort(edfile_handle); // Makes more sense than not calling and doing the hard way.
+	s16 tmp = 0;
+	EdFileRead(&tmp, sizeof(s16));
+	return tmp;
 }
 
 char EdFileReadChar(void)
 {
 	char tmp = 0;
-	NuFileRead(edfile_handle, &tmp, 1);
+	EdFileRead(&tmp, 1);
 	return tmp;
 }
