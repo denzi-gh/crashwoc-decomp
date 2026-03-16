@@ -85,14 +85,12 @@ void edbitsSoundPlay(struct nuvec_s *pos, s32 sid)		//CHECK
       SFXTab = edSfxGlobalTab;
     }
     else {
-      tsid = (sid - (s32)edSfxGlobalCount) * 0x30;
+      tsid = (sid - edSfxGlobalCount) * 0x30;
       SFXTab = edSfxLevelTab;
     }
-    {
-      struct pSFX *entry = (struct pSFX *)((char *)SFXTab + tsid);
-      gamesfx_pitch = entry->pitch;
-      gamesfx_effect_volume = entry->volume;
-    }
+    SFXTab = (struct pSFX *)((char *)SFXTab + tsid);
+    gamesfx_pitch = SFXTab->pitch;
+    gamesfx_effect_volume = SFXTab->volume;
     gamesfx_edbits = 1;
     GameSfx(sid, pos);
     debris_sfx = 0;

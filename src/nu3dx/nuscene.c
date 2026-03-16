@@ -12,6 +12,8 @@
 
 //NGC MATCH
 void ReadNuIFFTextureSet(s32 handle,struct nuscene_s *scene) {
+  void* malloc_x();
+  void free_x();
   s32 count;
   s32 i;
   s32 pal_size;
@@ -389,6 +391,7 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
     s32 i;
     s32 j;
     s32 nbytes;
+    s32 next_ix;
 
     nblends = NuFileReadInt(fh);
     if (nblends == 0) {
@@ -412,11 +415,11 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
     geom->blendgeom->offsets = (struct nuvec_s *)NuMemAlloc(numblends);
     NuFileRead(fh, geom->blendgeom->offsets, numblends);
 
-    j = 0;
+    next_ix = 0;
     for (i = 0; i < nblends; i++) {
         if (NuFileReadChar(fh) != '\0') {
-            geom->blendgeom->blend_offsets[i] = &geom->blendgeom->offsets[j];
-            j += geom->vtxcnt;
+            geom->blendgeom->blend_offsets[i] = &geom->blendgeom->offsets[next_ix];
+            next_ix += geom->vtxcnt;
         }
     }
 
@@ -428,13 +431,13 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
         for (i = 0; i < geom->vtxcnt; i++) {
             for (j = 0; j < nblends; j++) {
                 if (geom->blendgeom->blend_offsets[j] != NULL) {
-                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].x) < 0.000001f) {
+                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].x) < 0.00001f) {
                         geom->blendgeom->blend_offsets[j][i].x = 0.0f;
                     }
-                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].y) < 0.000001f) {
+                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].y) < 0.00001f) {
                         geom->blendgeom->blend_offsets[j][i].y = 0.0f;
                     }
-                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].z) < 0.000001f) {
+                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].z) < 0.00001f) {
                         geom->blendgeom->blend_offsets[j][i].z = 0.0f;
                     }
                 }
@@ -485,6 +488,8 @@ s32 ReadNuIFFInstSet(s32 fh,struct nuinstance_s **instances,struct nuinstanim_s 
 
 //NGC MATCH
 static void ReadNuIFFSpecialObjects(s32 fh,struct nugscn_s *gsc) {
+  void* malloc_x();
+  void free_x();
   struct nufspecial_s *file_specials;
   s32 i;
 
@@ -505,6 +510,8 @@ static void ReadNuIFFSpecialObjects(s32 fh,struct nugscn_s *gsc) {
 
 //NGC MATCH
 static void NuSceneCalcCulling(struct nugscn_s *scene) {
+    void* malloc_x();
+    void free_x();
     s32 num_gobjs;
     s32 num_instances;
     s32 objid;

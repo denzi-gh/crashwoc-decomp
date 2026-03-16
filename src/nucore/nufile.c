@@ -1,9 +1,15 @@
 
 #define FIRST 0
+#define NUMEM_H
 
 #include "nufile.h"
 #include "nuerror.h"
 #include <string.h>
+
+// Re-declare needed functions from numem.h
+void* NuMemAlloc(s32 size);
+void NuMemFree(void* data);
+void* malloc_x();  // K&R style: generates crclr before call
 
 unsigned char* filebuffer = NULL;
 s32 blkcnt = 1;
@@ -95,8 +101,8 @@ s32 NuFileOpen(char* file, enum nufilemode_e mode) {
                 if (fp == NULL) {
                     return 0;
                 }
-                bytesleft = (s32)m;
                 *p = fp;
+                bytesleft = (s32)m;
                 return s + 1;
             }
             p++;

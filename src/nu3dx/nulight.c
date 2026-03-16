@@ -355,15 +355,17 @@ void NuLgtArcLaserDraw(s32 paused)
   float lp;
   float step;
   float len;
+  float next;
+  float arcscale;
   float rx;
   float ry;
   float u0_2;
   u8 rnd;
 
-  uv[1].y = NuLgtArcV0;
-  uv[1].w = NuLgtArcV1;
   uv[1].x = NuLgtArcV0;
   uv[1].z = NuLgtArcV1;
+  uv[1].y = NuLgtArcV0;
+  uv[1].w = NuLgtArcV1;
   if (paused != 0) {
     NuLgtArcLaserCnt = NuLgtArcLaserOldCnt;
   }
@@ -385,17 +387,18 @@ void NuLgtArcLaserDraw(s32 paused)
       pnts[5].z = NuLgtArcLaserData[id].target.z;
       pnts[5].w = 1.0f;
       NuVec4MtxTransformVU0(&pnts[5], &pnts[5], vpcsmtx);
-      if (0.5f <= pnts[4].w) {
-        pnts[6].x = NuLgtArcLaserData[id].start.x;
-        pnts[6].y = NuLgtArcLaserData[id].start.y;
-        pnts[6].z = NuLgtArcLaserData[id].start.z;
-        pnts[6].w = 1.0f;
-      } else if (0.5f > pnts[5].w) {
-        continue;
-      } else {
+      if (!(0.5f <= pnts[4].w)) {
+        if (!(0.5f <= pnts[5].w)) {
+          continue;
+        }
         pnts[6].x = NuLgtArcLaserData[id].target.x + (((NuLgtArcLaserData[id].start.x - NuLgtArcLaserData[id].target.x) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
         pnts[6].y = NuLgtArcLaserData[id].target.y + (((NuLgtArcLaserData[id].start.y - NuLgtArcLaserData[id].target.y) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
         pnts[6].z = NuLgtArcLaserData[id].target.z + (((NuLgtArcLaserData[id].start.z - NuLgtArcLaserData[id].target.z) * (pnts[5].w - 0.5f)) / (pnts[5].w - pnts[4].w));
+        pnts[6].w = 1.0f;
+      } else {
+        pnts[6].x = NuLgtArcLaserData[id].start.x;
+        pnts[6].y = NuLgtArcLaserData[id].start.y;
+        pnts[6].z = NuLgtArcLaserData[id].start.z;
         pnts[6].w = 1.0f;
       }
       sqrt(POW2(pnts[6].x - NuLgtArcLaserData[id].target.x) + POW2(pnts[6].y - NuLgtArcLaserData[id].target.y) + POW2(pnts[6].z - NuLgtArcLaserData[id].target.z));
@@ -427,8 +430,6 @@ void NuLgtArcLaserDraw(s32 paused)
       pnts[7].w = pnts[7].w - pnts[6].w;
       len = sqrt(POW2(pnts[7].x) + POW2(pnts[7].y) + POW2(pnts[7].z));
       if (0.0f < len) {
-        float next;
-        float arcscale;
 
         pnts[10].x = NuLgtArcLaserData[id].lasdir.x;
         pnts[10].y = NuLgtArcLaserData[id].lasdir.y;
@@ -445,10 +446,10 @@ void NuLgtArcLaserDraw(s32 paused)
         if (step > 1.0f) {
           step = 1.0f;
         }
-        uv[0].x = NuLgtArcU0;
-        uv[0].y = NuLgtArcU1;
         uv[0].z = NuLgtArcU0;
         uv[0].w = NuLgtArcU1;
+        uv[0].x = NuLgtArcU0;
+        uv[0].y = NuLgtArcU1;
         pnts[4].x = pnts[6].x;
         pnts[4].y = pnts[6].y;
         pnts[4].z = pnts[6].z;
@@ -471,8 +472,8 @@ void NuLgtArcLaserDraw(s32 paused)
             pnts[5].y = pnts[6].y + pnts[7].y;
             pnts[5].z = pnts[6].z + pnts[7].z;
             u0_2 = NuLgtArcU1 + (((NuLgtArcU0 - NuLgtArcU1) * (1.0f - lp)) / step);
-            uv[0].x = u0_2;
             uv[0].z = u0_2;
+            uv[0].x = u0_2;
           } else {
             pnts[5].x = (pnts[10].x * NuTrigTable[(u16)next]) + ((pnts[7].x * next) + pnts[6].x);
             pnts[5].y = (pnts[10].y * NuTrigTable[(u16)next]) + ((pnts[7].y * next) + pnts[6].y);
@@ -498,10 +499,10 @@ void NuLgtArcLaserDraw(s32 paused)
           pnts[2].y = (pnts[5].y + norm2.y) + ry;
           pnts[0].z = pnts[5].z;
           pnts[2].z = pnts[5].z;
-          if (((-50.0f <= pnts[0].x) || (50.0f <= pnts[1].x)) &&
-              ((pnts[0].x <= 700.0f) || (pnts[1].x <= 700.0f)) &&
-              ((-50.0f <= pnts[0].y) || (-50.0f <= pnts[1].y)) &&
-              ((pnts[0].y <= 530.0f) || (pnts[1].y <= 530.0f))) {
+          if ((!(pnts[0].x < -50.0f) || !(pnts[1].x < 50.0f)) &&
+              (!(pnts[0].x > 700.0f) || !(pnts[1].x > 700.0f)) &&
+              (!(pnts[0].y < -50.0f) || !(pnts[1].y < -50.0f)) &&
+              (!(pnts[0].y > 530.0f) || !(pnts[1].y > 530.0f))) {
             dxpnts[0].rhw = dxpnts[1].rhw = dxpnts[2].rhw = 0.1f;
             dxpnts[0].diffuse = dxpnts[1].diffuse = dxpnts[2].diffuse = NuLgtArcLaserData[id].col;
             dxpnts[0].pnt.x = pnts[0].x;

@@ -110,9 +110,9 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         loopAddr = sound->loopAddr;
         old = OSDisableInterrupts();
         axvpb->pb.addr.loopAddressHi = (u16)(loopAddr >> 16);
-        axvpb->pb.addr.currentAddressHi = (u16)(currentAddr >> 16);
-        axvpb->pb.addr.loopAddressLo = (u16)loopAddr;
         axvpb->pb.addr.endAddressHi = (u16)(endAddr >> 16);
+        axvpb->pb.addr.loopAddressLo = (u16)loopAddr;
+        axvpb->pb.addr.currentAddressHi = (u16)(currentAddr >> 16);
         axvpb->pb.addr.endAddressLo = (u16)endAddr;
         axvpb->pb.addr.currentAddressLo = (u16)currentAddr;
         axvpb->pb.addr.loopFlag = type;
@@ -138,15 +138,15 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.adpcm.pred_scale = *++p;
         axvpb->pb.adpcm.yn1 = *++p;
         axvpb->pb.adpcm.yn2 = *++p;
+        axvpb->pb.src.ratioHi = (u16)(srcBits >> 16);
         axvpb->pb.src.ratioLo = (u16)srcBits;
-        axvpb->pb.src.last_samples[3] = type;
         axvpb->pb.src.currentAddressFrac = type;
         axvpb->pb.src.last_samples[0] = type;
         axvpb->pb.src.last_samples[1] = type;
         axvpb->pb.src.last_samples[2] = type;
+        axvpb->pb.src.last_samples[3] = type;
         sync |= 0x00061000;
         axvpb->sync = sync;
-        axvpb->pb.src.ratioHi = (u16)(srcBits >> 16);
         OSRestoreInterrupts(old);
         break;
     }
@@ -158,10 +158,10 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         loopAddr = sound->loopAddr;
         old = OSDisableInterrupts();
         axvpb->pb.addr.loopAddressHi = (u16)(loopAddr >> 16);
-        axvpb->pb.addr.currentAddressHi = (u16)(currentAddr >> 16);
+        axvpb->pb.addr.endAddressHi = (u16)(endAddr >> 16);
         axvpb->pb.addr.loopFlag = type;
         axvpb->pb.addr.loopAddressLo = (u16)loopAddr;
-        axvpb->pb.addr.endAddressHi = (u16)(endAddr >> 16);
+        axvpb->pb.addr.currentAddressHi = (u16)(currentAddr >> 16);
         axvpb->pb.addr.endAddressLo = (u16)endAddr;
         axvpb->pb.addr.currentAddressLo = (u16)currentAddr;
         axvpb->pb.addr.format = 0;
@@ -202,8 +202,8 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         break;
     }
     case 2:
-        endAddr = sound->endAddr;
         loopAddr = sound->loopAddr;
+        endAddr = sound->endAddr;
         currentAddr = sound->currentAddr;
         old = OSDisableInterrupts();
         zero = 0;
@@ -238,8 +238,8 @@ void SPPrepareSound(SPSoundEntry *sound, AXVPB *axvpb, u32 sampleRate) {
         axvpb->pb.src.ratioLo = (u16)srcBits;
         goto zero_adpcm;
     case 4:
-        endAddr = sound->endAddr;
         loopAddr = sound->loopAddr;
+        endAddr = sound->endAddr;
         currentAddr = sound->currentAddr;
         old = OSDisableInterrupts();
         zero = 0;

@@ -264,8 +264,6 @@ void UnSetupShaders(enum shadertypes_e shader) {
     NudxFw_SetTextureState(2,D3DTSS_COLOROP,1);
     NudxFw_SetTextureState(3,D3DTSS_COLOROP,1);
     switch (shader) {     
-    case NO_SHADER:
-        return;
     case GLASS:
         NudxFw_SetRenderState(0x5D, 0);
         GS_SetBlendSrc(1, 1, 0);
@@ -274,6 +272,7 @@ void UnSetupShaders(enum shadertypes_e shader) {
         NudxFw_SetRenderState(0x6C, 0);
         NudxFw_SetRenderState(0x6D, 0);
         return;
+    case WATERCAUSTICS:
     case SPECULAR:
     case BUMPMAP:
     case BUMPMAPPOINTLIGHT:

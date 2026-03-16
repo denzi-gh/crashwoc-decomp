@@ -22,13 +22,13 @@ int strcasecmp(const char *s1, const char *s2) {
         s2++;
     }
 
-    c1 = (unsigned char)*s1;
-    if ((_ctype_ + 1)[c1] & 1)
-        c1 += 0x20;
-
     c2 = (unsigned char)*s2;
     if ((_ctype_ + 1)[c2] & 1)
         c2 += 0x20;
+
+    c1 = (unsigned char)*s1;
+    if ((_ctype_ + 1)[c1] & 1)
+        c1 += 0x20;
 
     return c1 - c2;
 }

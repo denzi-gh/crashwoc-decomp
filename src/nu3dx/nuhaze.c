@@ -1,4 +1,5 @@
 #include "nuhaze.h"
+#include "nutex.h"
 #include "../system.h"
 
 struct numtl_s* NuLightHazePolymtl;
@@ -69,7 +70,7 @@ void NuHazeInit(void) {
   (haze_backbuffer_mtl->fx2).f32 = 0.0f;
   (haze_backbuffer_mtl->fx3).f32 = 0.0f;
   (haze_backbuffer_mtl->fx4).f32 = 0.0f;
-    //haze_backbuffer_mtl->wrong[5] = 2;
+  ((struct nusysmtl_s*)haze_backbuffer_mtl)->hShader = 2;
   NuMtlUpdate(haze_backbuffer_mtl);
     tex.width = SWIDTH;
     tex.height = SHEIGHT;
@@ -79,7 +80,7 @@ void NuHazeInit(void) {
     tex.type = NUTEX_RGBA32;
   haze_mtl = NuMtlCreate(1);
   haze_mtl->tid = haze_tid;
-   //haze_mtl->wrong[5] = 6;
+  ((struct nusysmtl_s*)haze_mtl)->hShader = 6;
   (haze_mtl->diffuse).r = 1.0f;
   (haze_mtl->diffuse).g = 1.0f;
   (haze_mtl->diffuse).b = 1.0f;

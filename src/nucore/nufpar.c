@@ -9,14 +9,12 @@
 
 s32 old_line_pos;
 
-//99% NGC (regswap)
+//99.78% NGC (regalloc: r3 vs r0 for buffend+bytesRead computation)
 char NuGetChar(struct nufpar_s* fPar) {
     s32 bufferEndPos = fPar->buffend;
-    char ret;
     s32 size;
     s32 tmp;
-    s32 x;
-    
+
     if (bufferEndPos < 0) {
         bufferEndPos = 0;
     }
@@ -33,9 +31,11 @@ char NuGetChar(struct nufpar_s* fPar) {
            return 0;
         }
     }
-    ret = fPar->fbuff[fPar->cpos - fPar->buffstart];
-    fPar->cpos++;
-    return ret;
+    {
+        char ret = fPar->fbuff[fPar->cpos - fPar->buffstart];
+        fPar->cpos++;
+        return ret;
+    }
 }
 
 //MATCH NGC
@@ -75,35 +75,37 @@ s32 NuFParGetWord(struct nufpar_s* fPar) {
     return len;
 }
 
+//MATCH NGC
 s32 NuFParGetInt(struct nufpar_s* fPar)
 {
-    s32 ret = 0;
-
     NuFParGetWord(fPar);
-    if (fPar->wbuff[1] != 0)
+    if (fPar->wbuff[0] != 0)
     {
-        ret = atoi((char*)(fPar->wbuff + 1));
+        return atoi(fPar->wbuff);
     }
-    return ret;
+    return 0;
 }
 
+//MATCH NGC
 s32 NuFParPushCom(struct nufpar_s* fPar, struct nufpcomjmp_s* jmp)
 {
     s32 ind = fPar->compos;
-    if (ind < 7)
+    if (ind > 6)
     {
-        fPar->compos = ind + 1;
-        fPar->comstack[ind] = jmp;
-        return fPar->compos;
+        return -1;
     }
-    return -1;
+    fPar->compos = ind + 1;
+    fPar->comstack[ind + 1] = jmp;
+    return fPar->compos;
 }
 
+//MATCH NGC
 void NuFParClose(struct nufpar_s* fPar)
 {
     NuMemFree(fPar);
 }
 
+//MATCH NGC
 struct nufpar_s* NuFParOpen(s32 handle)
 {
     struct nufpar_s* fPar = NuMemAlloc(sizeof(struct nufpar_s));	//size: 0x1244
@@ -113,18 +115,19 @@ struct nufpar_s* NuFParOpen(s32 handle)
 
         memset(fPar, 0, sizeof(struct nufpar_s));
         fPar->handle = handle;
-        fPar->compos = -1;
         fPar->buffend = -1;
         fPar->line_num = -1;
+        fPar->compos = -1;
         originalPos = NuFilePos(handle);
         NuFileSeek(handle, 0, 2);
-        fPar->size = NuFilePos(handle);	// = filelength (global var s32)
+        fPar->size = filelength;
         NuFileSeek(handle, originalPos, 0);
     }
 
     return fPar;
 }
 
+//MATCH NGC
 void NuFParDestroy(struct nufpar_s* fPar)
 {
     fileHandle handle = fPar->handle;
@@ -132,6 +135,7 @@ void NuFParDestroy(struct nufpar_s* fPar)
     NuFileClose(handle);
 }
 
+//MATCH NGC
 struct nufpar_s* NuFParCreate(char* filename)
 {
     s32 handle = NuFileOpen(filename, 0); //0= NUFILE_READ
@@ -147,53 +151,64 @@ struct nufpar_s* NuFParCreate(char* filename)
     return NULL;
 }
 
+//96.92% NGC (scheduler: li r30/lwz r9 order swapped at comment exit)
 s32 NuFParGetLine(struct nufpar_s* fPar) {
-    s32 i;
+    s32 i = 0;
     char ch;
-    char inc_f2_flag;
+    s32 lineNum = fPar->line_num;
+    char nul = 0;
 
-    i = 0;
     fPar->line_pos = 0;
-    inc_f2_flag = 1;
-    while ((ch = NuGetChar(fPar)) != 0) {
-        if (inc_f2_flag) {
-            fPar->line_num += 1;
-            inc_f2_flag = 0;
-        }
 
-        if ((ch == CR) || (ch == LF)) {
-            if (ch == CR) {
-                ch = NuGetChar(fPar);
-            }
-            if (i == 0) {
-                inc_f2_flag = 1;
-            }
-            else {
+    for (;;) {
+        lineNum++;
+        fPar->line_num = lineNum;
+
+        for (;;) {
+            ch = NuGetChar(fPar);
+            switch (ch) {
+            case 0:
+                goto exit_func;
+            case CR:
+                NuGetChar(fPar);
+            case LF:
+                if (i != 0) {
+                    goto exit_func;
+                }
+                lineNum = fPar->line_num;
                 break;
-            }
-
-        }
-        else {
-            if (ch == 0x3B) {
+            exit_func:
+                fPar->lbuff[i] = nul;
+                return i;
+            case 0x3B:
                 if (i == 0) {
-                    do {
-                        ch = NuGetChar(fPar);
-                    } while (!((ch == LF) || (ch == CR) || (ch == 0)));
-                    if (ch == CR) {
-                        ch = NuGetChar(fPar);
+                    {
+                        s32 done = 0;
+                        do {
+                            ch = NuGetChar(fPar);
+                            switch (ch) {
+                            case CR:
+                                NuGetChar(fPar);
+                            case 0:
+                            case LF:
+                                done = 1;
+                                break;
+                            }
+                        } while (done == 0);
+                        lineNum = fPar->line_num;
                     }
                     i = 0;
-                    fPar->line_pos = 0;
-                    inc_f2_flag = 1;
-                    continue;
+                    fPar->line_pos = i;
+                    break;
                 }
+            default:
+                fPar->lbuff[i & 0xFF] = ch;
+                i++;
+                continue;
             }
-            fPar->lbuff[i] = ch;
-            i += 1;
+            break;
         }
     }
-    fPar->lbuff[i] = 0;
-    return i;
 }
 
 //MATCH NGC
@@ -209,3 +224,4 @@ s32 NuFParInterpretWord(struct nufpar_s* fPar) {
     }
     return 0;
 }
+

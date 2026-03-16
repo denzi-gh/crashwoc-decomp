@@ -51,6 +51,9 @@ struct tagBITMAPINFOHEADER {
     u32 biClrImportant;
 };
 
+// Create a D3D texture object.
+struct D3DTexture* NudxTx_Create(struct nutex_s* texture, s32 rendertargetflag);
+
 // Initialize the texture system.
 void NuTexInit();
 

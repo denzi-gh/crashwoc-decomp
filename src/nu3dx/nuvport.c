@@ -30,21 +30,28 @@ void NuVpInit(void)
 //NGC
 static void NuVpSetScalingMtx(void)
 {
-  smtx._00 = (float)vpCurrent.width * 0.5f;
+  float x = (float)vpCurrent.x;
+  float y = (float)vpCurrent.y;
+  float w = (float)vpCurrent.width;
+  float h = (float)vpCurrent.height;
+  float zmin = vpCurrent.zmin;
+  float zmax = vpCurrent.zmax;
+
+  smtx._00 = w * 0.5f;
   smtx._01 = 0.0f;
   smtx._02 = 0.0f;
   smtx._03 = 0.0f;
   smtx._10 = 0.0f;
-  smtx._11 = -(float)vpCurrent.height * 0.5f;
+  smtx._11 = -h * 0.5f;
   smtx._12 = 0.0f;
   smtx._13 = 0.0f;
   smtx._20 = 0.0f;
   smtx._21 = 0.0f;
-  smtx._22 = vpCurrent.zmax - vpCurrent.zmin;
+  smtx._22 = zmax - zmin;
   smtx._23 = 0.0f;
-  smtx._30 = (float)vpCurrent.x + (float)vpCurrent.width * 0.5f;
-  smtx._31 = (float)vpCurrent.y + (float)vpCurrent.height * 0.5f;
-  smtx._32 = vpCurrent.zmin;
+  smtx._30 = w * 0.5f + x;
+  smtx._31 = y + h * 0.5f;
+  smtx._32 = zmin;
   smtx._33 = 1.0f;
   return;
 }

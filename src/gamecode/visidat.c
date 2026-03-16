@@ -289,24 +289,20 @@ struct visidata_s* visiLoadData(char* fname, struct nugscn_s* sc, union variptr_
                     splinelen = vd->sc->splines[o].len;
                     start_ix = assocs[m].visstart_ix;
                     if (splinelen > start_ix) {
-                        ;
-                    } else {
-                        start_ix = splinelen;
+                        splinelen = start_ix;
                     }
-                    assocs[m].visstart_ix = start_ix;
+                    assocs[m].visstart_ix = splinelen;
+                    n = splinelen;
 
                     end_ix = assocs[m].visend_ix;
                     splinelen = vd->sc->splines[o].len;
                     if (splinelen > end_ix) {
-                        ;
-                    } else {
-                        end_ix = splinelen;
+                        splinelen = end_ix;
                     }
 
-                    n = start_ix;
-                    assocs[m].visend_ix = end_ix;
+                    assocs[m].visend_ix = splinelen;
 
-                    if (n > end_ix) {
+                    if (n > splinelen) {
                         continue;
                     }
 
@@ -315,32 +311,28 @@ struct visidata_s* visiLoadData(char* fname, struct nugscn_s* sc, union variptr_
                             binfo_data[n * binfosize + p] |= tmpalloc[assocs[m].bndspline * binfosize + p];
                         }
                         n++;
-                    } while (n <= end_ix);
+                    } while (n <= assocs[m].visend_ix);
                 }
             }
 
             if (spline_used != 0) {
                 vd->vspline[o] = (void**)buff->voidptr;
 
-                {
-                    s32 splinelen;
-                    splinelen = vd->sc->splines[o].len;
-                    memset(vd->vspline[o], 0, splinelen * 8);
-                }
-
                 buff->intaddr += vd->sc->splines[o].len * 8;
+
+                memset(vd->vspline[o], 0, vd->sc->splines[o].len * 8);
+
                 buff->intaddr = (buff->intaddr + 7) & ~7;
 
                 for (n = 0; n < vd->sc->splines[o].len; n++) {
                     deltatot = 0;
                     for (p = 0; p < binfosize; p++) {
                         if (n == 0) {
-                            delta = binfo_data[p];
+                            binfo[p] = binfo_data[p];
                         } else {
-                            delta = binfo_data[(n - 1) * binfosize + p] ^ binfo_data[n * binfosize + p];
+                            binfo[p] = binfo_data[(n - 1) * binfosize + p] ^ binfo_data[n * binfosize + p];
                         }
-                        binfo[p] = delta;
-                        deltatot |= delta;
+                        deltatot |= binfo[p];
                     }
 
                     if (deltatot != 0) {

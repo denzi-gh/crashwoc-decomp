@@ -148,8 +148,8 @@ struct nufpcomjmp_s {
 struct nufpar_s {
     s32 handle; /* fH */
     char fbuff[4096]; /* fbuff */
-    char lbuff[256]; /* lbuff */
-    char wbuff[260];
+    char lbuff[257]; /* lbuff */
+    char wbuff[259];
     s32 line_num;
     s32 line_pos;
     s32 cpos;

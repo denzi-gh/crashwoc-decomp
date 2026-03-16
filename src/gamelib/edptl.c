@@ -321,7 +321,7 @@ void FileLoadSingleEffectType(struct debinftype *effect,s32 version,char list) {
   return;
 }
 
-//93% NGC (fix) //PS2 MATCH
+//NGC 99% - BLOCKER: same stwx loop optimization as edppMergeEffects; also blt/ble sentinel diff in version<5 path
 s32 edppLoadEffects(char* file, char list) {
     s32 i;
     s32 version;
@@ -485,7 +485,7 @@ void edppRestartAllEffectsInLevel(void) {
   return;
 }
 
-//NGC 97% //PS2 99% (extra nop)
+//NGC 97% - BLOCKER: compiler generates stw+offset instead of stwx for final loop (stwx indexed store optimization)
 s32 edppMergeEffects(char* file, char list) {
     struct debinftype dummy;
     s32 i;
@@ -523,7 +523,7 @@ s32 edppMergeEffects(char* file, char list) {
     }
     effect_types_used += new_effects;
     EdFileClose();
-    for (i = 0; i < 0x80; i++) { //extra nop PS2
+    for (i = 0; i < 0x80; i++) {
         effecttypes[i].DmaDebTypePointer = NULL;
         effecttypes[i].variable_key = -1;
     }

@@ -48,7 +48,7 @@ s32 GetTPID()
 s32 NuTexCreate(struct nutex_s *nutex) {
     //replace struct D3DTexture with SDL_Surface *surface;
 
-    if (nutex->type > NUTEX_BB) {
+    if ((u32)nutex->type > NUTEX_BB) {
         tinfo[tpid].dds = NudxTx_Create(nutex, 1);
     } else {
         tinfo[tpid].dds = NudxTx_Create(nutex, 0);
@@ -106,13 +106,22 @@ u32 NuTexUnRef(s32 id)
 }
 
 s32 NuTexPixelSize(enum nutextype_e type) {
-  if (type == NUTEX_RGB16) return 0x10;
-  if (type == NUTEX_RGBA16) return 0x10;
-  if (type == NUTEX_RGB24) return 0x18;
-  if (type == NUTEX_RGBA32) return 0x20;
-  if (type == NUTEX_PAL4) return 4;
-  if (type == NUTEX_PAL8) return 8;
-  return 0;
+  switch (type) {
+    case NUTEX_RGB16:
+      return 0x10;
+    case NUTEX_RGBA16:
+      return 0x10;
+    case NUTEX_RGB24:
+      return 0x18;
+    case NUTEX_RGBA32:
+      return 0x20;
+    case NUTEX_PAL8:
+      return 8;
+    case NUTEX_PAL4:
+      return 4;
+    default:
+      return 0;
+  }
 }
 
 s32 NuTexImgSize(enum nutextype_e type, s32 width, s32 height)
@@ -128,13 +137,14 @@ s32 NuTexImgSize(enum nutextype_e type, s32 width, s32 height)
 s32 NuTexPalSize(enum nutextype_e type)
 
 {
-  if (type == NUTEX_PAL4) {
-    return 0x40;
+  switch (type) {
+    case NUTEX_PAL8:
+      return 0x400;
+    case NUTEX_PAL4:
+      return 0x40;
+    default:
+      return 0;
   }
-  if (type == NUTEX_PAL8) {
-    return 0x400;
-  }
-  return 0;
 }
 
 //NGC MATCH

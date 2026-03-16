@@ -62,7 +62,7 @@ struct lights_s
 
 struct lights_s Lights[320];
 
-//94% NGC
+//96% NGC - BLOCKER: r28/r29 register swap in main loop + scheduling in loop tail (i++ and offset++ order around NuFileReadInt)
 void LoadLights(void) {
     s32 handle;
     s32 i;
@@ -93,8 +93,8 @@ void LoadLights(void) {
             for (i = 0; i < LIGHTCOUNT; ) {
                 Lights[i].type = NuFileReadInt(handle);
                 Lights[i].pos.x = NuFileReadFloat(handle);
-                (Lights[i].pos.y) = NuFileReadFloat(handle);
-                (Lights[i].pos.z) = NuFileReadFloat(handle);
+                Lights[i].pos.y = NuFileReadFloat(handle);
+                Lights[i].pos.z = NuFileReadFloat(handle);
                 Lights[i].radius_pos.x = NuFileReadFloat(handle);
                 Lights[i].radius_pos.y = NuFileReadFloat(handle);
                 Lights[i].radius_pos.z = NuFileReadFloat(handle);

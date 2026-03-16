@@ -261,8 +261,8 @@ struct nugeomitem_s
     struct numtx_s* mtx;
     struct nugeom_s* geom;
     f32** blendvals;
-    u16 instancelights_index[3];
-    u16 hShader;
+    s16 instancelights_index[3];
+    s16 hShader;
 };
 
 // Size: 0x18

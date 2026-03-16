@@ -342,12 +342,35 @@ else:
     config.linker_version = "GC/1.3.2"
 
 
+# Metrowerks cflags for SDK libraries (used regardless of active toolchain,
+# because the Nintendo SDK objects were always compiled with CodeWarrior).
+cflags_mw_sdk = [
+    "-nodefaults",
+    "-proc gekko",
+    "-align powerpc",
+    "-enum int",
+    "-fp hardware",
+    "-Cpp_exceptions off",
+    "-O4,p",
+    "-inline auto",
+    "-RTTI off",
+    "-fp_contract on",
+    "-str reuse",
+    *[f"-i {d.as_posix()}" for d in project_include_dirs],
+    f"-i {project_include_dir.as_posix()}",
+    f"-i {project_build_include_dir.as_posix()}",
+    f"-DBUILD_VERSION={version_num}",
+    f"-DVERSION_{config.version}",
+    "-DNDEBUG=1",
+]
+
+
 # Helper function for Dolphin libraries
 def DolphinLib(lib_name: str, objects: List[Object]) -> Dict[str, Any]:
     return {
         "lib": lib_name,
         "mw_version": "GC/1.2.5n",
-        "cflags": cflags_base,
+        "cflags": cflags_mw_sdk,
         "progress_category": "sdk",
         "objects": objects,
     }
@@ -615,6 +638,9 @@ config.libs = [
             Object(NonMatching, "xboxlibs.c", source="system/xboxlibs.c"),
         ],
     },
+    DolphinLib("CrashWOC_SDK_MW", [
+        Object(NonMatching, "CARDCreate.c", source="system/gc/CARDCreate.c"),
+    ]),
     {
         "lib": "CrashWOC_SDK",
         "mw_version": config.linker_version,
@@ -671,7 +697,7 @@ config.libs = [
             Object(NonMatching, "CARDCheck.c", source="system/gc/CARDCheck.c"),
             Object(NonMatching, "CARDMount.c", source="system/gc/CARDMount.c"),
             Object(NonMatching, "CARDFormat.c", source="system/gc/CARDFormat.c"),
-            Object(NonMatching, "CARDCreate.c", source="system/gc/CARDCreate.c"),
+            # CARDCreate.c moved to CrashWOC_SDK_MW (Metrowerks-compiled SDK)
             Object(NonMatching, "CARDRead.c", source="system/gc/CARDRead.c"),
             Object(NonMatching, "CARDWrite.c", source="system/gc/CARDWrite.c"),
             Object(NonMatching, "CARDDelete.c", source="system/gc/CARDDelete.c"),

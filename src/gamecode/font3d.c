@@ -423,6 +423,7 @@ Skip:
     } else if ((align & 10U) == 2) {
         y -= (dy * 0.5f);
     }
+    xpulsescale = 1.0f;
     i = ((u32)colour < 5) ? colour : 0;
     nurndr_forced_mtl_table = (struct numtl_s **)&Font3DMtlTab[i][0];
     for (j = 0; j < l; j++, txt++) {
@@ -525,7 +526,7 @@ Skip:
                 }
                 goto Skip_2;
             }
-        } else {
+        } else if (c < 0) {
             accent = RemapAccentedCharacter(&c);
             if (accent != -1) {
                 if (Font3DRemap[(s32)(c & 0xff)] != -1) {
@@ -544,9 +545,9 @@ Skip:
         }
 Skip_2:
         if ((c == ':') || (c == '.')) {
-            x += (dx * 0.5f);
+            x += (dx * 0.5f) * xpulsescale;
         } else {
-            x += dx;
+            x += dx * xpulsescale;
         }
         if (Game.language == 0x63) {
 SkipAdvance:
@@ -696,6 +697,7 @@ Skip2:
     } else if ((align & 10U) == 2) {
         y -= (dy * 0.5f);
     }
+    xpulsescale = 1.0f;
     i = ((u32)colour < 5) ? colour : 0;
     nurndr_forced_mtl_table = (struct numtl_s **)&Font3DMtlTab[i][0];
     for (j = 0; j < l; j++, txt++) {
@@ -806,7 +808,7 @@ Skip2:
                 }
                 goto Skip_2b;
             }
-        } else {
+        } else if (c < 0) {
             accent = RemapAccentedCharacter(&c);
             if (accent != -1) {
                 if (Font3DRemap[(s32)(c & 0xff)] != -1) {
@@ -825,9 +827,9 @@ Skip2:
         }
 Skip_2b:
         if ((c == ':') || (c == '.')) {
-            x += (dx * 0.5f);
+            x += (dx * 0.5f) * xpulsescale;
         } else {
-            x += dx;
+            x += dx * xpulsescale;
         }
         if (Game.language == 0x63) {
 SkipAdvance2:
