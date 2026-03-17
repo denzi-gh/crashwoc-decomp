@@ -1010,6 +1010,10 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
         {
           GameCamera->mode = 9;
         }
+        else
+        {
+          GameCamera->mode = 4;
+        }
       }
       else
         if (PLAYERCOUNT != 0)
@@ -1055,10 +1059,6 @@ void MoveGameCamera(struct cammtx_s *GameCamera, struct obj_s *obj)
         {
           GameCamera->mode = 10;
         }
-      }
-      else
-      {
-        GameCamera->mode = 4;
       }
     }
   }

@@ -106,9 +106,12 @@ Repository AI guidance lives in:
 Repo-local helper commands include:
 
 - `python tools/ai_context.py <symbol-or-unit>`
+- `python tools/ai_launch_copilot.py <unit-or-path>`
 - `python tools/ai_lookup_symbol.py <symbol-or-address>`
 - `python tools/ai_lookup_unit.py <unit-or-path>`
 - `python tools/ai_match_plan.py <unit-or-path>`
+
+Run `python tools/ai_launch_copilot.py src/gamecode/crate.c` from a VS Code integrated terminal to generate a filled prompt for that unit and immediately start a terminal Copilot CLI session. Use `--no-launch --print-prompt` if you only want the generated prompt text.
 
 
 

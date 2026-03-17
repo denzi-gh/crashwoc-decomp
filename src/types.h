@@ -88,6 +88,7 @@ struct nucolour3_s
 struct _XINPUT_STATE
 {
     unsigned int dwPacketNumber; // Offset: 0x0
+    unsigned char _pad[0x14];
 };
 
 // Size: 0x44

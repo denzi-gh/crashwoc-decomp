@@ -1,6 +1,7 @@
 # Match One Unit End-to-End
 
 Use this prompt directly in GitHub Copilot when you want it to take one file or unit and keep pushing it forward.
+If you want a prefilled prompt plus an interactive terminal Copilot session, run `python tools/ai_launch_copilot.py <target-file-or-unit>` from a VS Code integrated terminal.
 
 Target unit or file: `<replace with src/... path or unit name>`
 

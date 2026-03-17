@@ -7,7 +7,7 @@
 #include "nuxbox/nuxboxtypes.h"
 #include "gamecode/font3d.h"
 
-void* SpaceGameCutTab[2][26];
+void* SpaceGameCutTab[26][2];
 unsigned char CLetter[191];
 float temp_time;
 s32 temp_action;

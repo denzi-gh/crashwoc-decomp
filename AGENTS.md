@@ -86,6 +86,9 @@ Use the repo-local helpers before manual grep when possible:
 - [`tools/ai_match_plan.py`](tools/ai_match_plan.py): file- or unit-level matching backlog, next target, and suggested loop commands
   - `python tools/ai_match_plan.py src/gamecode/text.c`
   - `python tools/ai_match_plan.py text.c`
+- [`tools/ai_launch_copilot.py`](tools/ai_launch_copilot.py): generate a filled unit prompt and launch GitHub Copilot CLI in the current terminal
+  - `python tools/ai_launch_copilot.py src/gamecode/crate.c`
+  - `python tools/ai_launch_copilot.py crate.c --no-launch --print-prompt`
 - [`tools/ai_decompme_zip.py`](tools/ai_decompme_zip.py): inspect a decomp.me-style zip or extracted directory, resolve target functions to repo units, and surface insertion/missing-declaration hints
   - `python tools/ai_decompme_zip.py C:/Users/denis/Downloads/MoveMINETUB.zip`
   - `python tools/ai_decompme_zip.py path/to/extracted_bundle_dir`
@@ -114,10 +117,11 @@ Repo-local skills live under `tools/skills/`:
 For decomp work, prefer this order:
 
 1. Resolve the target with `ai_lookup_symbol.py`, `ai_lookup_unit.py`, `ai_context.py`, or `ai_decompme_zip.py` for decomp.me-style bundles.
-2. If the task starts from a file or unit, run `python tools/ai_match_plan.py <unit-or-path>` to list the remaining functions and the next target.
-3. Build the single object or context target when iterating.
-4. Keep changes narrow and match-focused.
-5. Run `ninja changes` before wrapping up if matching or tooling behavior may have changed.
+2. If you want to hand the target off to GitHub Copilot CLI from a VS Code terminal, run `python tools/ai_launch_copilot.py <unit-or-path>`.
+3. If the task starts from a file or unit, run `python tools/ai_match_plan.py <unit-or-path>` to list the remaining functions and the next target.
+4. Build the single object or context target when iterating.
+5. Keep changes narrow and match-focused.
+6. Run `ninja changes` before wrapping up if matching or tooling behavior may have changed.
 
 ## Autonomous Matching Loop
 
