@@ -15,6 +15,7 @@ REQUIRED_FILES = [
     ".github/instructions/ai-tooling.instructions.md",
     ".github/prompts/match-unit.prompt.md",
     "tools/ai_common.py",
+    "tools/ai_launch_copilot.py",
     "tools/ai_lookup_symbol.py",
     "tools/ai_lookup_unit.py",
     "tools/ai_context.py",

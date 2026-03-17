@@ -61,7 +61,7 @@ static u32 nta_sig_old;
 s32 nta_labels[64];
 char texanimbuff[32768];
 u32 texanimbits;
-static char xdeflabtab[21][256];
+static char xdeflabtab[256][21];
 static s32 xdeflabtabcnt;
 static s32 labtabcnt;
 

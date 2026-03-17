@@ -1,4 +1,10 @@
+#define InitXboxEffectSystem InitXboxEffectSystem_
+#define InitXboxGSceneEffects InitXboxGSceneEffects_
+#define Reseter Reseter_
 #include "main.h"
+#undef InitXboxEffectSystem
+#undef InitXboxGSceneEffects
+#undef Reseter
 #include <stddef.h>
 #include <string.h>
 
@@ -105,15 +111,15 @@ struct instNUGCUTSCENE_s {
     struct NUGCUTSCENE_s *cutscene;
     struct nuvec_s centre;
     float maxdistsqr;
-    int is_visible:1;
-    int checkmaxdist:1;
-    int checkbboxclip:1;
-    int has_mtx:1;
-    int autostart:1;
-    int looping:1;
-    unsigned int is_playing:1;
     int played_first_frame:1;
-    int is_disabled:16;
+    unsigned int is_playing:1;
+    int looping:1;
+    int autostart:1;
+    int has_mtx:1;
+    int checkbboxclip:1;
+    int checkmaxdist:1;
+    int is_visible:1;
+    int is_disabled:1;
     int been_updated_this_frame:1;
     float cframe;
     float rate;
@@ -163,7 +169,7 @@ s32 cutmovie;
 s32 cutworldix;
 static float cutratefrig;
 s32 logos_played;
-void *SpaceGameCutTab[2][26];
+void *SpaceGameCutTab[26][2];
 struct nucolour3_s cutdircol[3];
 struct nuvec_s cutambcol;
 struct nuvec_s cutdir[3];
@@ -173,7 +179,7 @@ static s32 ghg_inst_count;
 static struct ghg_inst_s ghg_insts[32];
 static s32 scene_inst_count;
 static struct scene_inst_s scene_insts[32];
-static u8 music_volume;
+static s32 music_volume;
 struct csc_s *CutChar;
 s32 loadcut_chardatfile;
 char chardatfilename[128];
@@ -227,6 +233,32 @@ static void AppCutSceneFindCharacters(struct NUGCUTSCENE_s *cutscene);
 void AppCutSceneCharacterRender(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTSCENE_s *cutscene,
                                 struct instNUGCUTCHAR_s *icutchar,struct NUGCUTCHAR_s *cutchar,
                                 float current_frame);
+void NuGCutCharAnimProcess(struct NUGCUTCHAR_s *cutchar,float current_frame,struct numtx_s *mtx,s32 *is_visible,
+                           u32 *animix,float *animrate,float *blendframes);
+void NuHGobjEvalAnim2(struct NUHGOBJ_s *hgobj,struct nuanimdata2_s *animdata,float time,s32 njanims,struct NUJOINTANIM_s *janim,struct numtx_s *mtx_array);
+float ** NuHGobjEvalDwa2(int nlayers,short *layers,struct nuanimdata2_s *vtxanim,float vtxtime);
+void instNuGCutLocatorUpdate(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTLOCATORSYS_s *locatorsys,struct instNUGCUTLOCATOR_s *ilocator,struct NUGCUTLOCATOR_s *locator,float current_frame,struct numtx_s *wm);
+struct NUHGOBJ_s* NuHGobjRead(union variptr_u* opbuff, char* fname);
+void NuHGobjDestroy(struct NUHGOBJ_s* hgobj);
+void NuGCutSceneSysInit(struct NUGCUTLOCFNDATA_s *locfndat);
+void NuGCutSceneSysUpdate(s32 paused);
+struct NUGCUTSCENE_s * NuGCutSceneLoad(char *fname,union variptr_u *buff,union variptr_u *endbuff);
+void NuGCutSceneFixUp(struct NUGCUTSCENE_s *cutscene,struct nugscn_s *scene,struct NUTRIGGERSYS_s *triggersys);
+struct instNUGCUTSCENE_s *instNuGCutSceneCreate(struct NUGCUTSCENE_s *cutscene,struct nugscn_s *gscene,struct instNUTRIGGERSYS_s *itriggersys,char *name,union variptr_u *buff);
+void instNuGCutSceneStart(struct instNUGCUTSCENE_s *icutscene);
+void instNuGCutSceneDestroy(struct instNUGCUTSCENE_s *icutscene);
+void NuSetCutSceneCharacterRenderFn(void (*fn)(struct instNUGCUTSCENE_s *,struct NUGCUTSCENE_s *,struct instNUGCUTCHAR_s *,struct NUGCUTCHAR_s *,float));
+void NuSetCutSceneFindCharactersFn(void (*fn)(struct NUGCUTSCENE_s *));
+void InitSkinning(s32 buffsize);
+void NuRndrClear(s32 flags,s32 colour,f32 depth);
+void NuGScnUpdate(struct nugscn_s *scn,float dt);
+void NuMtlAnimate(float timestep);
+s32 NuGCutLocatorIsVisble(struct NUGCUTLOCATOR_s *locator,float current_frame,struct nuanimtime_s *atime,float *rate);
+void NuAnimData2CalcTime(struct nuanimdata2_s *animdata,float time,struct nuanimtime_s *atime);
+void DrawGameMessage(char* txt,s32 message_frame,float ys);
+void UpdateAnimPacket(struct CharacterModel *mod,struct anim_s *anim,float dt,float xz_distance);
+void DebrisRegisterCutoffCameraVec(struct nuvec_s *cutoff);
+void ProcMenu(struct cursor_s *cursor,struct nupad_s *pad);
 
 //NGC MATCH
 static struct NUHGOBJ_s * InstNuGHGRead(union variptr_u *superbuf_ptr,char *path) {
@@ -414,7 +446,6 @@ s32 LoadCutComponents(struct cutscenedesc_s *csd,struct csc_s *chars) {
     char *path;
     char *final_path;
     struct nudathdr_s *char_dat;
-    char pad [6];
     
     char_dat = NULL;
     InitSkinning(0);
@@ -498,7 +529,7 @@ void AppCutSceneCharacterRender
     s32 j;
     s32 is_visible;
     struct numtx_s mtx;
-    struct numtx_s tmtx[256];	//global
+    //tmtx is global
     float **array_dwa;
     struct NUHGOBJ_s *obj;
     short layertab[8];
@@ -512,30 +543,30 @@ void AppCutSceneCharacterRender
     obj = icutchar->character;
     
     NuGCutCharAnimProcess(cutchar, current_frame, &mtx, &is_visible, 0, 0, 0);
-    if ((icutscene->has_mtx & 0x10) != 0)
+    if (icutscene->has_mtx)
     {
         NuMtxMul(&mtx, &mtx, &icutscene->mtx);
     }
     
-    if (is_visible != NULL) {
+    if (is_visible != 0) {
         if ((cutchar->joint_anim != NULL)) {
-            NuHGobjEvalAnim2(obj, cutchar->joint_anim, current_frame, 0, NULL, &tmtx);
+            NuHGobjEvalAnim2(obj, cutchar->joint_anim, current_frame, 0, NULL, tmtx);
         }
         else {
-            NuHGobjEval(obj, 0, NULL, &tmtx);
+            NuHGobjEval(obj, 0, NULL, tmtx);
         }
         
         if (cutchar->face_anim != NULL) {
             array_dwa = NuHGobjEvalDwa2(obj->num_layers, layertab, cutchar->face_anim, current_frame);
         }
         else {
-            array_dwa = 0;
+            array_dwa = NULL;
         }
         
-        NuHGobjRndrMtxDwa(obj, &mtx, obj->num_layers, layertab, &tmtx, array_dwa);
+        NuHGobjRndrMtxDwa(obj, &mtx, obj->num_layers, layertab, tmtx, array_dwa);
         if (cutchar->first_locator != 0xff) {
-            locatorsys = &cutscene->locators[0];
-            ilocatorsys = &icutscene->ilocators[0];
+            locatorsys = cutscene->locators;
+            ilocatorsys = icutscene->ilocators;
             for(j = 0; j < cutchar->nlocators; j++)
             {
                 locix = cutchar->first_locator + j;
@@ -544,7 +575,7 @@ void AppCutSceneCharacterRender
                     instNuGCutLocatorUpdate(icutscene, locatorsys, &ilocatorsys->ilocators[locix], locator, current_frame, &mtx);
                 }
                 else {
-                    NuMtxMulVU0(&locatormtx, &tmtx[locator->joint_ix], &mtx);
+                    NuMtxMul(&locatormtx, &tmtx[locator->joint_ix], &mtx);
                     instNuGCutLocatorUpdate(icutscene, locatorsys, &ilocatorsys->ilocators[locix], &locatorsys->locators[locix], current_frame, &locatormtx);
                 }
             }
@@ -613,7 +644,7 @@ void SetCutMovieRate() {
 
 //NGC MATCH
 void UpdateCutMovie(void) {
-    if (((cutmovie_hold == 0) || (CutAudio[cutworldix] == -1)) || (NuSoundKeyStatus(4) != 1)) {
+    if (((cutmovie_hold != 0) && (CutAudio[cutworldix] != -1)) && (NuSoundKeyStatus(4) != 1)) {
         CutInst[cutworldix]->rate = 0.0f;
     }
     else {
@@ -832,7 +863,7 @@ void PlayCutMovie(s32 movie) {
                     UpdateCutMovieCamera(GameCam);
                     Debris(0);
                     if (world_scene[cutworldix] != NULL) {
-                        NuGScnUpdate(1.0f, world_scene[cutworldix]);
+                        NuGScnUpdate(world_scene[cutworldix], 1.0f);
                     }
                     GameTiming();
                     if (cutmovie == 0) {
@@ -960,7 +991,7 @@ void CloseCutMovie(s32 all)
     NuSoundStopStream(3);
     NuSoundStopStream(4);
     NuSoundUpdate();
-    //NuSoundFlushLoops();	//PS2
+    NuSoundFlushLoops();
     //UnLoadGBABG();  //NGC
     if (all != 0) {
         NuTexInit();
@@ -972,8 +1003,7 @@ void CloseCutMovie(s32 all)
 
 
 //part of cutscene_locatorfns variable
-static void locatorfn_fadeout(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTLOCATORSYS_s *locatorsys, struct instNUGCUTLOCATOR_s *ilocator,struct NUGCUTLOCATOR_s *locator,struct numtx_s *wm) {
-    float currf;
+static void locatorfn_fadeout(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTLOCATORSYS_s *locatorsys, struct instNUGCUTLOCATOR_s *ilocator,struct NUGCUTLOCATOR_s *locator,float currf,struct numtx_s *wm) {
     struct nuanimtime_s atime;
     float remaining;
     
@@ -982,11 +1012,11 @@ static void locatorfn_fadeout(struct instNUGCUTSCENE_s *icutscene,struct NUGCUTL
         if ( (NuGCutLocatorIsVisble(locator,currf,&atime,NULL) != 0) && (ilocator->data == NULL)) {
             ilocator->data = (void *)0x1;
             remaining = 255.0f / (icutscene->cutscene->nframes - icutscene->cframe);
-            if (1.0f <= remaining) {
-                fade_rate = (s32)remaining;
+            if (remaining < 1.0f) {
+                fade_rate = 1;
             }
             else {
-                fade_rate = 1;
+                fade_rate = (s32)remaining;
             }
         }
     }
