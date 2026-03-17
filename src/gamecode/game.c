@@ -195,6 +195,10 @@ extern s32 level_part_2;
 extern s32 boss_dead;
 extern s32 new_level;
 extern s32 new_mode;
+extern s32 plr_rebound;
+extern s32 jonframe1;
+extern struct nuvec_s hubmidpos[2];
+extern char hublevelopen[36];
 extern s32 loadsave_frame;
 extern s32 warp_level;
 extern s32 force_menu;
@@ -840,6 +844,272 @@ void HubStart(struct obj_s *obj,s32 hub,s32 level,struct nuvec_s* pos) {
     tumble_cycleduration = ModelAnimDuration(tumble_character,tumble_action,0.0f,tumble_item_starttime);
   }
   return;
+}
+
+void HubSelect(struct creature_s* c) {
+  struct nuvec_s* closest;
+  struct nuvec_s* p0;
+  struct nuvec_s* p1;
+  struct nuvec_s pos;
+  struct nugspline_s* spl;
+  f32 d;
+  f32 xold, zold, xnew, znew;
+  s32 i, j, k;
+  s32 ispl;
+  u8 flags;
+  u16 yrot;
+
+  closest = &hubmidpos[0];
+  d = NuVecDist(&c->obj.pos, &hubmidpos[0], NULL);
+  {
+    f32 d1 = NuVecDist(&c->obj.pos, &hubmidpos[1], NULL);
+    if (d1 < d) {
+      d = d1;
+      closest = &hubmidpos[1];
+    }
+  }
+
+  if (d < 6.0f) {
+    if (d < 3.0f) {
+      gamesfx_effect_volume = 0x3FFF;
+    } else {
+      gamesfx_effect_volume = 0x3FFF - (s32)((d - 3.0f) * 16383.0f / 3.0f);
+    }
+    gamesfx_effect_volume = gamesfx_effect_volume + gamesfx_effect_volume;
+    GameSfxLoop(0xBF, closest);
+  }
+
+  for (i = 0; i <= 5; i++) {
+    if (HData[i].sfx == -1) goto next_hub_sfx;
+    ispl = (s8)HData[i].i_spl[0];
+    if (ispl == -1) goto next_hub_sfx;
+    spl = SplTab[ispl].spl;
+    if (spl == NULL) goto next_hub_sfx;
+    p0 = (struct nuvec_s*)(spl->pts + (s32)spl->ptsize * 12);
+    d = NuVecDist(&c->obj.pos, p0, NULL);
+    if (d >= 6.0f) goto next_hub_sfx;
+    if (d < 3.0f) {
+      gamesfx_effect_volume = 0x3FFF;
+    } else {
+      gamesfx_effect_volume = 0x3FFF - (s32)((d - 3.0f) * 16383.0f / 3.0f);
+    }
+    gamesfx_effect_volume = gamesfx_effect_volume + gamesfx_effect_volume;
+    GameSfxLoop(HData[i].sfx, p0);
+    if (i == 1) {
+      if (qrand() > 0xFF) goto next_hub_sfx;
+      k = qrand();
+      gamesfx_pitch = 100 - (k * 33) / 65536;
+      GameSfx(0xC4, p0);
+    }
+    next_hub_sfx:;
+  }
+
+  if (new_mode != -1) return;
+  if (new_level != -1) return;
+
+  if (plr_rebound != 0 && c->obj.ground != 0) {
+    plr_rebound = 0;
+    c->obj.mom.x = 0.0f;
+    c->obj.mom.z = 0.0f;
+  }
+
+  xold = c->obj.oldpos.x;
+  zold = c->obj.oldpos.z;
+  xnew = c->obj.pos.x;
+  znew = c->obj.pos.z;
+
+  for (i = 0; i <= 5; i++) {
+    flags = Game.hub[i].flags;
+
+    for (j = 0; j <= 5; j++) {
+      hublevelopen[j + i * 6] = 0;
+
+      if (!(flags & 1)) goto next_inner;
+
+      k = 1;
+
+      if (i == 5) {
+        if (j == 5) {
+          k = 0;
+        } else if (Game.relics < (s32)((j + 1) * 5)) {
+          k = 0;
+        }
+      } else {
+        s32 bits = flags & 6;
+        if (j <= 4) {
+          if (bits == 2) {
+            k = 0;
+          }
+        }
+        if (j == 5) {
+          if (bits == 0) {
+            k = 0;
+          }
+        }
+      }
+
+      if (k != 0) {
+        hublevelopen[j + i * 6] = 1;
+      } else {
+        if ((jonframe1 & 3) != 0) goto next_inner;
+        if (i == 5 && j == 5) goto next_inner;
+
+        ispl = (s8)HData[i].i_spl[0];
+        if (ispl == -1) goto next_inner;
+        spl = SplTab[ispl].spl;
+        if (spl == NULL) goto next_inner;
+
+        {
+          s32 ptoff = (j * 2 + 2) * (s32)spl->ptsize;
+          p0 = (struct nuvec_s*)(spl->pts + ptoff);
+          pos.x = p0->x;
+          pos.z = p0->z;
+          if (i > 3) {
+            pos.y = p0->y + 0.65f;
+          } else {
+            pos.y = p0->y + 0.25f;
+          }
+          AddVariableShotDebrisEffect(GDeb[HData[i].i_gdeb << 2].i, &pos, 1, 0, 0);
+        }
+      }
+      next_inner:;
+    }
+
+    ispl = (s8)HData[i].i_spl[0];
+    if (ispl == -1) continue;
+    spl = SplTab[ispl].spl;
+    if (spl == NULL) continue;
+
+    p0 = (struct nuvec_s*)spl->pts;
+    p1 = (struct nuvec_s*)(spl->pts + (s32)spl->ptsize);
+
+    {
+      f32 e0x, e0z, e1x, e1z;
+      f32 cross_new, cross_old;
+      s32 old_in, new_in;
+
+      e0z = p0->z;
+      e0x = p0->x;
+      e1x = p1->x;
+      e1z = p1->z;
+
+      cross_new = (znew - e0z) * (e0x - e1x) + (xnew - e0x) * (e1z - e0z);
+      cross_old = (zold - e0z) * (e0x - e1x) + (xold - e0x) * (e1z - e0z);
+
+      old_in = (cross_old >= 0.0f) ? 1 : 0;
+      new_in = (cross_new >= 0.0f) ? 1 : 0;
+
+      if (old_in == 0) {
+        if (new_in == 0) continue;
+        {
+          f32 c2 = (znew - zold) * (xold - e0x) + (xnew - xold) * (e0z - zold);
+          if (c2 < 0.0f) continue;
+        }
+        {
+          f32 c3 = (znew - e1z) * (e1x - xold) + (xnew - e1x) * (zold - e1z);
+          if (c3 < 0.0f) continue;
+        }
+      } else {
+        if (new_in != 0) continue;
+        {
+          f32 c2 = (znew - zold) * (xold - p1->x) + (xnew - xold) * (p1->z - zold);
+          if (c2 < 0.0f) continue;
+        }
+        {
+          f32 c3 = (znew - p0->z) * (p0->x - xold) + (xnew - p0->x) * (zold - p0->z);
+          if (c3 < 0.0f) continue;
+        }
+      }
+    }
+
+    flags = Game.hub[i].flags;
+    if (flags & 1) {
+      Hub = i;
+      if (i != 0) return;
+      if (Game.cutbits & 1) return;
+      NewCut(0);
+      new_mode = 1;
+      return;
+    }
+
+    c->obj.pos.x = c->obj.oldpos.x;
+    c->obj.pos.z = c->obj.oldpos.z;
+    p1 = (struct nuvec_s*)(spl->pts + (s32)spl->ptsize);
+    {
+      f32 dx = p1->x - p0->x;
+      f32 dz = p1->z - p0->z;
+      yrot = (u16)(NuAtan2D(dx, dz) + 0x4000);
+    }
+
+    if (c->spin != 0) {
+      if (c->spin_frames - c->OnFootMoveInfo->SPINRESETFRAMES > c->spin_frame) {
+        c->obj.mom.x = NuTrigTable[yrot & 0xFFFF] * 0.050000004f;
+        c->obj.mom.z = NuTrigTable[(yrot + 0x4000) & 0xFFFF] * 0.050000004f;
+        return;
+      }
+    }
+
+    {
+      struct MoveInfo* mi = c->OnFootMoveInfo;
+      f32 camscale = mi->WALKSPEED;
+      s32 camdir = (s16)mi->JUMPFRAMES2;
+      f32 speed;
+
+      c->obj.mom.x = NuTrigTable[yrot & 0xFFFF] * camscale;
+      c->obj.mom.z = NuTrigTable[(yrot + 0x4000) & 0xFFFF] * camscale;
+      c->obj.thdg = yrot;
+      c->crawl = 0;
+      c->crawl_lock = 1;
+      c->somersault = 0;
+      c->land = 0;
+      c->slide = (s16)j;
+      c->slam = 0;
+      c->crouch_pos = (s16)j;
+      c->spin = 0;
+
+      if (c->jump_type == 3) {
+        speed = mi->JUMPHEIGHT * 1.5f / (f32)camdir;
+      } else {
+        speed = mi->JUMPHEIGHT / (f32)camdir;
+      }
+
+      {
+        u16 old_cc6 = c->jump_frames;
+        c->jump_frame = old_cc6;
+        c->jump = 6;
+        c->jump_type = 4;
+
+        plr_rebound = 1;
+
+        if (c->obj.model->anmdata[0x19] != NULL) {
+          ResetAnimPacket(&c->obj.anim, 0x19);
+          c->obj.anim.anim_time = *(f32*)c->obj.model->anmdata[0x19];
+        }
+
+        NewBuzz(&c->rumble, 12);
+
+        gamesfx_effect_volume = 0x7FFE;
+        GameSfx(0x4B, &c->obj.pos);
+
+        c->obj.mom.y = speed;
+
+        {
+          f32 fx, fy, fz;
+          u16 cosidx = (u16)(yrot + 0x4000);
+          fx = c->obj.pos.x - NuTrigTable[cosidx & 0xFFFF] * c->obj.RADIUS;
+          fy = (c->obj.bot + c->obj.top) * c->obj.SCALE;
+          fy = fy * 0.5f + c->obj.pos.y;
+          fz = c->obj.pos.z - NuTrigTable[yrot & 0xFFFF] * c->obj.RADIUS;
+
+          pos.x = fx;
+          pos.y = fy;
+          pos.z = fz;
+          AddGameDebris(0x82, &pos);
+        }
+      }
+    }
+    return;
+  }
 }
 
 //MATCH NGC

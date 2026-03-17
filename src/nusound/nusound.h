@@ -24,25 +24,50 @@
   800c28a0 000020 800c28a0  4 NuSoundPauseSfx 	Global
 */
 
-// If the track is currently playing.
 extern u32 SS_TrackPlayingFlag;
-
-// The current channel.
 extern s32 SS_CurrentChannel;
 
-// TODO: FUNCTIONS!!!
+extern struct NuSndLoopInfo_s NuSndLoopInfo[8];
+extern struct nuvec_s dummypos;
+extern f32 nusound_fade_start;
+extern f32 nusound_fade_end;
 
-// Play a 3D positional sound effect.
+extern struct nucamera_s global_camera;
+extern struct creature_s *player;
+extern s32 Level;
+extern struct game_s Game;
+
+f32 NuFsqrt(f32 x);
+
+s16 SS_PlaySFX(s32 SSample, s32 VolL, s32 VolR, s32 Pitch, ...);
+void SS_SetChannelVolume(s32 channel, s32 VolL, s32 VolR, ...);
+void SS_SetChannelPitch(s32 channel, s32 Pitch, ...);
+void SS_TrackStop(s32 channel, ...);
+void PlayStream(s32 track, s32 vol, s32 channel, ...);
+void SS_StopAllSFX(void);
+void SS_PauseSFX(void);
+void SS_ResumeSFX(void);
+void SS_LoadBank(s32 bank);
+void SS_Update(u8 val, ...);
+
+struct NuSndLoopInfo_s* NuSoundFindLoopInfo(struct nuvec_s *id);
+void NuSoundInitLoopInfo(void);
+void NuSoundInit(void);
+void NuSoundPlay(s32 SSample, s32 VolL, s32 VolR, s32 Pitch);
+void NuSoundPlayLoop(s32 SSample, s32 VolL, s32 VolR, s32 Pitch);
 void NuSoundPlay3d(struct nuvec_s *pos, int SSample, int VolL, int VolR, int Pitch);
-
-// Resume SFX.
-void NuSoundResumeSfx();
-
-// Play a sound in a channel.
-void NuSoundPlayChan(u32 track, u8 leftVol, u8 rightVol, u32 pitch, s32 channel);
-
-// If the given channel is currently playing.
-u32 NuSoundKeyStatus(s32 channel);
+void NuSoundPlay3dLoopSfx(struct nuvec_s *pos, s32 SSample, s32 VolL, s32 VolR, s32 Pitch);
+void NuSoundPlayStereo(s32 track, s32 unused, s32 vol);
+void NuSoundPlayStereo2(s32 track, s32 unused, s32 vol);
 s32 NuSoundStopStream(s32 SPUChannel);
+void NuSoundUpdate(void);
+void NuXboxSoundUpdate(void);
+void NuSoundLocalSet(s32 bank);
+void NuSoundSetLevelAmbience(void);
+void NuSoundKillAllAudio(void);
+void NuSoundPauseSfx(void);
+void NuSoundResumeSfx(void);
+void NuSoundPlayChan(u32 track, u8 leftVol, u8 rightVol, u32 pitch, s32 channel);
+u32 NuSoundKeyStatus(s32 channel);
 
 #endif // !NUSOUND_H
