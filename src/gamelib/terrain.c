@@ -163,11 +163,11 @@ short * terraininit(int LevelNum, short **store, short *endstore, int opt, char 
         c++;
         mbuf++;
     }
-    //asm("nop");
+    asm("nop");
     for (c = 0; c < 0x101; c++) {
         TempTerr->terrgroup[c].count = 0;
     }
-    //asm("nop");
+    asm("nop");
     for (c = 0; c < 0x80; c++) {
         TempTerr->platdata[c].curmtx = NULL;
         TempTerr->platdata[c].plrgrav = 0.0f;
@@ -176,7 +176,7 @@ short * terraininit(int LevelNum, short **store, short *endstore, int opt, char 
         TempTerr->platdata[c].damp = 0.0f;
         TempTerr->platdata[c].tension = 0.0f;
     }
-    //asm("nop");
+    asm("nop");
     for (c = 0; c < 4; c++) {
         TempTerr->TrackInfo[c].ptrid = NULL;
     }
@@ -526,13 +526,13 @@ void TerrainPlatformOldUpdate(void) {
   if (CurTerr == NULL) {
       return;
   }
-    //asm("nop");
+    asm("nop");
     for (i = 0; i < 0x80; i++) { 
       if (CurTerr->platdata[i].curmtx != NULL) {
           CurTerr->platdata[i].oldmtx = *CurTerr->platdata[i].curmtx;
       }
     }
-    //asm("nop");
+    asm("nop");
     for (i = 0; i < 4; i++) {
       if (CurTerr->TrackInfo[i].ptrid != NULL) {
         CurTerr->TrackInfo[i].timer--;
@@ -586,8 +586,8 @@ void TerrainPlatformNewUpdate(void) {
 
 //NGC MATCH
 void DerotateMovementVector(void) {
-  TerI->ay = NuAtan2D((TerI->curvel).x,(TerI->curvel).z);
-  TerI->ax = NuAtan2D(-(TerI->curvel).y,NuFsqrt((TerI->curvel).x * (TerI->curvel).x + (TerI->curvel).z * (TerI->curvel).z));
+  TerI->ay = (s32)NuAtan2D((TerI->curvel).x,(TerI->curvel).z);
+  TerI->ax = (s32)NuAtan2D(-(TerI->curvel).y,NuFsqrt((TerI->curvel).x * (TerI->curvel).x + (TerI->curvel).z * (TerI->curvel).z));
   TerI->len = NuFsqrt((TerI->curvel).x * (TerI->curvel).x + (TerI->curvel).y * (TerI->curvel).y +
                   (TerI->curvel).z * (TerI->curvel).z);
 }
@@ -2235,7 +2235,7 @@ s32 HitTerrain() {
   HitWallSpline();
   TerI->vellen = NuFsqrt((TerI->curvel).x * (TerI->curvel).x + (TerI->curvel).z * (TerI->curvel).z);
 loop1: 
-//asm("nop");
+asm("nop");
     while (0 < *CurData) {
       TerI->csx = (TerI->curpos).x - CurTerr->terr[*(CurData + 1)].Location.x;
       TerI->csy = (TerI->curpos).y - CurTerr->terr[*(CurData + 1)].Location.y;
@@ -2286,7 +2286,7 @@ loop1:
       }
         goto loop1; //check
     } 
-        //asm("nop");
+        asm("nop");
   for (lp = 0; lp < curSphereter; lp++) {
     pos = SphereData[lp].pos;
     DeRotatePoint(&pos);
@@ -2384,7 +2384,7 @@ void ScanTerrain(s32 platscan, s32 extramask) {
             radmov += 0.02f;
         break;
     }
-    
+    asm("nop");
     for (a = 0; a < CurTerr->terrgcnt; a++) {
         if (
             (maxx >= CurTerr->terrgroup[a].minx) 
@@ -2940,7 +2940,7 @@ void ScanTerrain(s32 platscan, s32 extramask) {
             } else {
                 c = WallSpl->count;
             }
-            
+            asm("nop");
             for (b = a; b < c; b++) {
                 if (
                     (
@@ -3307,7 +3307,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
              && (CurTerr->platdata[platid].oldmtx._31 == (CurTerr->platdata[platid].curmtx)->_31))
             && (CurTerr->platdata[platid].oldmtx._32 == (CurTerr->platdata[platid].curmtx)->_32))
         {
-            if ((s32)CurTerr->platdata[platid].status.hit == 0) {
+            if ((s32)CurTerr->platdata[platid].status.rotate == 0) {
                 return 1;
             }
             else if (((((CurTerr->platdata[platid].oldmtx._00 == (CurTerr->platdata[platid].curmtx)->_00)
@@ -3351,7 +3351,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
         TerI->curvel.y = (CurTerr->platdata[platid].oldmtx._31 - (CurTerr->platdata[platid].curmtx)->_31) * 1.3f
             * TerI->inyscale;
         TerI->curvel.z = (CurTerr->platdata[platid].oldmtx._32 - (CurTerr->platdata[platid].curmtx)->_32) * 1.3f;
-        if ((s32)CurTerr->platdata[platid].status.hit != 0) {
+        if ((s32)CurTerr->platdata[platid].status.rotate != 0) {
             tertempmat = CurTerr->platdata[platid].oldmtx;
             tertempvec4.x = TerITemp->curpos.x;
             tertempvec4.y = TerITemp->curpos.y * TerI->yscale;
@@ -3383,7 +3383,7 @@ s32 TerrainPlatformEmbedded(struct nuvec_s* vvel) {
                 }
                 modp = (short *)ter;
             }
-        } else if ((s32)CurTerr->platdata[platid].status.hit != 0) {
+        } else if ((s32)CurTerr->platdata[platid].status.rotate != 0) {
             while (*(short*)modp >= 0) {
                 for (c = (s32) * ((short*)modp + 1), ter = (tertype*)(modp + 10); c > 0; c--) {
                     pnts[0].x = ter->pnts[0].x;
@@ -4013,6 +4013,7 @@ int TerrShapeSideStep(struct nuvec_s* vpos, struct nuvec_s* vvel, u8* flags) {
         TerI->curvel.x = dotp * slide.x * TerrShape->size + TerrShape->offset.x;
         TerI->curvel.z = dotp * slide.z * TerrShape->size + TerrShape->offset.z;
     }
+    asm("nop");
     do {
         DerotateMovementVector();
         HitTerrain();
@@ -4038,7 +4039,16 @@ int TerrShapeSideStep(struct nuvec_s* vpos, struct nuvec_s* vvel, u8* flags) {
 //PS2 MATCH //check Gamecube
 void CubeImpact(struct numtx_s *mat,struct numtx_s *nmat,struct nuvec_s *norm,float size,struct nuvec_s *impact) {
   s32 lp;
-  struct nuvec_s cube[8] = {1.0f, 1.0f, 1.0f};
+  struct nuvec_s cube[8] = {
+    -1.0f, -1.0f, -1.0f,
+     1.0f, -1.0f, -1.0f,
+     1.0f,  1.0f, -1.0f,
+    -1.0f,  1.0f, -1.0f,
+    -1.0f, -1.0f,  1.0f,
+     1.0f, -1.0f,  1.0f,
+     1.0f,  1.0f,  1.0f,
+    -1.0f,  1.0f,  1.0f,
+  };
   struct nuvec4_s pnts[10];
   float best;
   s32 bestnum;
@@ -4046,7 +4056,7 @@ void CubeImpact(struct numtx_s *mat,struct numtx_s *nmat,struct nuvec_s *norm,fl
   float dotb;
   
     best = 10000.0f;
-    bestnum = 0.0f;
+    bestnum = 0;
   for (lp = 0; (s32)lp < 8; lp++) {
     pnts[lp].x = cube[lp].x;
     pnts[lp].y = cube[lp].y;
@@ -4766,7 +4776,7 @@ short* NewScanHandelFull(struct nuvec_s* vpos, struct nuvec_s* vvel, float size,
             } else {
                 c = *(unsigned short*)WallSpl;
             }
-            //asm("nop");
+            asm("nop");
             for (b = a; b < (s32)c; b++) {
                 if (((((WallSpl->spl[b].x >= minx) && (WallSpl->spl[b + 1].x <= maxx))
                       || ((WallSpl->spl[b + 1].x >= minx && (WallSpl->spl[b].x <= maxx))))
@@ -5078,16 +5088,18 @@ void ScanTerrainHandel(s32 extramask, short* Handel) {
     HitCnt = 0;
     platinrange = 0;
     TerI->plathit = -1;
-    if (TerI->scanmode != 1) {
-        radmov = TerI->curvel.x * TerI->curvel.x + TerI->curvel.y * TerI->curvel.y + TerI->curvel.z * TerI->curvel.z;
-        radmov += TerI->sizesq + 0.02f;
-        maxx = TerI->curpos.x + radmov;
-        maxy = TerI->curpos.y + radmov * TerI->yscale;
-        maxz = TerI->curpos.z + radmov;
-        minx = TerI->curpos.x - radmov;
-        miny = TerI->curpos.y - radmov * TerI->yscale;
-        minz = TerI->curpos.z - radmov;
-    } else {
+    switch (TerI->scanmode) {
+        default:
+            radmov = TerI->curvel.x * TerI->curvel.x + TerI->curvel.y * TerI->curvel.y + TerI->curvel.z * TerI->curvel.z;
+            radmov += TerI->sizesq + 0.02f;
+            maxx = TerI->curpos.x + radmov;
+            maxy = TerI->curpos.y + radmov * TerI->yscale;
+            maxz = TerI->curpos.z + radmov;
+            minx = TerI->curpos.x - radmov;
+            miny = TerI->curpos.y - radmov * TerI->yscale;
+            minz = TerI->curpos.z - radmov;
+        break;
+        case 1:
         if (TerI->curvel.x > 0.0f) {
             minx = (TerI->curpos.x - 0.02f) - TerI->size;
             maxx = TerI->curpos.x + TerI->curvel.x + 0.02f + TerI->size;
@@ -5111,6 +5123,7 @@ void ScanTerrainHandel(s32 extramask, short* Handel) {
         }
         radmov = (minx - maxx) * (minx - maxx) + (miny - maxy) * (miny - maxy) + (minz - maxz) * (minz - maxz);
         radmov += +0.02f;
+        break;
     }
     HitCnt = 0;
     CurData = Handel;
@@ -5393,16 +5406,18 @@ void ScanTerrainPlatform(s32 msituid, s32 extramask) {
     HitCnt = 0;
     platinrange = 0;
     TerI->plathit = -1;
-    if (TerI->scanmode != 1) {
-        radmov = TerI->curvel.x * TerI->curvel.x + TerI->curvel.y * TerI->curvel.y + TerI->curvel.z * TerI->curvel.z;
-        radmov += TerI->sizesq + 0.02f;
-        maxx = TerI->curpos.x + radmov;
-        maxy = TerI->curpos.y + radmov * TerI->yscale;
-        maxz = TerI->curpos.z + radmov;
-        minx = TerI->curpos.x - radmov;
-        miny = TerI->curpos.y - radmov * TerI->yscale;
-        minz = TerI->curpos.z - radmov;
-    } else {
+    switch (TerI->scanmode) {
+        default:
+            radmov = TerI->curvel.x * TerI->curvel.x + TerI->curvel.y * TerI->curvel.y + TerI->curvel.z * TerI->curvel.z;
+            radmov += TerI->sizesq + 0.02f;
+            maxx = TerI->curpos.x + radmov;
+            maxy = TerI->curpos.y + radmov * TerI->yscale;
+            maxz = TerI->curpos.z + radmov;
+            minx = TerI->curpos.x - radmov;
+            miny = TerI->curpos.y - radmov * TerI->yscale;
+            minz = TerI->curpos.z - radmov;
+        break;
+        case 1:
         if (TerI->curvel.x > 0.0f) {
             minx = (TerI->curpos.x - 0.02f) - TerI->size;
             maxx = TerI->curpos.x + TerI->curvel.x + 0.02f + TerI->size;
@@ -5426,6 +5441,7 @@ void ScanTerrainPlatform(s32 msituid, s32 extramask) {
         }
         radmov = (minx - maxx) * (minx - maxx) + (miny - maxy) * (miny - maxy) + (minz - maxz) * (minz - maxz);
         radmov += TerI->size + 0.02f;
+        break;
     }
     TerI->PlatScanStart = LastWrite;
     a = 0x100;

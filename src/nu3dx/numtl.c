@@ -774,7 +774,7 @@ void NuMtlRender(void) {
   NuMtlRenderOT(0xb,0x100);
   DBTimerEnd(9);
   DBTimerStart(8);
-  //DrawStencilShadowQuad(); //empty
+  DrawStencilShadowQuad();
   DBTimerEnd(8);
   DBTimerStart(7);
   NuMtlRenderUpd();

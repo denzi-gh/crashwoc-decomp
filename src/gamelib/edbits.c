@@ -79,13 +79,13 @@ void edbitsSoundPlay(struct nuvec_s *pos, s32 sid)		//CHECK
   struct pSFX *SFXTab;
   s32 tsid;
   
-  if (edbits_what_game == '\x02') {
+  if (edbits_what_game == 2) {
     if (sid < (s32)edSfxGlobalCount) {
       tsid = sid * 0x30;
       SFXTab = edSfxGlobalTab;
     }
     else {
-      tsid = (sid - edSfxGlobalCount) * 0x30;
+      tsid = (sid - (s32)edSfxGlobalCount) * 0x30;
       SFXTab = edSfxLevelTab;
     }
     SFXTab = (struct pSFX *)((char *)SFXTab + tsid);
@@ -96,14 +96,17 @@ void edbitsSoundPlay(struct nuvec_s *pos, s32 sid)		//CHECK
     debris_sfx = 0;
   }
   else if (sid < (s32)edSfxGlobalCount) {
-    tsid = (s32)((u32)edSfxGlobalTab[sid].volume * edbitsSfxVol) / 100;
-    NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxGlobalTab[sid].pitch);
+    tsid = sid * 0x30;
+    SFXTab = (struct pSFX *)((char *)edSfxGlobalTab + tsid);
+    tsid = ((s32)SFXTab->volume * (s32)edbitsSfxVol) / 100;
+    NuSoundPlay3d(pos, sid, tsid, tsid, SFXTab->pitch);
   }
   else {
-    tsid = (s32)((u32)edSfxLevelTab[sid - (s32)edSfxGlobalCount].volume * edbitsSfxVol) / 100;
-    NuSoundPlay3d(pos, sid, tsid, tsid, (u32)edSfxLevelTab[sid - (s32)edSfxGlobalCount].pitch);
+    tsid = (sid - (s32)edSfxGlobalCount) * 0x30;
+    SFXTab = (struct pSFX *)((char *)edSfxLevelTab + tsid);
+    tsid = ((s32)SFXTab->volume * (s32)edbitsSfxVol) / 100;
+    NuSoundPlay3d(pos, sid, tsid, tsid, SFXTab->pitch);
   }
-  return;
 }
 
 

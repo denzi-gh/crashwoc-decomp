@@ -282,6 +282,56 @@ void NewGenerateJeepMatrix(struct numtx_s *Mat,short YAng,short SurfaceX,short S
   return;
 }
 
+void SpinWheelsJeep(struct JEEPSTRUCT *Jeep, f32 DeltaTime) {
+  f32 SpeedF;
+  f32 AccelF;
+  f32 ChassisDeltaF;
+  s16 SpeedDelta;
+  s16 AngleDelta;
+  s16 BigSpinDelta;
+  s32 FrontDelta;
+  s32 RearDelta;
+  s32 i;
+
+  SpeedF = Jeep->Move.Resolved.z * DeltaTime * 65536.0f;
+  SpeedF = (SpeedF + SpeedF) / 10.0f;
+
+  AccelF = Jeep->Accelerator;
+  AccelF = AccelF + AccelF;
+  AccelF = AccelF + AccelF;
+  AccelF = AccelF * 65536.0f;
+  AccelF = AccelF * DeltaTime;
+
+  ChassisDeltaF = (f32)(Jeep->aChassisAngleY - Jeep->aOldChassisAngleY);
+
+  AngleDelta = (s16)((Jeep->aChassisAngleY - Jeep->aOldChassisAngleY) +
+               ((Jeep->aFrontWheelAng - Jeep->aOldFrontWheelAng) >> 2));
+
+  AccelF = AccelF / (Jeep->Traction + 1.0f);
+
+  SpeedDelta = (s16)(s32)SpeedF;
+
+  if (AccelF < (f32)SpeedDelta) {
+    AccelF = (f32)SpeedDelta;
+  }
+
+  FrontDelta = (s32)(AccelF + ChassisDeltaF);
+  RearDelta = (s32)(AccelF - ChassisDeltaF);
+
+  BigSpinDelta = (s16)(s32)(DeltaTime * 393216.0f);
+
+  Jeep->aWRot[0] -= (s16)(SpeedDelta + AngleDelta);
+  Jeep->aWRot[1] -= (s16)(SpeedDelta - AngleDelta);
+  Jeep->aWRot[2] -= (s16)FrontDelta;
+  Jeep->aWRot[3] -= (s16)RearDelta;
+
+  for (i = 0; i < 4; i++) {
+    if (Jeep->Move.BigSpin[i] != 0) {
+      Jeep->aWRot[i] += BigSpinDelta;
+    }
+  }
+}
+
 //NGC MATCH
 void TiltSeek(struct JEEPSTRUCT *Jeep,float DeltaTime) {
   float fVar1;

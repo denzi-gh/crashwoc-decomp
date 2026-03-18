@@ -122,9 +122,12 @@ struct objtab_s {
 };
 
 struct plritem_s {
-    s32 draw;
-    s32 count;
-    s32 frame;
+    short count;
+    short draw;
+    s8 frame;
+    s8 wait;
+    u8 delay;
+    u8 item;
 };
 
 struct gdeb_s {
@@ -174,6 +177,7 @@ struct cratesarray_s {
 
 void NewMenu(struct cursor_s* cur, s32 menu, s32 y, s32 level);
 s32 NewCrateAnimation(CrateCube* crate, s32 type, s32 action, s32 random);
+f32 NewShadowMaskPlat(struct nuvec_s* ppos, f32 size, s32 extramask);
 
 extern char Chase[];
 extern s32 Hub;
@@ -283,6 +287,7 @@ extern f32 BONUSLIFESCALE;
 extern f32 BONUSPANELSY;
 extern f32 CRATECOUNT3DSCALE;
 extern f32 CRATECOUNT3DSEPERATION;
+extern f32 FINISHRADIUSHUB;
 extern f32 FINISHRADIUSLEVEL;
 extern f32 SAFEY;
 extern f32 DISCOXOFFSET;
@@ -297,7 +302,7 @@ extern u32 finish_frames;
 extern struct nuvec_s finish_oldpos;
 extern struct nuvec_s finish_newpos;
 extern s32 finish_type;
-extern u32 plr_items;
+extern u16 plr_items;
 extern struct plritem_s plr_wumpas;
 extern struct plritem_s plr_crates;
 extern struct plritem_s plr_lives;
@@ -326,7 +331,7 @@ extern f32 start_time;
 extern s32 clock_ok;
 extern s32 LivesLost;
 extern s32 mg_wumpatot;
-extern char* tNODATAAVAILABLE[6];
+extern char* tNODATAAVAILABLE[6][2];
 extern char* tCHECK[];
 extern char* tPOINT[];
 extern char* tYES[6];
@@ -434,9 +439,15 @@ extern GameObject gempath_obj;
 extern s32 gempath_open;
 extern struct RPos_s gempath_RPos;
 extern s32 gold_relics;
+extern s32 hub_vr_image;
 extern s32 hub_vr_level;
 extern f32 hub_vr_newscale;
 extern struct nuvec_s hub_vr_pos;
+extern u16 HubLevelAngle;
+extern s32 hubleveltext_i;
+extern s32 hubleveltext_open;
+extern struct nuvec_s hubwarp_oldpos;
+extern struct nuvec_s hubwarp_newpos;
 extern f32 hub_vr_scale;
 extern u16 hub_vr_xrot;
 extern u16 hub_vr_yrot;
@@ -1515,10 +1526,7 @@ void AddFlyingWumpa(struct nuvec_s *src,struct nuvec_s *dir,struct nuvec_s *dst,
   wumpa->time = 0.0f;
   wumpa->duration = 2.0f;
   wumpa->surface_type = -1;
-  wumpa->mom = *dir;
-  wumpa->mom.x *= 0.1666667f;
-  wumpa->mom.y *= 0.1666667f;
-  wumpa->mom.z *= 0.1666667f;
+  NuVecScale(0.1666667f, &wumpa->mom, dir);
   WumpaHitTerrain(wumpa);
   if (destroy == 3) {
     destroy = 2;
@@ -2347,6 +2355,230 @@ s32 ActiveAwards(void) {
   return 0;
 }
 
+
+void HubLevelSelect(struct obj_s *obj, s32 hub) {
+  struct nugspline_s* spl;
+  struct nuvec_s* p0;
+  struct nuvec_s* p1;
+  struct nuvec_s pos;
+  f32 dx, dy, dz;
+  f32 dist2;
+  f32 best;
+  f32 radius2;
+  f32 eye_y;
+  f32 target;
+  s32 i;
+  s32 j;
+  s32 huboff;
+  s32 level;
+  s32 sploff;
+  s32 ptoff0, ptoff1;
+  u16 ang;
+  char* pts;
+
+  if (warp_level != -1) {
+    finish_frame++;
+    if (finish_frame == finish_frames) {
+      new_level = (s8)HData[hub].level[HubLevel];
+    }
+
+    if (hubleveltext_pos > 0.333f) {
+      hubleveltext_pos -= 1.0f / 60.0f;
+      if (hubleveltext_pos < 0.333f) {
+        hubleveltext_pos = 0.333f;
+      }
+    } else if (hubleveltext_pos < 0.333f) {
+      hubleveltext_pos += 1.0f / 60.0f;
+      if (hubleveltext_pos > 0.333f) {
+        hubleveltext_pos = 0.333f;
+      }
+    }
+    return;
+  }
+
+  /* warp_level == -1 */
+  HubLevel = warp_level; /* -1 */
+  level = -1;
+  HubLevel_available = 0;
+  finish_frame = 0;
+
+  if (new_mode != -1) goto text_update;
+  if (new_level != -1) goto text_update;
+  if (hub == -1) goto text_update;
+
+  huboff = hub * 12;
+  {
+    s8 ispl_val = HData[hub].i_spl[0];
+    if (ispl_val == -1) goto text_update;
+    sploff = ispl_val * 0x18;
+    if (SplTab[ispl_val].spl == NULL) goto text_update;
+  }
+
+  if (Game.hub[hub].flags == 0) goto text_update;
+
+  if (hub == 5) {
+    radius2 = 6.25f;
+  } else {
+    radius2 = 3.2399998f;
+  }
+
+  j = 2;
+  for (i = 0; i < 6; i++) {
+    if (hub != 5 || i != 5) {
+      spl = *(struct nugspline_s**)((char*)SplTab + sploff);
+      p0 = (struct nuvec_s*)(spl->pts + j * (s32)spl->ptsize);
+      dx = p0->x - obj->pos.x;
+      dz = p0->z - obj->pos.z;
+      dist2 = dz * dz + dx * dx;
+      if (dist2 < radius2) {
+        if (HubLevel != -1) {
+          if (!(dist2 < best)) goto next_level;
+        }
+        HubLevel = i;
+        best = dist2;
+        hub_vr_level = i;
+      }
+    }
+    next_level:
+    j += 2;
+  }
+
+  if (HubLevel != -1 && hublevelopen[HubLevel + hub * 6] != 0) {
+    HubLevel_available = 1;
+  } else {
+    in_finish_range = 0;
+  }
+  if (HubLevel != -1) {
+    level = (s8)HData[hub].level[HubLevel];
+  } else {
+    level = -1;
+  }
+
+  if (HubLevel == -1) goto out_of_range;
+
+  if (Level == 0x25) {
+    if (tumble_time < tumble_duration) {
+      if (last_hub != -1) goto out_of_range;
+    }
+  }
+
+  /* Calculate spline data for selected level */
+  spl = *(struct nugspline_s**)((char*)SplTab + sploff);
+  ptoff0 = (HubLevel * 2 + 2) * (s32)spl->ptsize;
+  ptoff1 = (HubLevel * 2 + 3) * (s32)spl->ptsize;
+  pts = spl->pts;
+  p0 = (struct nuvec_s*)(pts + ptoff0);
+  p1 = (struct nuvec_s*)(pts + ptoff1);
+
+  ang = (u16)NuAtan2D(obj->pos.x - p0->x, obj->pos.z - p0->z);
+
+  pos.x = p0->x;
+  pos.y = p0->y + 1.0f;
+  pos.z = p0->z;
+
+  eye_y = (obj->bot + obj->top) * obj->SCALE * 0.5f + obj->pos.y;
+  dx = obj->pos.x - p0->x;
+  dz = obj->pos.z - p0->z;
+  dy = eye_y - pos.y;
+
+  dist2 = dx * dx + dz * dz;
+  if (dist2 >= FINISHRADIUSHUB * FINISHRADIUSHUB) goto out_of_range;
+  if (NuFabs(dy) >= 5.0f) goto out_of_range;
+
+  /* In finish range */
+  in_finish_pos = *p0;
+  if (HubLevel_available != 0) {
+    in_finish_range++;
+    if (in_finish_range <= 0x3b) goto text_update;
+  }
+
+  /* Try to activate warp */
+  if (level == -1) {
+    HubLevel = level;
+    goto set_direction;
+  }
+  if (HubLevel_available == 0) goto set_direction;
+
+  /* Activate warp */
+  if (HubLevel <= 4) {
+    hub_vr_image = level;
+  }
+
+  spl = *(struct nugspline_s**)((char*)SplTab + sploff);
+  ptoff1 = (HubLevel * 2 + 3) * (s32)spl->ptsize;
+  ptoff0 = (HubLevel * 2 + 2) * (s32)spl->ptsize;
+  pts = spl->pts;
+  p1 = (struct nuvec_s*)(pts + ptoff1);
+  p0 = (struct nuvec_s*)(pts + ptoff0);
+  level = (s8)HData[hub].level[HubLevel];
+
+  HubLevelAngle = (u16)NuAtan2D(p1->x - p0->x, p1->z - p0->z);
+  warp_level = (s8)HData[hub].level[HubLevel];
+  AddWarpDebris(obj, &pos);
+
+  hubwarp_oldpos = obj->pos;
+  finish_frames = 60;
+  hubwarp_newpos = *p0;
+  gamesfx_effect_volume = 0x7FFE;
+  GameSfx(0x1E, &obj->pos);
+  goto text_update;
+
+set_direction:
+  if (Level == 0x25) {
+    if (tumble_time < tumble_duration) {
+      if (last_hub != -1) goto text_update;
+    }
+  }
+
+  if (HubLevel == 5) {
+    obj->mom.x = NuTrigTable[ang & 0xFFFF] * 0.050000004f;
+    obj->mom.z = NuTrigTable[(ang + 0x4000) & 0xFFFF] * 0.050000004f;
+  } else {
+    ang = (u16)NuAtan2D(p1->x - p0->x, p1->z - p0->z);
+    obj->mom.x = NuTrigTable[ang & 0xFFFF] * 0.050000004f;
+    obj->mom.z = NuTrigTable[(ang + 0x4000) & 0xFFFF] * 0.050000004f;
+  }
+  goto text_update;
+
+out_of_range:
+  in_finish_range = 0;
+
+text_update:
+  target = 0.0f;
+  if (level != -1) {
+    if (hubleveltext_pos == 0.0f) {
+      hubleveltext_i = HubLevel;
+      hubleveltext_open = HubLevel_available;
+      hubleveltext_level = level;
+    }
+    if (hubleveltext_level != -1) {
+      if (level == hubleveltext_level) {
+        if (tumble_time == tumble_duration) {
+          if (ActiveAwards() == 0) {
+            target = 0.333f;
+          }
+        }
+      }
+    }
+  }
+
+  if (hubleveltext_pos > target) {
+    hubleveltext_pos -= 1.0f / 60.0f;
+    if (hubleveltext_pos < target) {
+      hubleveltext_pos = target;
+    }
+  } else if (hubleveltext_pos < target) {
+    hubleveltext_pos += 1.0f / 60.0f;
+    if (hubleveltext_pos > target) {
+      hubleveltext_pos = target;
+    }
+  }
+
+  if (hubleveltext_pos == 0.0f) {
+    hubleveltext_level = -1;
+  }
+}
+
 //NGC 99%
 s32 AddAward(s32 hub,s32 level,u16 got) {
   s32 i0;
@@ -2670,16 +2902,16 @@ if ((cp_iRAIL == -1) || (cp_iALONG == -1))
 
 //NGC MATCH
 void ResetLoadSaveCharacter(void) {
+  Hub = -1;
   tumble_action = -1;
   tumble_duration = 0.0f;
   tumble_time = 0.0f;
   last_level = -1;
   last_hub = -1;
-  Hub = -1;
-  (player->obj).hdg = 0x8000;
+  player->obj.hdg = 0x8000;
   if (pos_START != NULL) {
-    (player->obj).pos = *pos_START;
-    (player->obj).shadow = NewShadowMaskPlat(&(player->obj).pos,0.0f,-1);
+    player->obj.pos = *pos_START;
+    player->obj.shadow = NewShadowMaskPlat(&player->obj.pos, 0.0f, -1);
   }
   return;
 }
@@ -4400,13 +4632,13 @@ void ResetAkuAkuAdvice(void) {
 }
 
 void ResetItems(void) {
-  plr_items = 0;
   plr_bonusgem.count = 0;
+  plr_crystal.draw = 0;
   plr_crystal.count = 0;
   plr_crategem.draw = 0;
   plr_crategem.count = 0;
   plr_bonusgem.draw = 0;
-  plr_crystal.draw = 0;
+  plr_items = 0;
   return;
 }
 
