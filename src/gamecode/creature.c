@@ -1420,19 +1420,13 @@ void ProcessCreatures(void) {
     }
     c->obj.SCALE = c->obj.scale * CData[c->obj.character].scale;
         
-    if (((VEHICLECONTROL != 1) && ( VEHICLECONTROL == 2))) {
+    if (VEHICLECONTROL == 2) {
          c->obj.RADIUS = CData[115].radius;
-        
     }
-    else if (VEHICLECONTROL == 1){
-            if  (c->obj.vehicle != -1){
-             c->obj.RADIUS = CData[c->obj.vehicle].radius;
-            }
-          else{
-               c->obj.RADIUS = c->obj.radius ;
-          }
+    else if ((VEHICLECONTROL == 1) && (c->obj.vehicle != -1)){
+         c->obj.RADIUS = CData[c->obj.vehicle].radius;
     } else {
-        c->obj.RADIUS = c->obj.radius ;
+        c->obj.RADIUS = c->obj.radius;
     }
         c->obj.RADIUS *= c->obj.SCALE;
     
@@ -1513,8 +1507,8 @@ void StoreLocatorMatrices(struct CharacterModel *model,struct numtx_s *mC,struct
         oldpos.x = mtx[i]._30;
         oldpos.y = mtx[i]._31;
         oldpos.z = mtx[i]._32;
-        NuHGobjPOIMtx(model->hobj,i,mC,tmtx,&m);
-          mtx[i] = m;
+        NuHGobjPOIMtx(model->hobj,(u8)i,mC,tmtx,&m);
+        mtx[i] = m;
         if (mom != NULL) {
           mom[i].x = mtx[i]._30 - oldpos.x;
           mom[i].y = mtx[i]._31 - oldpos.y;

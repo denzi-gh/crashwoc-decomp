@@ -83,9 +83,28 @@ struct instNUTRIGGER_s {
     char flags;
 };
 
+struct NUTRIGGER_s {
+    char *triggername;
+    s32 trigger_type;
+    s16 hitpoints;
+    u8 enableflags;
+    char pad;
+    int scale_transform : 1;
+    int display_box : 1;
+    int persistant : 1;
+    float radius;
+    struct nuvec_s min;
+    struct nuvec_s max;
+    s16 numprims;
+    s16 instance_ix;
+    void *prims;
+};
+
 struct NUTRIGGERSYS_s {
+    s32 version;
+    s32 address_offset;
     s32 ntriggers;
-    struct NUGCUTTRIGGER_s *triggers;
+    struct NUTRIGGER_s *triggers;
 };
 
 struct instNUTRIGGERSYS_s {

@@ -241,17 +241,16 @@ struct instNUGCUTSCENE_s *instNuGCutSceneCreate (struct NUGCUTSCENE_s *cutscene,
     return icutscene;
 }
 
-void instNuGCutSceneDestroy(instNUGCUTSCENE_s *icutscene)
-
+void instNuGCutSceneDestroy(struct instNUGCUTSCENE_s *icutscene)
 {
   if (icutscene->is_playing != 0)
   {
     instNuGCutSceneEnd(icutscene);
   }
-  if (icutscene->next != (instNUGCUTSCENE_s *)0x0) {
+  if (icutscene->next != NULL) {
     icutscene->next->prev = icutscene->prev;
   }
-  if (icutscene->prev == (instNUGCUTSCENE_s *)0x0) {
+  if (icutscene->prev == NULL) {
     active_cutscene_instances = icutscene->next;
   }
   else {
@@ -323,7 +322,7 @@ void instNuGCutSceneSetEndCallback(struct instNUGCUTSCENE_s *icutscene,void(*fn)
 }
 
 //PS2 MATCH //NGC MATCH
-inline static void instNuGCutSceneClipTest(struct instNUGCUTSCENE_s *icutscene) {
+static void instNuGCutSceneClipTest(struct instNUGCUTSCENE_s *icutscene) {
     struct NUGCUTSCENE_s *cutscene;
 
     cutscene = icutscene->cutscene;
@@ -708,8 +707,8 @@ void instNuGCutCamSysStart(struct instNUGCUTCAMSYS_s *icamsys,struct NUGCUTCAMSY
     for (i = 0; camsys->ncutcams > i; i++)
     {
       icutcam = &icamsys->icutcams[i];
-      icutcam->tgt_ix = '\0';
       icutcam->flags = icutcam->flags & 0xfd;
+      icutcam->tgt_ix = '\0';
     }
   return;
 }
@@ -885,7 +884,7 @@ static void instNuGCutLocatorSysUpdate(struct instNUGCUTSCENE_s *icutscene,float
       locator = &locatorsys->locators[i];
       if ((locator->flags & 1) == 0) {
         if ((locator->flags & 2) == 0) {
-            if (icutscene->has_mtx & 0x10) {
+            if (icutscene->has_mtx) {
             instNuGCutLocatorUpdate
                       (icutscene,locatorsys,ilocatorsys->ilocators + i,locator,current_frame,
                        &icutscene->mtx);
@@ -941,15 +940,10 @@ static void NuGCutLocatorSysFixUp(struct NUGCUTLOCATORSYS_s *locatorsys)
       if ((loctype->flags & 1) != 0) {
         loctype->ix = LookupDebrisEffect(loctype->name);
       }
-      else {
-        if ((loctype->flags & 2) != 0) {
-          loctype->ix = LookupLocatorFn(loctype->name);
-        }
+      else if ((loctype->flags & 2) != 0) {
+        loctype->ix = LookupLocatorFn(loctype->name);
       }
-      if (loctype->ix == 0xFFFF) {
-        NuDebugMsgProlog("..\\nu2.ps2\\gamelib\\gcutscn.c", 0x4FB)
-            ("NuGCutLocatorSysFixUp: cannot fixup locator <%s> in cutscene", loctype->name);
-      }
+      
     }
   return;
 }
@@ -1123,9 +1117,6 @@ static void NuGCutRigidSysFixUp(struct NUGCUTSCENE_s *cutscene,struct nugscn_s *
             
             if (NuSpecialFind(scene, &rigid->special, rigid->name) != 0) {
                 rigid->flags |= 4;
-            } else {
-                NuDebugMsgProlog("..\\nu2.ps2\\gamelib\\gcutscn.c", 0x5d6)
-                    ("NuGCutRigidSysFixUp: cannot fixup rigid object <%s> in cutscene", rigid->name);
             }
             
             if (rigid->nlocators == 0) {
@@ -1180,9 +1171,6 @@ instNuCGutRigidSysCreate(struct NUGCUTSCENE_s *cutscene,struct nugscn_s *gscene,
                     iVar4 = (s32)cutrigid->special.scene->specials;
                     iVar5 = (s32)cutrigid->special.special;
                     icutrigid->special.special = &gscene->specials[FAST_DIV_20(iVar5 - iVar4)];
-                } else {
-                    NuDebugMsgProlog("..\\nu2.ps2\\gamelib\\gcutscn.c", 0x606)
-                        ("instNuCGutRigidSysCreate: cannot reference rigid object <%s>, object was not fixed up", cutrigid->name);
                 }
             }
             else {
@@ -1216,9 +1204,9 @@ static void NuGCutRigidCalcMtx(struct NUGCUTRIGID_s* rigid, float current_frame,
       r.x = NuAnimCurve2CalcVal(curves + 3,&atime,(s32)curveflags[3]);
       r.y = NuAnimCurve2CalcVal(curves + 4,&atime,(s32)curveflags[4]);
       r.z = NuAnimCurve2CalcVal(curves + 5,&atime,(s32)curveflags[5]);
-      rf.z = (s32)(r.z * 10430.378f);
       rf.x = (s32)(r.x * 10430.378f);
       rf.y = (s32)(r.y * 10430.378f);
+      rf.z = (s32)(r.z * 10430.378f);
       NuMtxSetRotateXYZ(mtx,&rf);
     }
     else {
@@ -1530,9 +1518,9 @@ void NuGCutCharAnimProcess
             r.x = NuAnimCurve2CalcVal(&curves[3], &atime, (int)curveflags[3]);
             r.y = NuAnimCurve2CalcVal(&curves[4], &atime, (int)curveflags[4]);
             r.z = NuAnimCurve2CalcVal(&curves[5], &atime, (int)curveflags[5]);
-            rf.z = (s32)(r.z * DEG_TO_FIXED_POINT);
             rf.x = (s32)(r.x * DEG_TO_FIXED_POINT);
             rf.y = (s32)(r.y * DEG_TO_FIXED_POINT);
+            rf.z = (s32)(r.z * DEG_TO_FIXED_POINT);
             NuMtxSetRotateXYZ(mtx, &rf);
         }
         else {
@@ -1632,7 +1620,7 @@ static void NuGCutTriggerSysFixUp(struct NUGCUTSCENE_s *cutscene,struct NUTRIGGE
           cuttrigger = &cuttriggersys->triggers[i];
           for (j = 0; j < triggersys->ntriggers; j++) {
             cuttrigger->ix = -1;
-            if (strcasecmp(cuttrigger->triggername,(&triggersys->triggers->triggername)[j * 0xd]) == 0)
+            if (strcasecmp(cuttrigger->triggername, triggersys->triggers[j].triggername) == 0)
             {
               cuttrigger->ix = (short)j;
               break;

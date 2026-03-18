@@ -13,12 +13,12 @@ typedef enum terr_type {
 } TERR_TYPE;
 
 typedef struct TERRAINFLAGS_s {
-    u32 rot;
+    u32 rot : 1;
 } TERRAINFLAGS;
 
 typedef struct platattrib {
-    unsigned int hit : 1;
     unsigned int rotate : 1;
+    unsigned int hit : 1;
 } PLATATTRIB;
 
 typedef struct {

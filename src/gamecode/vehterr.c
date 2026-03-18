@@ -52,7 +52,7 @@ void FindSurfaceRotXZFromNormal(struct nuvec_s *normal, s16 *rotX, s16 *rotZ);
 s32 TryUnembeddPointDir(struct nuvec_s *pos, struct nuvec_s *dir1, struct nuvec_s *dir2, s16 *handle, float radius);
 s32 TryUnembeddPointSafe(struct nuvec_s *pos, struct nuvec_s *target, s16 *handle, float radius);
 void BestGuessActualsJeep(struct VEHICLE *v);
-s32 MyCast(struct nuvec_s *pos, struct nuvec_s *target, struct nuvec_s *normals, s32 count, s32 flags, s16 *handle, float radius, s32 checkFirst);
+s32 MyCast(struct nuvec_s *pos, struct nuvec_s *target, struct nuvec_s *normals, float radius, s32 count, s32 flags, s32 checkFirst, s16 *handle);
 
 static struct nuvec_s TempX = {1.0f, 0.0f, 0.0f};
 static struct nuvec_s TempY = {0.0f, 1.0f, 0.0f};
@@ -238,10 +238,12 @@ done:
 void BestGuessActualsJeep(struct VEHICLE *v)
 {
     struct nuvec_s wp[4];
-    struct nuvec_s front, rear;
+    struct nuvec_s front;
+    struct nuvec_s rear;
+    struct nuvec_s *points;
     struct nuvec_s frontToRear;
-    struct nuvec_s side;
     struct nuvec_s up;
+    struct nuvec_s side;
     struct nuvec_s rotated;
     struct nuvec_s result;
     struct nuvec_s genpt;
@@ -251,23 +253,25 @@ void BestGuessActualsJeep(struct VEHICLE *v)
     s16 diff;
     s16 baseDiff;
 
+    points = wp;
+
     for (i = 0; i < 4; i++) {
-        wp[i] = v->ActualWheelPosition[i];
+        points[i] = v->ActualWheelPosition[i];
     }
 
-    NuVecAdd(&front, &wp[0], &wp[1]);
+    NuVecAdd(&front, &points[0], &points[1]);
     NuVecScale(0.5f, &front, &front);
 
-    NuVecAdd(&rear, &wp[2], &wp[3]);
+    NuVecAdd(&rear, &points[2], &points[3]);
     NuVecScale(0.5f, &rear, &rear);
 
     NuVecSub(&frontToRear, &rear, &front);
 
     NuFsqrt(NuVecMagSqr(&frontToRear));
 
-    side.x = ((wp[1].x - wp[0].x) + wp[3].x - wp[2].x) * 0.5f;
-    side.y = ((wp[1].y - wp[0].y) + wp[3].y - wp[2].y) * 0.5f;
-    side.z = ((wp[1].z - wp[0].z) + wp[3].z - wp[2].z) * 0.5f;
+    side.x = ((points[1].x - points[0].x) + points[3].x - points[2].x) * 0.5f;
+    side.y = ((points[1].y - points[0].y) + points[3].y - points[2].y) * 0.5f;
+    side.z = ((points[1].z - points[0].z) + points[3].z - points[2].z) * 0.5f;
 
     NuVecCross(&up, &side, &frontToRear);
     NuVecNorm(&up, &up);
@@ -281,11 +285,10 @@ void BestGuessActualsJeep(struct VEHICLE *v)
     v->aActSurfRotZ = rotZ;
 
     if ((s16)rotX < -0x1555) {
-        rotX = -0x1555;
+        v->aActSurfRotX = -0x1555;
     } else if ((s16)rotX > 0x1555) {
-        rotX = 0x1555;
+        v->aActSurfRotX = 0x1555;
     }
-    v->aActSurfRotX = rotX;
 
     NuVecRotateX(&up, &frontToRear, -(s32)v->aActSurfRotX);
     NuVecRotateZ(&up, &up, -(s32)v->aActSurfRotZ);
@@ -334,12 +337,12 @@ end_clamp:
     v->ActualPosition.z = result.z - genpt.z;
 }
 
-s32 MyCast(struct nuvec_s *pos, struct nuvec_s *target, struct nuvec_s *normals, s32 count, s32 flags, s16 *handle, float radius, s32 checkFirst)
+s32 MyCast(struct nuvec_s *pos, struct nuvec_s *target, struct nuvec_s *normals, float radius, s32 count, s32 flags, s32 checkFirst, s16 *handle)
 {
     struct nuvec_s rel;
+    struct nuvec_s temp;
     struct nuvec_s norm;
     struct nuvec_s refl;
-    struct nuvec_s temp;
     s32 i;
     s32 retval;
 
@@ -537,9 +540,9 @@ void FindSurfaceRotXZFromNormal(struct nuvec_s *normal, s16 *rotX, s16 *rotZ)
 void FindSurfaceNormalAndUnembedd(struct VEHICLE *v, float deltaTime)
 {
     struct nuvec_s temp;
-    struct nuvec_s offset;
     struct nuvec_s vel[4];
     struct nuvec_s newPos[4];
+    struct nuvec_s offset;
     s32 scanResults[4];
     s32 i;
     s32 scan;
@@ -640,7 +643,6 @@ void TerrainVehicleSoft(struct nuvec_s *out, struct VEHICLE *v, struct nuvec_s *
     struct numtx_s mtx2;
     struct nuvec_s wp[4];
     struct nuvec_s wp2[4];
-    struct nuvec_s wp3[4];
     struct nuvec_s genpt;
     struct nuvec_s genpt2;
     struct nuvec_s resolved;
@@ -733,7 +735,7 @@ void TerrainVehicleSoft(struct nuvec_s *out, struct VEHICLE *v, struct nuvec_s *
     for (i = 0; i <= 3; i++) {
         s32 flags;
         flags = (i <= 1) ? 1 : 0;
-        scanResults[i] = MyCast(&v->ActualWheelPosition[i], &wp2[i], pAxis, 4, flags, v->TerrHandle, vehSize, i);
+        scanResults[i] = MyCast(&v->ActualWheelPosition[i], &wp2[i], pAxis, vehSize, 4, flags, i, v->TerrHandle);
     }
 
     BestGuessActualsJeep(v);
