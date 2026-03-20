@@ -229,7 +229,7 @@ static angle fxyd(f32 x, f32 y)
 	return ret;
 }
 
-angle NuAtan2D(f32 x, f32 y)
+int NuAtan2D(f32 x, f32 y)
 {
 	s32 ret;
 	if (x == 0.0f)
