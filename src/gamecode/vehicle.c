@@ -1722,6 +1722,103 @@ void ProcessWeatherBossTarget(void) {
   return;
 }
 
+void ControlGliderWeatherBoss(GLIDERSTRUCT *Glider, struct nupad_s *Pad) {
+  float f31;
+  float f1;
+  float f12;
+  float f13;
+  struct nuvec_s localVec;
+  struct nuvec_s *pos;
+  struct nuvec_s *camPos;
+  float ratio;
+
+  if (Glider->TerminalDive == 0 && WBIntroOn == 0 && FlyingLevelExtro == 0) {
+    if ((Pad->paddata & 0x8) != 0) {
+      if ((u32)Glider->BarrelRoll <= 1u) {
+        if (Glider->Position.x > -WBLIMX) {
+          Glider->BarrelRoll = 3;
+          GameSfx(0x5c, &Glider->Position);
+          goto skip_input;
+        }
+      }
+    }
+    if ((Pad->paddata & 0x4) != 0) {
+      if ((u32)(Glider->BarrelRoll + 1) <= 1u) {
+        if (Glider->Position.x < WBLIMX) {
+          Glider->BarrelRoll = -3;
+          GameSfx(0x5c, &Glider->Position);
+        }
+      }
+    }
+  }
+skip_input:
+  if (Glider->BarrelRoll != 0) {
+    f31 = Rationalise360f(Glider->TiltZ);
+    if (Glider->BarrelRoll == 2) {
+      if (Glider->TiltZ > -45.0f) {
+        Glider->BarrelRoll = 1;
+      }
+    }
+    if (Glider->BarrelRoll == -2) {
+      if (Glider->TiltZ < 45.0f) {
+        Glider->BarrelRoll = -1;
+      }
+    }
+    f12 = Glider->TiltZ;
+    if ((u32)(Glider->BarrelRoll + 1) > 2u || f12 > 30.0f || f12 < -30.0f) {
+      SeekHalfLife(&Glider->BarrelDelta, 6.0000005f, 0.05f, 0.016666668f);
+    } else if (f12 <= 1.0f && f12 >= -1.0f) {
+      Glider->BarrelDelta = 1.0f;
+    } else {
+      Glider->BarrelDelta = NuFabs(f12 * 20.0f * 0.016666668f * 0.5f);
+    }
+
+    if (Glider->BarrelRoll > 0) {
+      f1 = Rationalise360f(f31 + Glider->BarrelDelta);
+      Glider->TiltZ = f1;
+      if (f31 >= 0.0f) {
+        if (f1 < 0.0f) {
+          Glider->BarrelRoll = 2;
+        }
+      }
+    } else {
+      f1 = Rationalise360f(f31 - Glider->BarrelDelta);
+      Glider->TiltZ = f1;
+      if (f31 <= 0.0f) {
+        if (f1 > 0.0f) {
+          Glider->BarrelRoll = -2;
+        }
+      }
+    }
+
+    if (Glider->BarrelRoll == 1) {
+      if (f31 < 0.0f) {
+        if (Glider->TiltZ >= 0.0f) {
+          goto reset;
+        }
+      }
+    }
+    if (Glider->BarrelRoll == -1) {
+      if (f31 > 0.0f) {
+        if (Glider->TiltZ <= 0.0f) {
+          goto reset;
+        }
+      }
+    }
+    goto done;
+reset:
+    Glider->BarrelRoll = 0;
+    Glider->TiltZ = 0.0f;
+  }
+done:
+  ProcessWeatherBossTarget();
+  camPos = (struct nuvec_s *)&WeatherBossCamMtx._30;
+  pos = GetWeatherBossPos();
+  ratio = (pos->z - camPos->z) / WeatherBossTargetPos.z;
+  NuVecScale(ratio, &localVec, &WeatherBossTargetPos);
+  NuVecAdd(&WeatherBossFirePoint, &localVec, camPos);
+}
+
 // NGC MATCH
 static char GrabAnotherLocator(char *List, struct NUPOINTOFINTEREST_s **PList) {
   s32 i;
