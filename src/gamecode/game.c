@@ -27,6 +27,7 @@ GemPathTransporter  96%
 
 #include "main.h"
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
 typedef struct crate_s CRATE;
@@ -169,6 +170,44 @@ typedef struct kaboom_s KABOOM;
 typedef struct obj_s GameObject;
 #define vtog_s pVTog
 
+s32 HitCreatures(struct obj_s *obj, s32 destroy, s32 type);
+void AddKaboom(s32 type, struct nuvec_s *pos, float radius);
+void AddPanelDebris(float x, float y, s32 type, float scale, s32 count);
+void ResetPlayer(s32 set);
+void PickupPower(s32 character);
+void PickupCrystal(void);
+void PickupCrateGem(void);
+void AddWarpDebris(struct obj_s *obj, struct nuvec_s *pos);
+s32 GetCurrentLevelObjectives(void);
+void JudderGameCamera(struct cammtx_s *cam, float time, struct nuvec_s *pos);
+s32 *NuBridgeCreate(struct nuinstance_s **instance, struct nuinstance_s *ipost, struct nuvec_s *start, struct nuvec_s *end, float width, short yang, float tension, float damp, float gravity, float plrweight, s32 sections, float postw, float posth, s32 postint, s32 colour);
+void UpdateAnimPacket(struct CharacterModel *mod, struct anim_s *anim, float dt, float xz_distance);
+float ModelAnimDuration(u32 character, u32 action, float start, float end);
+s32 FurtherALONG(s32 iRAIL0, s32 iALONG0, float fALONG0, s32 iRAIL1, s32 iALONG1, float fALONG1);
+void NuHGobjEvalAnim(struct NUHGOBJ_s *hgobj, struct nuanimdata_s *animdata, float time, int njanims, struct NUJOINTANIM_s *janim, struct numtx_s *mtx_array);
+s32 DrawCharacterModel(struct CharacterModel *model, struct anim_s *anim, struct numtx_s *mC, struct numtx_s *mS, s32 render, struct numtx_s *mR, struct numtx_s *loc_mtx, struct nuvec_s *loc_mom, struct obj_s *obj);
+float NewShadowMask(struct nuvec_s *ppos, float size, int extramask);
+void DestroyAllNitroCrates(CrateCubeGroup *group, CrateCube *crate);
+void OpenPreviousCheckpoints(s32 iRAIL, s32 iALONG, float fALONG);
+void StartExclamationCrateSequence(CrateCubeGroup *group, CrateCube *crate);
+s32 CrateRayCast(struct nuvec_s *p0, struct nuvec_s *p1);
+s32 CreatureRayCast(struct nuvec_s *p0, struct nuvec_s *p1);
+void ResetVehicleLevel(s32 PlayerDead);
+void KillItem(struct obj_s *obj);
+void ScaleFlatShadow(struct nuvec_s *s, float y, float shadow, float scale);
+float CreatureTopBelow(struct nuvec_s *pos, u32 obj_flags);
+void InitLoadSaveDeleteScreen(struct cursor_s *cur, s32 menu);
+s32 GotoCheckpoint(struct nuvec_s *pos, s32 direction);
+struct nugspline_s *NuSplineFind(struct nugscn_s *scene, char *name);
+void PickupItem(struct obj_s *obj);
+s32 GetCrateType(CrateCube *crate, s32 flags);
+void NewCut(s32 i);
+void HopCratesAbove(float speed, CrateCubeGroup *group, CrateCube *crate);
+s32 CrateOff(CrateCubeGroup *group, CrateCube *crate, s32 kaboom, s32 chase);
+void BlendGameCamera(struct cammtx_s *cam, float time);
+void AddMechanicalDebris(struct nuvec_s *pos, s32 vehicle);
+s32 Draw3DObject(s32 object, struct nuvec_s *pos, u16 xrot, u16 yrot, u16 zrot, float scalex, float scaley, float scalez, struct nugscn_s *scn, struct nuspecial_s *obj, s32 rot);
+
 struct cratesarray_s {
     s8 iRAIL;
     s16 iALONG;
@@ -213,7 +252,7 @@ extern s32 cortex_quit_i;
 extern s32 just_continued;
 extern s32 tempanim_waitaudio;
 extern s32 tempanim_nextaction;
-extern s32 new_hub_flags;
+extern u8 new_hub_flags;
 extern u16 new_lev_flags;
 extern u16 temp_lev_flags;
 extern s32 tumble_action;
@@ -231,9 +270,12 @@ extern f32 vtog_time;
 extern f32 vtog_duration;
 extern s32 vtog_blend;
 extern u16 vtog_angle;
+extern struct nuvec_s vtog_oldpos;
+extern struct nuvec_s vtog_newpos;
 extern s32 i_tempwumpa;
 extern s32 i_screenwumpa;
 extern s32 WUMPACOUNT;
+extern u16 wumpa_a[3];
 extern WumpaFruit Wumpa[320];
 extern struct winfo_s WInfo[8];
 extern struct wscr_s WScr[32];
@@ -315,12 +357,19 @@ extern s32 force_panel_crate_update;
 extern s32 force_panel_lives_update;
 extern s32 force_panel_items_update;
 extern s32 bonus_finish_frame;
-extern s32 bonus_wumpa_delay;
+extern u8 bonus_wumpa_delay;
 extern f32 bonus_wumpa_wait;
-extern s32 bonus_life_delay;
+extern u8 bonus_life_delay;
 extern s32 bonus_lives;
 extern f32 bonus_lives_wait;
 extern s32 bonus_restart;
+extern struct nugspline_s *bonus_pPLAT;
+extern struct nugspline_s *bonus_pCAM;
+extern f32 bonus_time;
+extern f32 bonus_duration;
+extern f32 bonus_panel_wait;
+extern u8 bonus_crate_delay;
+extern f32 bonus_crates_wait;
 extern f32 check_delay;
 extern f32 check_duration;
 extern f32 check_time;
@@ -392,19 +441,22 @@ extern u16 temp_xrot;
 extern u16 temp_zrot;
 extern s32 temprotate;
 extern s32 iTEMP;
-extern s32 TT_RELICX;
-extern s32 TT_RELICY;
+extern float TT_RELICX;
+extern float TT_RELICY;
 extern f32 tt_sx;
 extern f32 tt_sy;
 extern struct nuvec_s TTScrPos;
 extern f32 TEXTZMUL;
 extern struct ldata_s LData[];
 extern struct nuvec_s* pos_START;
-extern struct mask* Mask;
+extern struct mask Mask;
 extern struct cammtx_s* pCam;
 extern struct game_s* game;
 extern struct obj_s* pObj[];
 extern struct nuvec_s AshesMechInPos;
+extern struct nuvec_s AshesMechOutPos;
+extern f32 AshesMechInZ;
+extern f32 AshesMechOutZ;
 extern unsigned int bonus_frame;
 extern GameObject bonus_obj[2];
 extern s32 carpet_place;
@@ -422,7 +474,12 @@ extern s32 CutAudio[32];
 extern s32 cutmovie;
 extern s32 cutworldix;
 extern s32 death_begun;
+extern f32 death_duration;
+extern s32 death_lock;
 extern GameObject death_obj;
+extern struct nugspline_s *death_pCAM;
+extern struct nugspline_s *death_pPLAT;
+extern f32 death_time;
 extern s32 DemoLevel[4];
 extern s32 DESTRUCTIBLECRATECOUNT;
 static f32 MENUDY;
@@ -435,9 +492,14 @@ extern s32 fadeval;
 extern struct nugscn_s* font3d_scene;
 extern s16 Font3DRemap[256];
 extern s32 gempath_begun;
+extern f32 gempath_duration;
+extern s32 gempath_lock;
 extern GameObject gempath_obj;
 extern s32 gempath_open;
+extern struct nugspline_s *gempath_pCAM;
+extern struct nugspline_s *gempath_pPLAT;
 extern struct RPos_s gempath_RPos;
+extern f32 gempath_time;
 extern s32 gold_relics;
 extern s32 hub_vr_image;
 extern s32 hub_vr_level;
@@ -462,8 +524,8 @@ extern s32 FlyingLevelExtro;
 extern f32 plr_invisibility_time;
 extern s32 memtest_done;
 extern s32 next_cut_movie;
-extern char* PlaceName3[6][5];
-extern f32 platinum_relics;
+extern char* PlaceName3[6][6];
+extern s32 platinum_relics;
 extern struct tubinfo_s {
     struct creature_s* c;
     s8 track;
@@ -644,7 +706,7 @@ void JonProbe(void) {
                 }
                 probespk = probepos;
                 vec = probepos;
-                AddVariableShotDebrisEffect(GDeb[76].i, &vec, 1, -0x8000, 0);
+                AddVariableShotDebrisEffect(GDeb[304].i, &vec, 1, -0x8000, 0);
                 probecol += 0xf0;
                 if (probecol > 0x1e00) {
                     probecol = 0x1e00;
@@ -688,8 +750,8 @@ void JonProbe(void) {
                 if (Paused == 0) {
                     NuLgtArcLaser(0, &vec1, &vec, &vec2, 0.1f, 0.1f, 0.01f, dx, col + 0x00ff7f3f);
                     NuLgtArcLaser(0, &vec1, &vec, &vec2, 0.4f, 0.3f, 0.001f, dx, col + 0x00800040);
-                    AddVariableShotDebrisEffect(GDeb[78].i, &vec1, 1, 0, 0);
-                    AddVariableShotDebrisEffect(GDeb[78].i, &vec, 1, -0x8000, 0);
+                    AddVariableShotDebrisEffect(GDeb[312].i, &vec1, 1, 0, 0);
+                    AddVariableShotDebrisEffect(GDeb[312].i, &vec, 1, -0x8000, 0);
                 }
             }
         }
@@ -1192,6 +1254,141 @@ void HubMoveVR(void) {
     return;
 }
 
+void HubDrawItems(void) {
+    s32 selected;
+    s32 i;
+    s32 hub;
+    s32 j;
+    s32 k;
+    s32 object;
+    s32 character;
+    s32 level;
+    s32 item;
+    s32 chr;
+    struct nugspline_s *spl;
+    struct nuvec_s *pt_a;
+    struct nuvec_s *pt_b;
+    u16 yrot;
+
+    selected = 0;
+    if (Game.language != LANGUAGE_JAPANESE) {
+        selected = Game.language;
+    }
+
+    for (i = 0; i < 6; i++) {
+        if (ObjTab[115 + i].obj.special != NULL) {
+            if (GameMode == 1) {
+                ObjTab[115 + i].obj.special->instance->flags.visible = 0;
+            } else if (i == selected) {
+                ObjTab[115 + i].obj.special->instance->flags.visible = 1;
+            } else {
+                ObjTab[115 + i].obj.special->instance->flags.visible = 0;
+            }
+        }
+    }
+
+    if (ObjTab[121].obj.special != NULL) {
+        if (GameMode == 1) {
+            ObjTab[121].obj.special->instance->flags.visible = 1;
+        } else {
+            ObjTab[121].obj.special->instance->flags.visible = 0;
+        }
+    }
+
+    if (hub_vr_scale > 0.0f) {
+        item = 0x66;
+        if (hubleveltext_level != -1) {
+            if (hubleveltext_pos == 0.333f) {
+                item = hubleveltext_level + 0x17;
+            }
+        }
+        Draw3DObject(item, &hub_vr_pos, hub_vr_xrot, hub_vr_yrot, 0,
+                     hub_vr_scale, hub_vr_scale, hub_vr_scale,
+                     ObjTab[item].obj.scene, ObjTab[item].obj.special, 0);
+        Draw3DObject(0x16, &hub_vr_pos, hub_vr_xrot, hub_vr_yrot, 0,
+                     hub_vr_scale, hub_vr_scale, hub_vr_scale,
+                     ObjTab[0x16].obj.scene, ObjTab[0x16].obj.special, 0);
+    }
+
+    for (hub = 0; hub <= 5; hub++) {
+        if (HData[hub].barrier != 0xFF) {
+            if (ObjTab[HData[hub].barrier].obj.special != NULL) {
+                ObjTab[HData[hub].barrier].obj.special->instance->flags.visible =
+                    !(Game.hub[hub].flags & 1);
+            }
+        }
+
+        if (HData[hub].i_spl[1] == -1) continue;
+        spl = SplTab[HData[hub].i_spl[1]].spl;
+        if (spl == NULL) continue;
+
+        for (j = 0; j <= 5; j++) {
+            for (k = 0; k <= 3; k++) {
+                level = HData[hub].level[j];
+                if (level == -1) continue;
+
+                pt_a = (struct nuvec_s *)(spl->pts + (j * 8 + k * 2) * spl->ptsize);
+                pt_b = (struct nuvec_s *)(spl->pts + (j * 8 + k * 2 + 1) * spl->ptsize);
+                object = -1;
+                character = -1;
+
+                switch (k) {
+                case 0:
+                    if (Game.level[level].flags & 0x10) {
+                        object = 0xC2;
+                    }
+                    break;
+                case 1:
+                    if (Game.level[level].flags & 0x08) {
+                        object = 0xC1;
+                    }
+                    break;
+                case 2:
+                    if (Game.level[level].flags & 0x04) {
+                        object = 1;
+                    } else if (Game.level[level].flags & 0x02) {
+                        object = 2;
+                    } else if (Game.level[level].flags & 0x01) {
+                        object = 3;
+                    }
+                    break;
+                case 3:
+                    if (Game.level[level].flags & 0x20) {
+                        object = 0xC3;
+                    } else if (Game.level[level].flags & 0x40) {
+                        object = 0xC4;
+                    } else if (Game.level[level].flags & 0x80) {
+                        object = 0xC5;
+                    } else if (Game.level[level].flags & 0x100) {
+                        object = 0xC6;
+                    } else if (Game.level[level].flags & 0x200) {
+                        object = 0xC8;
+                    } else if (Game.level[level].flags & 0x400) {
+                        object = 0xC7;
+                    }
+                    break;
+                }
+
+                if (object != -1) {
+                    if (ObjTab[object].obj.special != NULL) {
+                        yrot = (u16)NuAtan2D(pt_b->x - pt_a->x, pt_b->z - pt_a->z);
+                        Draw3DObject(object, pt_a, 0, yrot, 0, 0.77f, 0.77f, 0.77f,
+                                    ObjTab[object].obj.scene, ObjTab[object].obj.special, 0);
+                    }
+                } else if (character != -1) {
+                    chr = (s32)CRemap[character];
+                    if (chr != -1) {
+                        yrot = (u16)NuAtan2D(pt_b->x - pt_a->x, pt_b->z - pt_a->z);
+                        Draw3DCharacter(pt_a, 0, yrot, 0, &CModel[chr], -1, 0.77f, 1.0f, 0);
+                    }
+                }
+            }
+        }
+    }
+
+    JonProbe();
+}
+
 //MATCH NGC
 void InitWumpa(void) {
   s32 i;
@@ -1447,7 +1644,7 @@ s32 HitWumpa(struct obj_s* obj, s32 destroy) {
                 if (dx + dz < r2) {
                     if (destroy != 0) {
                         key = -1;
-                        AddFiniteShotDebrisEffect(&key, GDeb[130].i, &wumpa->pos, 1);
+                        AddFiniteShotDebrisEffect(&key, GDeb[520].i, &wumpa->pos, 1);
                         wumpa->active = 0;
                     } else {
                         FlyWumpa(wumpa);
@@ -1474,6 +1671,109 @@ void FlyWumpa(struct wumpa_s* wumpa) {
   wumpa->fired = '\0';
   GameSfx(0x2a,&wumpa->pos);
   return;
+}
+
+void UpdateWumpa(void) {
+  u16 la[3];
+  struct nuvec_s scale;
+  struct obj_s hitobj;
+  struct winfo_s *info;
+  struct wumpa_s *wumpa;
+  s32 key;
+  s32 active;
+  s32 i;
+  u16 rx, rz;
+  f32 s;
+
+  wumpa_a[0] += 0x222;
+  wumpa_a[1] += 0x280;
+  wumpa_a[2] += 0x355;
+  la[0] = wumpa_a[0];
+  la[1] = wumpa_a[1];
+  la[2] = wumpa_a[2];
+
+  info = WInfo;
+  for (i = 8; i != 0; i--) {
+    info->angle -= info->spin;
+    info->dy = NuTrigTable[la[0]] * 0.05f;
+    rx = (u16)(s32)(NuTrigTable[la[1]] * 2048.0f);
+    rz = (u16)(s32)(NuTrigTable[la[2]] * 2048.0f);
+    info->m = numtx_identity;
+    scale.x = info->scale;
+    scale.z = info->scale;
+    scale.y = info->scale;
+    NuMtxSetScale((struct numtx_s *)info, &scale);
+    NuMtxRotateY((struct numtx_s *)info, info->angle);
+    NuMtxRotateZ((struct numtx_s *)info, rz);
+    NuMtxRotateX((struct numtx_s *)info, rx);
+    la[0] += 0x2000;
+    la[1] += 0x2000;
+    la[2] += 0x2000;
+    info++;
+  }
+
+  hitobj.bot = -0.1f;
+  hitobj.top = 0.1f;
+  hitobj.flags = 0;
+  hitobj.finished = '\0';
+  hitobj.dead = '\0';
+  hitobj.attack = 0;
+  hitobj.pLOCATOR = NULL;
+
+  wumpa = Wumpa;
+  for (i = 0x140; i != 0; i--, wumpa++) {
+    active = (s8)wumpa->active;
+    if (active == 1) {
+      wumpa->time += (1.0f / 60.0f);
+      if (wumpa->time >= 0.75f) {
+        wumpa->time = 0.75f;
+        wumpa->pos = wumpa->pos1;
+        wumpa->active = 2;
+      } else {
+        f32 t = wumpa->time / 0.75f;
+        wumpa->pos.x = (wumpa->pos1.x - wumpa->pos0.x) * t + wumpa->pos0.x;
+        wumpa->pos.y = (wumpa->pos1.y - wumpa->pos0.y) * t + wumpa->pos0.y;
+        wumpa->pos.z = (wumpa->pos1.z - wumpa->pos0.z) * t + wumpa->pos0.z;
+        wumpa->pos.y += NuTrigTable[(u16)(s32)(t * 32768.0f)];
+      }
+    } else if (active == 3) {
+      wumpa->time += (1.0f / 60.0f);
+      if (wumpa->time < wumpa->duration) {
+        NuVecAdd(&wumpa->pos, &wumpa->pos, &wumpa->mom);
+        hitobj.pos = wumpa->pos;
+        s = 1.0f - wumpa->time * 0.5f;
+        hitobj.RADIUS = s * 0.1f;
+        hitobj.SCALE = s;
+        if (wumpa->destroy == 2) {
+          hitobj.SCALE = s + s;
+        }
+        if (HitCreatures(&hitobj, 1, 2) != 0 ||
+            HitCrates(&hitobj, (wumpa->destroy != 0) ? 1 : 0) != 0 ||
+            HitItems(&hitobj) != 0 ||
+            (wumpa->destroy != 0 && HitWumpa(&hitobj, 1) != 0))
+        {
+          key = -1;
+          AddFiniteShotDebrisEffect(&key, GDeb[520].i, &wumpa->pos, 1);
+          wumpa->active = 0;
+        }
+      } else {
+        key = -1;
+        AddFiniteShotDebrisEffect(&key, GDeb[520].i, &wumpa->pos, 1);
+        wumpa->active = 0;
+      }
+    }
+
+    if (active != 0 && wumpa->active == 0) {
+      if ((s8)wumpa->destroy != 0) {
+        if ((s8)wumpa->destroy == 2) {
+          AddKaboom(0x100, &wumpa->pos, 0.0f);
+          GameSfx(0x31, &wumpa->pos);
+        } else {
+          GameSfx(4, &wumpa->pos);
+        }
+      }
+    }
+  }
 }
 
 //MATCH NGC
@@ -2165,13 +2465,13 @@ void UpdateMask(struct mask_s* mask, struct obj_s* obj) {
         v.x = (player->obj).pos.x;
         v.y = ((player->obj).bot + (player->obj).top) * (player->obj).SCALE * 0.5f + (player->obj).pos.y;
         v.z = (player->obj).pos.z;
-        AddVariableShotDebrisEffect(GDeb[155].i, &v, 1, 0, 0);
+        AddVariableShotDebrisEffect(GDeb[620].i, &v, 1, 0, 0);
     } else {
         if (1 < mask->active) {
             v.x = (mask->pos).x;
             v.y = (mask->pos).y;
             v.z = (mask->pos).z;
-            AddVariableShotDebrisEffect(GDeb[156].i, &v, 1, 0, 0);
+            AddVariableShotDebrisEffect(GDeb[624].i, &v, 1, 0, 0);
         }
     }
     if ((USELIGHTS != 0) && (LIGHTMASK != 0)) {
@@ -4493,8 +4793,432 @@ s32 FinishHGobjAnim(struct nuhspecial_s *obj) {
   return 0;
 }
 
+void InitVehicleToggles(void) {
+  struct nugspline_s *NuSplineFind(struct nugscn_s *scene, char *name);
+  float NewShadowMask(struct nuvec_s *ppos,float size,int extramask);
+  s32 i;
+  s32 action;
+  struct vtog_s *tog;
+  struct nugspline_s *spl;
+  struct nuvec_s *pos;
+  float y;
 
-//vehsupp.c
+  action = LDATA->vehicle;
+  if (((action == 0x44) || (action == 0xb2)) || ((action == 0x3b) || (action == 0x20))) {
+    action = 0x62;
+  } else if (action != -1) {
+    action = 0x68;
+  }
+  vtog_action = action;
+
+  for (i = 0; i <= 5; i++) {
+    tog = &VTog[i];
+    pos = &tog->pos;
+    tog->pTRIGGER = NULL;
+    if (world_scene[0] != NULL) {
+      sprintf(tbuf,"vehicle_trigger_%.2i_in",i);
+      tog->pTRIGGER = NuSplineFind(world_scene[0],tbuf);
+      if (tog->pTRIGGER != NULL) {
+        tog->type = 0;
+      } else {
+        sprintf(tbuf,"vehicle_trigger_%.2i_out",i);
+        tog->pTRIGGER = NuSplineFind(world_scene[0],tbuf);
+        if (tog->pTRIGGER == NULL) {
+          continue;
+        }
+        tog->type = 1;
+      }
+      spl = tog->pTRIGGER;
+      if (spl->len != 3) {
+        tog->pTRIGGER = NULL;
+        continue;
+      }
+      pos = (struct nuvec_s *)(spl->pts + spl->ptsize * 2);
+      tog->pos = *pos;
+      pos = &tog->pos;
+      GetALONG(pos,NULL,-1,-1,2);
+      tog->iRAIL = TempRPos.iRAIL;
+      tog->iALONG = TempRPos.iALONG;
+      tog->fALONG = TempRPos.fALONG;
+      tog->yrot = TempRPos.angle;
+      tog->zrot = 0;
+      tog->xrot = 0;
+      if ((tog->type != 0) || ((LBIT & 0x10080010) == 0)) {
+        y = NewShadowMask(pos,0.0f,-1);
+        if (y != 2000000.0f) {
+          pos->y = y;
+          FindAnglesZX(&ShadNorm);
+          tog->xrot = temp_xrot;
+          tog->zrot = temp_zrot;
+        }
+      }
+      sprintf(tbuf,"vehicle_cam_%.2i",i);
+      tog->pCAM = NuSplineFind(world_scene[0],tbuf);
+      sprintf(tbuf,"vehicle_look_%.2i",i);
+      tog->pLOOK = NuSplineFind(world_scene[0],tbuf);
+    }
+  }
+  return;
+}
+
+void ResetVehicleControl(s32 iRAIL,s32 iALONG,f32 fALONG) {
+  s32 special_done;
+  s32 found;
+  s32 i;
+  struct vtog_s *tog;
+  s32 FurtherALONG(s32 iRAIL0,s32 iALONG0,float fALONG0,s32 iRAIL1,s32 iALONG1,float fALONG1);
+  s32 FurtherBEHIND(s32 iRAIL0,s32 iALONG0,float fALONG0,s32 iRAIL1,s32 iALONG1,float fALONG1);
+
+  found = 0;
+  special_done = 1;
+  if (Level == 0xf) {
+    special_done = 0;
+  }
+  tog = VTog;
+  for (i = 0; i <= 5; i++, tog++) {
+    if ((tog->pTRIGGER != NULL) &&
+        FurtherALONG((s32)tog->iRAIL,tog->iALONG,tog->fALONG,iRAIL,iALONG,fALONG) != 0) {
+      if ((Level == 0xf) && (i > 1)) {
+        if (special_done == 0) {
+          if (tog->type == 1) {
+            SKELETALCRASH = 1;
+          } else {
+            SKELETALCRASH = special_done;
+          }
+          special_done = 1;
+        }
+      } else if (found == 0) {
+        if (tog->type == 1) {
+          VEHICLECONTROL = 1;
+        } else if ((((u32 *)&LBIT)[0] & 4) | (((u32 *)&LBIT)[1] & 0x40)) {
+          VEHICLECONTROL = 2;
+        } else {
+          VEHICLECONTROL = 0;
+        }
+        found = 1;
+      }
+    }
+    if (special_done != 0) {
+      if (found != 0) {
+        break;
+      }
+    }
+  }
+  if ((special_done == 0) || (found == 0)) {
+    tog = &VTog[5];
+    for (i = 5; i >= 0; i--, tog--) {
+      if ((tog->pTRIGGER != NULL) &&
+          FurtherBEHIND((s32)tog->iRAIL,tog->iALONG,tog->fALONG,iRAIL,iALONG,fALONG) != 0) {
+        if ((Level == 0xf) && (i > 1)) {
+          if (special_done == 0) {
+            if (tog->type == 1) {
+              SKELETALCRASH = special_done;
+            } else {
+              SKELETALCRASH = 1;
+            }
+            special_done = 1;
+          }
+        } else if (found == 0) {
+          if (tog->type == 1) {
+            if ((((u32 *)&LBIT)[0] & 4) | (((u32 *)&LBIT)[1] & 0x40)) {
+              VEHICLECONTROL = 2;
+            } else {
+              VEHICLECONTROL = 0;
+            }
+          } else {
+            VEHICLECONTROL = 1;
+          }
+          found = 1;
+        }
+      }
+      if (special_done != 0) {
+        if (found != 0) {
+          break;
+        }
+      }
+    }
+  }
+  {
+    f32 zero;
+
+    zero = 0.0f;
+    vtog_duration = zero;
+    vtog_time = vtog_duration;
+  }
+  return;
+}
+
+void ToggleVehicle(struct creature_s *c) {
+  struct nuvec_s v1, v2;
+  struct nuvec_s oldp, curp;
+  struct nuvec_s debrispos;
+  s32 mirrored;
+  s32 i;
+  s32 vcont;
+  struct vtog_s *tog;
+  struct nuvec_s *ppos;
+  f32 y;
+
+  if (c->obj.dead != 0) {
+    return;
+  }
+
+  mirrored = 0;
+  if (Level == 6 || Level == 0x22) {
+    mirrored = 1;
+  }
+
+  if (mirrored != 0) {
+    oldp.x = -(c->obj).oldpos.y;
+    oldp.y = (c->obj).oldpos.x;
+    oldp.z = (c->obj).oldpos.z;
+    curp.x = -(c->obj).pos.y;
+    curp.y = (c->obj).pos.x;
+    curp.z = (c->obj).pos.z;
+  } else {
+    oldp = (c->obj).oldpos;
+    curp = (c->obj).pos;
+  }
+
+  if (Level == 0x16) {
+    vcont = VEHICLECONTROL;
+    if (vcont == 0) {
+      if (oldp.z >= AshesMechInZ && curp.z < AshesMechInZ) {
+        vtog_oldpos = (c->obj).pos;
+        VEHICLECONTROL = 1;
+        ResetPlayerMoves(c);
+        vtog_newpos = AshesMechInPos;
+        vtog_duration = 1.0f;
+        vtog_time = 0.0f;
+        y = NewShadow(&vtog_newpos, 0.0f);
+        if (y != 2000000.0f) {
+          vtog_newpos.y = y - (c->obj).bot * (c->obj).SCALE;
+        }
+        vtog_blend = 1;
+        pVTog = (struct pVTog *)vcont;
+        vtog_angle = (u16)vcont;
+        AddGameDebris(0x10, &(c->obj).pos);
+        AddGameDebris(0x11, &(c->obj).pos);
+        GameSfx(0x2f, &(c->obj).pos);
+        return;
+      }
+    }
+    if (vcont == 1) {
+      if (oldp.z < AshesMechOutZ && curp.z >= AshesMechOutZ) {
+        vtog_oldpos = (c->obj).pos;
+        VEHICLECONTROL = 0;
+        ResetPlayerMoves(c);
+        vtog_newpos = AshesMechOutPos;
+        vtog_duration = 1.0f;
+        vtog_time = 0.0f;
+        y = NewShadow(&vtog_newpos, 0.0f);
+        if (y != 2000000.0f) {
+          vtog_newpos.y = y - (c->obj).bot * (c->obj).SCALE;
+        }
+        vtog_blend = vcont;
+        pVTog = (struct pVTog *)0;
+        vtog_angle = 0;
+        AddGameDebris(0x10, &(c->obj).pos);
+        AddGameDebris(0x11, &(c->obj).pos);
+        GameSfx(0x2f, &(c->obj).pos);
+
+        debrispos.x = (c->obj).pos.x;
+        debrispos.y = ((c->obj).bot + (c->obj).top) * (c->obj).SCALE * 0.5f + (c->obj).pos.y;
+        debrispos.z = (c->obj).pos.z;
+        AddMechanicalDebris(&debrispos, 0xb2);
+        GameSfx(0x3b, &(c->obj).pos);
+        JudderGameCamera(GameCam, 0.3f, NULL);
+        return;
+      }
+    }
+  }
+
+  tog = VTog;
+  for (i = 0; i <= 5; i++, tog++) {
+    struct nugspline_s *spl;
+    s32 type_val;
+    char *pts;
+    s16 ptsize;
+    char *pts2;
+    struct nuvec_s *pv1;
+    struct nuvec_s *pv2;
+    f32 cross_old, cross_cur;
+    f32 dx, dz;
+    s32 old_ge, cur_ge;
+
+    spl = tog->pTRIGGER;
+    if (spl == NULL) {
+      continue;
+    }
+
+    if (Level == 0xf) {
+      if (i > 1) {
+        goto do_trigger;
+      }
+    }
+
+    type_val = (s8)tog->type;
+    if (type_val == 0) {
+      if (VEHICLECONTROL == 1) {
+        continue;
+      }
+    } else if (type_val == 1) {
+      if (VEHICLECONTROL != 1) {
+        continue;
+      }
+    }
+
+  do_trigger:
+    pts = spl->pts;
+    ptsize = spl->ptsize;
+    pts2 = pts + ptsize;
+    pv1 = (struct nuvec_s *)pts;
+    pv2 = (struct nuvec_s *)pts2;
+
+    if (mirrored != 0) {
+      v1.x = -pv1->y;
+      v1.y = pv1->x;
+      v1.z = pv1->z;
+      v2.x = -pv2->y;
+      v2.y = pv2->x;
+      v2.z = pv2->z;
+    } else {
+      v1 = *pv1;
+      v2 = *pv2;
+    }
+
+    dx = v1.x - v2.x;
+    dz = v2.z - v1.z;
+    cross_cur = (curp.x - v1.x) * dz + (curp.z - v1.z) * dx;
+    cross_old = (oldp.x - v1.x) * dz + (oldp.z - v1.z) * dx;
+
+    old_ge = (cross_old >= 0.0f) ? 1 : 0;
+    cur_ge = (cross_cur >= 0.0f) ? 1 : 0;
+
+    if (old_ge != 0) {
+      if (cur_ge != 0) {
+        continue;
+      }
+      if ((curp.x - oldp.x) * (v1.z - oldp.z) + (curp.z - oldp.z) * (oldp.x - v1.x) >= 0.0f &&
+          (curp.x - v2.x) * (oldp.z - v2.z) + (curp.z - v2.z) * (v2.x - oldp.x) >= 0.0f) {
+        if (Level == 0xf && i > 1) {
+          if (tog->type == 0) {
+            SKELETALCRASH = 1;
+            GameSfx(0x1e, NULL);
+          } else {
+            SKELETALCRASH = 0;
+            GameSfx(0x21, NULL);
+          }
+          return;
+        }
+        goto do_toggle;
+      }
+      continue;
+    }
+    if (cur_ge == 0) {
+      continue;
+    }
+    if ((curp.x - oldp.x) * (v2.z - oldp.z) + (curp.z - oldp.z) * (oldp.x - v2.x) >= 0.0f &&
+        (curp.x - v1.x) * (oldp.z - v1.z) + (curp.z - v1.z) * (v1.x - oldp.x) >= 0.0f) {
+      if (Level == 0xf) {
+        if (i > 1) {
+          if ((s8)tog->type == 0) {
+            SKELETALCRASH = 0;
+            GameSfx(0x21, NULL);
+          } else {
+            SKELETALCRASH = 1;
+            GameSfx(0x1e, NULL);
+          }
+        }
+      }
+      return;
+    }
+    continue;
+
+  do_toggle:
+    ppos = &(c->obj).pos;
+    vtog_oldpos = *ppos;
+
+    if (tog->type == 0) {
+      VEHICLECONTROL = 1;
+    } else {
+      if ((((u32 *)&LBIT)[0] & 4) | (((u32 *)&LBIT)[1] & 0x40)) {
+        VEHICLECONTROL = 2;
+      } else {
+        VEHICLECONTROL = 0;
+      }
+    }
+
+    ResetPlayerMoves(c);
+
+    vtog_newpos.x = tog->pos.x;
+    vtog_newpos.y = tog->pos.y - (c->obj).bot * (c->obj).SCALE;
+    vtog_newpos.z = tog->pos.z;
+    vtog_time = 0.0f;
+    vtog_duration = 1.0f;
+
+    if (mirrored != 0 && pos_START != NULL) {
+      vtog_newpos.x = pos_START->x;
+    }
+
+    vtog_blend = 1;
+
+    tog->m = c->m;
+
+    if (tog->type == 0) {
+      ResetAnimPacket(&tog->anim, vtog_action);
+    } else {
+      tog->anim = (c->obj).anim;
+    }
+
+    if ((c->obj).vehicle == 0xa1) {
+      BlendGameCamera(GameCam, 1.0f);
+    } else {
+      if (tog->pCAM != NULL && vtog_blend != 0) {
+        GameCam[0].mode = -1;
+      }
+    }
+
+    type_val = (s8)tog->type;
+    if (type_val == 0) {
+      AddGameDebris(0x10, ppos);
+      AddGameDebris(0x11, ppos);
+      GameSfx(0x2f, ppos);
+      if (Level == 4) {
+        (c->obj).direction = 0;
+      }
+    } else {
+      AddGameDebris(0x10, ppos);
+      AddGameDebris(0x11, ppos);
+      GameSfx(0x2f, ppos);
+
+      debrispos.x = (c->obj).pos.x;
+      debrispos.y = ((c->obj).bot + (c->obj).top) * (c->obj).SCALE * 0.5f + (c->obj).pos.y;
+      debrispos.z = (c->obj).pos.z;
+
+      switch ((c->obj).vehicle) {
+        case 0x3b:
+        case 0x44:
+        case 0x63:
+        case 0x99:
+        case 0xb2:
+          GameSfx(0x69, &debrispos);
+          AddMechanicalDebris(&debrispos, (s32)(c->obj).vehicle);
+          break;
+        case 0x20:
+          AddMechanicalDebris(&debrispos, 0x20);
+          break;
+      }
+
+      GameSfx(0x3b, ppos);
+      JudderGameCamera(GameCam, 0.3f, NULL);
+    }
+
+    pVTog = tog;
+    vtog_angle = tog->yrot;
+    return;
+  }
+}
 void GetLocatorMtx(struct CharacterModel *Model,struct numtx_s *LocMtx,f32 YAngOff3)
 {
   /*
@@ -4554,7 +5278,7 @@ void NewGame(void) {
   DefaultTimeTrialNames(1);
   Game.lives = '\x04';
   Game.hub[0].flags = '\x01';
-  Mask->active = (u16)Game.mask;
+  Mask.active = (u16)Game.mask;
   Hub = -1;
   return;
 }
@@ -4702,6 +5426,461 @@ void ResetBonus(void) {
     Bonus = 0;
 }
 
+void PointAlongSpline(struct nugspline_s *spl, float ratio, struct nuvec_s *dst, u16 *angle, u16 *tilt);
+s32 ObjectCylinderCollision(struct obj_s *obj, struct obj_s *cyl, f32 scale, s32 flag);
+
+void BonusTransporter(struct creature_s *plr) {
+  struct rail_s *rail;
+  struct obj_s *active_obj;
+  struct nuvec_s spl_pos;
+  float old_time;
+  float half;
+  float window;
+  float ratio;
+  s32 finished;
+  s32 active;
+
+  finished = 0;
+  active = 0;
+
+  if (TimeTrial != 0) return;
+  if (VEHICLECONTROL == 1) return;
+  if (ChaseActive() != -1) return;
+
+  rail = &Rail[5];
+  if (rail->type == -1) return;
+  if (rail->pINPLAT == NULL) return;
+  if (rail->pOUTPLAT == NULL) return;
+  if (ObjTab[4].obj.special == NULL) return;
+
+  switch (Bonus) {
+  case 0:
+    StartTransporter(&bonus_obj[0], (struct nuvec_s *)rail->pINPLAT->pts);
+    StartTransporter(&bonus_obj[1], (struct nuvec_s *)rail->pOUTPLAT->pts);
+    if (ObjectCylinderCollision(&plr->obj, &bonus_obj[0], 1.0f, 0) == 2) {
+      Bonus = 1;
+      TransporterGo();
+      bonus_pPLAT = rail->pINPLAT;
+      bonus_pCAM = rail->pINCAM;
+      bonus_time = 0.0f;
+      bonus_duration = rail->in_distance * 0.2f;
+      if (bonus_duration > 10.0f) {
+        bonus_duration = 10.0f;
+      } else if (bonus_duration < 5.0f) {
+        bonus_duration = 5.0f;
+      }
+      plr_bonus_wumpas.wait = 0;
+      plr_bonus_wumpas.count = 0;
+      plr_bonus_wumpas.delay = 0;
+      plr_bonus_wumpas.draw = 0;
+      bonus_lives = 0;
+      bonus_frame = 0;
+      BlendGameCamera(GameCam, 1.0f);
+      bonus_crate_delay = 6;
+      bonus_life_delay = 1;
+      bonus_lives_wait = 0.0f;
+      bonus_finish_frame = 0;
+      bonus_wumpa_delay = 6;
+      bonus_wumpa_wait = 0.0f;
+      bonus_crates_wait = 0.0f;
+    }
+    break;
+
+  case 1:
+    old_time = bonus_time;
+    if (bonus_time < bonus_duration) {
+      bonus_time = old_time + 0.01666667f;
+      if (bonus_time >= bonus_duration) {
+        bonus_time = bonus_duration;
+      }
+      half = bonus_duration * 0.5f;
+      window = half - 0.25f;
+      if (old_time < window && bonus_time >= window) {
+        NuSoundStopStream(0);
+        NuSoundStopStream(1);
+      }
+      window = half + 0.25f;
+      if (old_time < window && bonus_time >= window) {
+        GameMusic((s32)LDATA->music[1], 0);
+      }
+    } else {
+      Bonus = 2;
+      finished = 1;
+      TransporterGo();
+      FinishTransporter(&bonus_obj[0], &plr->obj);
+      BlendGameCamera(GameCam, 1.0f);
+      bonus_panel_wait = 0.5f;
+    }
+    active = 1;
+    active_obj = &bonus_obj[0];
+    break;
+
+  case 2:
+    if (bonus_panel_wait > 0.0f) {
+      bonus_panel_wait = bonus_panel_wait - 0.01666667f;
+      if (bonus_panel_wait < 0.0f) {
+        bonus_panel_wait = 0.0f;
+      }
+    }
+    if (ObjectCylinderCollision(&plr->obj, &bonus_obj[1], 1.0f, 0) == 2) {
+      Bonus = 3;
+      TransporterGo();
+      bonus_pCAM = rail->pOUTCAM;
+      bonus_pPLAT = rail->pOUTPLAT;
+      bonus_time = 0.0f;
+      bonus_duration = rail->out_distance * 0.2f;
+      if (bonus_duration > 10.0f) {
+        bonus_duration = 10.0f;
+      } else if (bonus_duration < 5.0f) {
+        bonus_duration = 5.0f;
+      }
+      BlendGameCamera(GameCam, 1.0f);
+    } else {
+      ObjectCylinderCollision(&plr->obj, &bonus_obj[0], 1.0f, 0);
+    }
+    plr_bonus_wumpas.frame = 0x1e;
+    UpdatePanelItem(&plr_bonus_wumpas, 0x1e, 0);
+    if (Bonus == 3) {
+      if (plr_bonus_wumpas.count != 0) {
+        GameSfx(0x2c, NULL);
+      }
+    }
+    break;
+
+  case 3:
+    old_time = bonus_time;
+    if (bonus_time < bonus_duration) {
+      bonus_time = bonus_time + 0.01666667f;
+      if (bonus_time >= bonus_duration) {
+        bonus_time = bonus_duration;
+      }
+      half = bonus_duration * 0.5f;
+      window = half - 0.25f;
+      if (old_time < window && bonus_time >= window) {
+        NuSoundStopStream(0);
+        NuSoundStopStream(1);
+      }
+      window = half + 0.25f;
+      if (old_time < window && bonus_time >= window) {
+        GameMusic((s32)LDATA->music[0], 0);
+      }
+    } else {
+      Bonus = 4;
+      finished = 1;
+      TransporterGo();
+      FinishTransporter(&bonus_obj[1], &plr->obj);
+      BlendGameCamera(GameCam, 1.0f);
+    }
+    active = 1;
+    active_obj = &bonus_obj[1];
+    break;
+
+  case 4:
+    ObjectCylinderCollision(&plr->obj, &bonus_obj[1], 1.0f, 0);
+    break;
+  }
+
+  if (active != 0) {
+    plr->jump = 0;
+    (plr->obj).mom.y = 0.0f;
+    active_obj->oldpos = active_obj->pos;
+    ratio = (-NuTrigTable[(s32)((bonus_time / bonus_duration) * 32768.0f + 16384.0f)] + 1.0f) * 0.5f;
+    PointAlongSpline(bonus_pPLAT, ratio, &spl_pos, NULL, NULL);
+    active_obj->pos.x = (spl_pos.x - active_obj->pos.x) * 0.1f + active_obj->pos.x;
+    active_obj->pos.y = (spl_pos.y - active_obj->pos.y) * 0.1f + active_obj->pos.y;
+    active_obj->pos.z = (spl_pos.z - active_obj->pos.z) * 0.1f + active_obj->pos.z;
+    NuVecSub(&active_obj->mom, &active_obj->pos, &active_obj->oldpos);
+    active_obj->dyrot = 0;
+    (plr->obj).pos.y = active_obj->top * active_obj->SCALE + active_obj->pos.y - (plr->obj).min.y * (plr->obj).SCALE;
+    ObjectCylinderCollision(&plr->obj, active_obj, 1.0f - bonus_time / bonus_duration, 1);
+    if (finished == 0) {
+      (plr->obj).transporting = 1;
+    }
+  } else {
+    bonus_obj[0].oldpos = bonus_obj[0].pos;
+    bonus_obj[1].oldpos = bonus_obj[1].pos;
+    bonus_obj[0].mom = v000;
+    bonus_obj[1].mom = v000;
+    bonus_obj[1].dyrot = 0;
+    bonus_obj[0].dyrot = 0;
+  }
+}
+
+void DeathTransporter(struct creature_s *c) {
+  struct rail_s *rail;
+  struct nuvec_s spl_pos;
+  s32 finished;
+  s32 active;
+  s32 state;
+  float ratio;
+  u16 idx;
+
+  finished = 0;
+  active = 0;
+
+  if (TimeTrial != 0) return;
+  if (VEHICLECONTROL == 1) {
+    if ((c->obj).vehicle != 0x44) return;
+  }
+  if (ChaseActive() != -1) return;
+  if (Level == 0x25) {
+    if (!(Game.hub[5].flags & 1)) return;
+  }
+
+  rail = &Rail[6];
+  if (rail->type == -1) return;
+  if (rail->pINPLAT == NULL) return;
+
+  {
+    s32 i = 5;
+    if (LostLife != 0) i = 6;
+    if (ObjTab[i].obj.special == NULL) return;
+  }
+
+  state = Death;
+  switch (state) {
+  case 0:
+    if (death_begun == 0) {
+      float dur;
+      StartTransporter(&death_obj, (struct nuvec_s *)rail->pINPLAT->pts);
+      death_lock = 1;
+      death_pCAM = rail->pINCAM;
+      death_pPLAT = rail->pINPLAT;
+      death_begun = 1;
+      dur = rail->in_distance * 0.2f;
+      death_duration = dur;
+      if (dur > 10.0f) {
+        death_duration = 10.0f;
+      } else if (dur < 5.0f) {
+        death_duration = 5.0f;
+      }
+    }
+    {
+      s32 ll = LostLife;
+      s32 r;
+      if (ll != 0) break;
+      r = ObjectCylinderCollision(&c->obj, &death_obj, 1.0f, 0);
+      if (death_lock == 0) {
+        if (r != 2) break;
+        Death = 1;
+        goto start_death_leg;
+      } else {
+        if (r == 2) break;
+        death_lock = ll;
+        break;
+      }
+    }
+  case 1:
+    if (death_time < death_duration) goto death_time_step;
+    Death = 2;
+    finished = 1;
+    TransporterGo();
+    FinishTransporter(&death_obj, &c->obj);
+    BlendGameCamera(GameCam, 1.0f);
+    death_lock = state;
+    goto death_set_active;
+  case 2:
+    {
+      s32 r = ObjectCylinderCollision(&c->obj, &death_obj, 1.0f, 0);
+      if (death_lock == 0) {
+        if (r != 2) break;
+        Death = 3;
+      } else {
+        if (r == 2) break;
+        death_lock = active;
+        break;
+      }
+    }
+  start_death_leg:
+    TransporterGo();
+    if (Level == 0x25) {
+      GameSfx(0xC1, 0);
+    }
+    death_time = 0.0f;
+    BlendGameCamera(GameCam, 1.0f);
+    break;
+  case 3:
+    if (death_time >= death_duration) goto death_case3_done;
+  death_time_step:
+    death_time += (1.0f / 60.0f);
+    if (death_time >= death_duration) {
+      death_time = death_duration;
+    }
+    goto death_set_active;
+  death_case3_done:
+    Death = active;
+    finished = 1;
+    TransporterGo();
+    FinishTransporter(&death_obj, &c->obj);
+    BlendGameCamera(GameCam, 1.0f);
+    death_lock = 1;
+  death_set_active:
+    active = 1;
+    break;
+  }
+
+  if (active != 0) {
+    c->jump = 0;
+    (c->obj).mom.y = 0.0f;
+    death_obj.oldpos = death_obj.pos;
+    ratio = death_time / death_duration;
+    if (Death == 3 || state == 3) {
+      ratio = 1.0f - ratio;
+    }
+    idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
+    ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
+    PointAlongSpline((struct nugspline_s *)death_pPLAT, ratio, &spl_pos, NULL, NULL);
+    death_obj.pos.x = (spl_pos.x - death_obj.pos.x) * 0.1f + death_obj.pos.x;
+    death_obj.pos.y = (spl_pos.y - death_obj.pos.y) * 0.1f + death_obj.pos.y;
+    death_obj.pos.z = (spl_pos.z - death_obj.pos.z) * 0.1f + death_obj.pos.z;
+    NuVecSub(&death_obj.mom, &death_obj.pos, &death_obj.oldpos);
+    death_obj.dyrot = 0;
+    (c->obj).pos.y = death_obj.top * death_obj.SCALE + death_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
+    ObjectCylinderCollision(&c->obj, &death_obj, 1.0f - death_time / death_duration, 1);
+    if (finished != 0) return;
+    (c->obj).transporting = 1;
+  } else {
+    death_obj.oldpos = death_obj.pos;
+    death_obj.mom = v000;
+    death_obj.dyrot = 0;
+  }
+}
+
+void GemPathTransporter(creature_s *c) {
+  struct rail_s *rail;
+  struct nuvec_s spl_pos;
+  s32 finished;
+  s32 active;
+  s32 state;
+  float ratio;
+  u16 idx;
+
+  finished = 0;
+  active = 0;
+
+  if (TimeTrial != 0) return;
+  if (VEHICLECONTROL == 1) {
+    if ((c->obj).vehicle != 0x44) return;
+  }
+  if (ChaseActive() != -1) return;
+
+  rail = &Rail[7];
+  if (rail->type == -1) return;
+  if (rail->pINPLAT == NULL) return;
+
+  {
+    s32 i = 8;
+    if (gempath_open != 0) i = 7;
+    if (ObjTab[i].obj.special == NULL) return;
+  }
+
+  state = GemPath;
+  switch (state) {
+  case 0:
+    if (gempath_begun == 0) {
+      float dur;
+      StartTransporter(&gempath_obj, (struct nuvec_s *)rail->pINPLAT->pts);
+      GetALONG(&gempath_obj.pos, &gempath_RPos, -1, -1, 1);
+      gempath_lock = 1;
+      gempath_pCAM = rail->pINCAM;
+      gempath_pPLAT = rail->pINPLAT;
+      gempath_begun = 1;
+      dur = rail->in_distance * 0.2f;
+      gempath_duration = dur;
+      if (dur > 10.0f) {
+        gempath_duration = 10.0f;
+      } else if (dur < 5.0f) {
+        gempath_duration = 5.0f;
+      }
+    }
+    {
+      s32 r;
+      if (gempath_open == 0) break;
+      r = ObjectCylinderCollision(&c->obj, &gempath_obj, 1.0f, 0);
+      if (gempath_lock == 0) {
+        if (r != 2) break;
+        GemPath = 1;
+        goto start_gempath_leg;
+      } else {
+        if (r == 2) break;
+        gempath_lock = 0;
+        break;
+      }
+    }
+  case 1:
+    if (gempath_time < gempath_duration) goto gempath_time_step;
+    GemPath = 2;
+    finished = 1;
+    TransporterGo();
+    FinishTransporter(&gempath_obj, &c->obj);
+    BlendGameCamera(GameCam, 1.0f);
+    gempath_lock = state;
+    goto gempath_set_active;
+  case 2:
+    {
+      s32 r = ObjectCylinderCollision(&c->obj, &gempath_obj, 1.0f, 0);
+      if (gempath_lock == 0) {
+        if (r != 2) break;
+        GemPath = 3;
+      } else {
+        if (r == 2) break;
+        gempath_lock = active;
+        break;
+      }
+    }
+  start_gempath_leg:
+    TransporterGo();
+    gempath_time = 0.0f;
+    BlendGameCamera(GameCam, 1.0f);
+    break;
+  case 3:
+    if (gempath_time >= gempath_duration) goto gempath_case3_done;
+  gempath_time_step:
+    gempath_time += (1.0f / 60.0f);
+    if (gempath_time >= gempath_duration) {
+      gempath_time = gempath_duration;
+    }
+    goto gempath_set_active;
+  gempath_case3_done:
+    GemPath = active;
+    finished = 1;
+    TransporterGo();
+    FinishTransporter(&gempath_obj, &c->obj);
+    BlendGameCamera(GameCam, 1.0f);
+    gempath_lock = 1;
+  gempath_set_active:
+    active = 1;
+    break;
+  }
+
+  if (active != 0) {
+    c->jump = 0;
+    (c->obj).mom.y = 0.0f;
+    gempath_obj.oldpos = gempath_obj.pos;
+    ratio = gempath_time / gempath_duration;
+    if (GemPath == 3 || state == 3) {
+      ratio = 1.0f - ratio;
+    }
+    idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
+    ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
+    PointAlongSpline((struct nugspline_s *)gempath_pPLAT, ratio, &spl_pos, NULL, NULL);
+    gempath_obj.pos.x = (spl_pos.x - gempath_obj.pos.x) * 0.1f + gempath_obj.pos.x;
+    gempath_obj.pos.y = (spl_pos.y - gempath_obj.pos.y) * 0.1f + gempath_obj.pos.y;
+    gempath_obj.pos.z = (spl_pos.z - gempath_obj.pos.z) * 0.1f + gempath_obj.pos.z;
+    NuVecSub(&gempath_obj.mom, &gempath_obj.pos, &gempath_obj.oldpos);
+    gempath_obj.dyrot = 0;
+    (c->obj).pos.y = gempath_obj.top * gempath_obj.SCALE + gempath_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
+    ObjectCylinderCollision(&c->obj, &gempath_obj, 1.0f - gempath_time / gempath_duration, 1);
+    (c->obj).pos.y = gempath_obj.top * gempath_obj.SCALE + gempath_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
+    if (finished != 0) return;
+    (c->obj).transporting = 1;
+  } else {
+    gempath_obj.oldpos = gempath_obj.pos;
+    gempath_obj.mom = v000;
+    gempath_obj.dyrot = 0;
+  }
+}
+
 //NGC MATCH
 void ResetGame(void) {
   s32 i;
@@ -4717,7 +5896,7 @@ void ResetGame(void) {
   }
 
   for(i = 0; i < 1; i++) {
-    Mask[i].character = 3;
+    (&Mask)[i].character = 3;
   }
   ResetTimer(&GlobalTimer);
   InitProbe();
@@ -4924,7 +6103,7 @@ void UpdateKabooms(void) {
                         }
                         else {
                           if (CrateOff(group,crate,(uint)kaboom->type,0) != 0) {
-                            HopCratesAbove(group,crate,CRATEHOPSPEED);
+                            HopCratesAbove(CRATEHOPSPEED,group,crate);
                           }
                         }
                       }
@@ -4980,7 +6159,7 @@ void UpdateKabooms(void) {
                   }
                   wumpa->active = 0;
                   key = -1;
-                  AddFiniteShotDebrisEffect(&key,GDeb[130].i,&wumpa->pos,1);
+                  AddFiniteShotDebrisEffect(&key,GDeb[520].i,&wumpa->pos,1);
                 }
                 else {
                   FlyWumpa(wumpa);
@@ -5654,7 +6833,7 @@ void InitLevel(void) {
             break;
         }
   if ((LBIT & 0x3e00000) != 0) {
-    Mask->active = 0;
+    Mask.active = 0;
   }
   ai_lookpos = v000;
   Cursor.menu = -1;
@@ -5692,7 +6871,7 @@ void InitLevel(void) {
   in_finish_range = 0;
   LivesLost = 0;
   if ((LBIT & 0x3e00000) != 0) {
-    Mask->active = 0;
+    Mask.active = 0;
   }
   ResetAkuAkuAdvice();
   return;
@@ -7235,11 +8414,6 @@ void BonusTiming (struct creature_s* plr) {
         bonus_wumpa_delay--;
         if (plr_bonus_wumpas.count == 0) {
             bonus_wumpa_wait = 0.5f;
-        } else if (bonus_wumpa_wait > 0.0f) {
-            bonus_wumpa_wait -= 0.01666667f;
-            if (bonus_wumpa_wait < 0.0f) {
-                bonus_wumpa_wait = 0.0f;
-            }
         }
     } else {
         if (plr_bonus_wumpas.count != 0) {
@@ -7252,10 +8426,10 @@ void BonusTiming (struct creature_s* plr) {
                 GameSfx(0x19, NULL);
             }
             plr_bonus_wumpas.count--;
-        }
-        if (plr_bonus_wumpas.count == 0) {
-            bonus_wumpa_wait = 0.5f;
-        } else if (bonus_wumpa_wait > 0.0f) { // this isn't correct?
+            if (plr_bonus_wumpas.count == 0) {
+                bonus_wumpa_wait = 0.5f;
+            }
+        } else if (bonus_wumpa_wait > 0.0f) {
             bonus_wumpa_wait -= 0.01666667f;
             if (bonus_wumpa_wait < 0.0f) {
                 bonus_wumpa_wait = 0.0f;
@@ -7852,7 +9026,7 @@ void DrawProbeFX(struct obj_s* obj) {
 
     if (Paused == 0) {
         vec = obj->pos;
-        AddVariableShotDebrisEffect(GDeb[76].i, &vec, 1, -0x8000, 0);
+        AddVariableShotDebrisEffect(GDeb[304].i, &vec, 1, -0x8000, 0);
     }
     
     ang = obj->hdg + 3000;
@@ -7875,8 +9049,8 @@ void DrawProbeFX(struct obj_s* obj) {
         if (Paused == 0) {
             NuLgtArcLaser(0, &vec1, &vec, &vec2, 0.1f, 0.1f, 0.01f, 0.3f, 0x80FF7F3F);
             NuLgtArcLaser(0, &vec1, &vec, &vec2, 0.4f, 0.3f, 0.001f, 0.3f, 0x80800040);
-            AddVariableShotDebrisEffect(GDeb[78].i, &vec1, 1, 0, 0);
-            AddVariableShotDebrisEffect(GDeb[78].i, &vec, 1, -0x8000, 0);
+            AddVariableShotDebrisEffect(GDeb[312].i, &vec1, 1, 0, 0);
+            AddVariableShotDebrisEffect(GDeb[312].i, &vec, 1, -0x8000, 0);
         }
     }
     return;
