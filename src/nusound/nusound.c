@@ -23,8 +23,6 @@ static s32 NuSoundApply3d(struct nuvec_s *pos, s32 *volL, s32 *volR)
 	dist = NuFsqrt(dx * dx + dy * dy + dz * dz);
 
 	if (dist > nusound_fade_end) {
-	
-	
 		return 0;
 	}
 

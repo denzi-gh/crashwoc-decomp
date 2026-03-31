@@ -21,7 +21,22 @@ struct Mtx gm = {
 
 void NuMtxSetIdentity(struct Mtx* m)
 {
-	*m = mident;
+	m->m11 = mident.m11;
+	m->m12 = mident.m12;
+	m->m13 = mident.m13;
+	m->m14 = mident.m14;
+	m->m21 = mident.m21;
+	m->m22 = mident.m22;
+	m->m23 = mident.m23;
+	m->m24 = mident.m24;
+	m->m31 = mident.m31;
+	m->m32 = mident.m32;
+	m->m33 = mident.m33;
+	m->m34 = mident.m34;
+	m->m41 = mident.m41;
+	m->m42 = mident.m42;
+	m->m43 = mident.m43;
+	m->m44 = mident.m44;
 }
 
 void NuMtxSetTranslation(struct Mtx* m, struct nuvec_s* v)

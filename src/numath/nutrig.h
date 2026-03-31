@@ -18,8 +18,8 @@
 #define PI3OV2 ANGLE_270
 #define UNIT_CIRCLE_PRECISION 513
 
-#define ANG_SIN(a) NuTrigTable[(u16)(a)]
-#define ANG_COS(a) NuTrigTable[(u16)(a + PIOV2)]
+#define ANG_SIN(a) NuTrigTable[a]
+#define ANG_COS(a) NuTrigTable[(a + PIOV2)]
 
 // Why do expensive trig when we can store it here?
 extern f32 NuTrigTable[NU_TRIG_TABLE_SIZE];
@@ -43,7 +43,7 @@ f32 NuAtan2(f32 x, f32 y);
 // angle fxyd(f32 x, f32 y); // local to nutrig.c
 
 // Return the tan-1 with x and y sizes.
-int NuAtan2D(f32 x, f32 y);
+angle NuAtan2D(f32 x, f32 y);
 
 // Return signed shortest angle difference (a - b).
 s32 NuAngSub(s32 ang1, s32 ang2);

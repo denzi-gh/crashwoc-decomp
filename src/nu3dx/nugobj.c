@@ -1,14 +1,54 @@
 #include <nu3dx/nugobj.h>
 #include <nu3dx/nucvtskn.h>
+#include <nu3dx/nulight.h>
+#include <nu3dx/numtl.h>
 #include <nucore/numem.h>
 #include <numath/nu_asm.h>
 
-#define FLT_MAX 3.402823e+38
-#define FLT_MIN -3.402823e+38
+double sqrt(double x);
 
-static s32 sysinit;
-s32 Paused;
-s32 _timer;
+static const unsigned long D3DSIMPLERENDERSTATEENCODE[82] = {
+    0x00040260, 0x00040264, 0x00040268, 0x0004026C, 0x00040270, 0x00040274,
+    0x00040278, 0x0004027C, 0x00040288, 0x0004028C, 0x00040A60, 0x00040A64,
+    0x00040A68, 0x00040A6C, 0x00040A70, 0x00040A74, 0x00040A78, 0x00040A7C,
+    0x00040A80, 0x00040A84, 0x00040A88, 0x00040A8C, 0x00040A90, 0x00040A94,
+    0x00040A98, 0x00040A9C, 0x00040AA0, 0x00040AA4, 0x00040AA8, 0x00040AAC,
+    0x00040AB0, 0x00040AB4, 0x00040AB8, 0x00040ABC, 0x00040AC0, 0x00040AC4,
+    0x00040AC8, 0x00040ACC, 0x00040AD0, 0x00040AD4, 0x00040AD8, 0x00040ADC,
+    0x000417F8, 0x00041E20, 0x00041E24, 0x00041E40, 0x00041E44, 0x00041E48,
+    0x00041E4C, 0x00041E50, 0x00041E54, 0x00041E58, 0x00041E5C, 0x00041E60,
+    0x00041D90, 0x00041E74, 0x00041E78, 0x00040354, 0x0004033C, 0x00040304,
+    0x00040300, 0x00040340, 0x00040344, 0x00040348, 0x0004035C, 0x00040310,
+    0x0004037C, 0x00040358, 0x00040374, 0x00040378, 0x00040364, 0x00040368,
+    0x0004036C, 0x00040360, 0x00040350, 0x0004034C, 0x000409F8, 0x00040384,
+    0x00040388, 0x00040330, 0x00040334, 0x00040338
+};
+
+static const unsigned long D3DTEXTUREDIRECTENCODE[4] = {
+    0x00081B00, 0x00081B40, 0x00081B80, 0x00081BC0
+};
+
+static const unsigned long D3DDIRTYFROMRENDERSTATE[35] = {
+    0x00002000, 0x00002000, 0x00002000, 0x00002000, 0x00002000, 0x00002000,
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x00001200, 0x00003000,
+    0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000,
+    0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000,
+    0x00000100, 0x00000100, 0x00000900, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0x00000100, 0x00000000, 0x00000000, 0x00000000
+};
+
+static const unsigned long D3DDIRTYFROMTEXTURESTATE[22] = {
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F,
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F,
+    0x0000480F, 0x00000800, 0x00000800, 0x00000800, 0x00000800, 0x00000800,
+    0x00000800, 0x00000800, 0x00000800, 0x00000400
+};
+
+#define FLT_MAX 3.4028235e+38
+#define FLT_MIN -3.4028235e+38
+
+static s32 sysinit = 0;
+static struct nugobj_s* sysgobj = NULL;
 
 //MATCH GCN
 void NuGobjInit(void) {
@@ -132,7 +172,6 @@ void NuGobjCalcFaceOnDims(struct nugobj_s *gobj)
 
   struct nufaceon_s* faceon;
   float fonHeight;
-     char pad[6];
 
   gobj->bounding_box_min.x = FLT_MAX;
   gobj->bounding_box_min.y = FLT_MAX;
@@ -184,7 +223,7 @@ void NuGobjCalcFaceOnDims(struct nugobj_s *gobj)
         }
       }
   }
-  r2 = NuFsqrt(gobj->bounding_rsq_from_origin);
+  r2 = (f32)sqrt(gobj->bounding_rsq_from_origin);
   gobj->bounding_radius_from_origin = r2;
   (gobj->bounding_box_center).x = ((gobj->bounding_box_min).x + (gobj->bounding_box_max).x) * 0.5f;
   (gobj->bounding_box_center).y = ((gobj->bounding_box_min).y + (gobj->bounding_box_max).y) * 0.5f;
@@ -214,7 +253,7 @@ void NuGobjCalcFaceOnDims(struct nugobj_s *gobj)
         }
       }
   }
-  r2 = NuFsqrt(gobj->bounding_rsq_from_center);
+  r2 = (f32)sqrt(gobj->bounding_rsq_from_center);
   gobj->bounding_radius_from_center = r2;
   return;
 }
@@ -275,7 +314,7 @@ void NuGobjCalcDims(struct nugobj_s *gobj) {
                 }
             }
         }
-        r2 = NuFsqrt(gobj->bounding_rsq_from_origin);
+        r2 = (f32)sqrt(gobj->bounding_rsq_from_origin);
         geom = gobj->geom;
         gobj->bounding_radius_from_origin = r2;
         (gobj->bounding_box_center).x = ((gobj->bounding_box_min).x + (gobj->bounding_box_max).x) * 0.5f;
@@ -297,7 +336,7 @@ void NuGobjCalcDims(struct nugobj_s *gobj) {
                 }
             }
         }
-        gobj->bounding_radius_from_center = NuFsqrt(gobj->bounding_rsq_from_center);
+        gobj->bounding_radius_from_center = (f32)sqrt(gobj->bounding_rsq_from_center);
     }
     return;
 }
@@ -370,13 +409,13 @@ void NuGeomCreateVB(struct nugeom_s* geom, s32 vtxCount, enum nuvtxtype_e vtxTyp
         break;
     default:
         //"NuGeomCreateVB : Unknown vertex type!"
-        NuErrorProlog("OpenCrashWOC/code/nu3dx/nugobj.c", 441)("assert");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c", 0x270)("NuGeomCreateVB : Unknown vertex type!");
     }
 
     if (geom->hVB != 0)
     {
         //NuAssert(geom->vertex_buffer == NULL, "NuGeomCreateVB : geom already has VB");
-        NuErrorProlog("OpenCrashWOC/code/nu3dx/nugobj.c", 448)("assert");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c", 0x274)("NuGeomCreateVB : geom already has VB");
     }
 
 
@@ -398,6 +437,47 @@ void NuGeomDestroyVB(struct nugeom_s *geom) {
         geom->hVB = 0;
 		}
 	return;
+}
+
+// NOT MATCHING - dead-stripped by linker, rodata constants survive
+__attribute__((section(".dead")))
+void NuGeomCalcBasisVectors(struct nugeom_s *geom, struct numtx_s *mtx) {
+    struct nuprim_s *prim;
+    struct nuvec_s edge01, edge02;
+    struct nuvec_s du, cp;
+    unsigned short i;
+    int vtxcnt;
+    double fabs(double);
+
+    vtxcnt = geom->vtxcnt;
+
+    for (prim = geom->prim; prim != NULL; prim = prim->next) {
+        unsigned short j;
+        unsigned short *pIndices;
+        pIndices = prim->vid;
+
+        for (j = 0; j < prim->cnt; j += 3) {
+            cp.x = du.y * edge02.x - du.z * edge01.x;
+
+            if (fabs(cp.x) > 1e-6) {
+                edge01.x = -cp.y / cp.x;
+            }
+        }
+
+        for (i = 0; i < vtxcnt; i++) {
+            float dist;
+
+            dist = edge01.x * edge01.x + edge01.y * edge01.y + edge01.z * edge01.z;
+            if (dist > 1e-8) {
+                dist = (f32)sqrt(dist);
+            }
+
+            dist = edge02.x * edge02.x + edge02.y * edge02.y + edge02.z * edge02.z;
+            if (dist > 1e-8f) {
+                dist = (f32)sqrt(dist);
+            }
+        }
+    }
 }
 
 //MATCH GCN
@@ -494,7 +574,7 @@ int NuVtxStride(enum nuvtxtype_e type)
     case NUVT_PS:
         return 0x10;
     default:
-        NuErrorProlog("NuVtxStride: Unknown vertex type", 0x708)("NuVtxStride: Unknown vertex type!");
+        NuErrorProlog("C:/source/crashwoc/code/nu3dx/nugobj.c", 0x708)("NuVtxStride: Unknown vertex type!");
         return 0;
     }
 }
@@ -504,18 +584,19 @@ int NuVtxStride(enum nuvtxtype_e type)
 void NuAnimUV(void)
 {
     struct nugobj_s* current;
+    static s32 timer;
 
-    _timer++;
+    timer++;
 
     // Equivalent to (timer % 2 == 0). 30 fps animation?
-    if ((_timer & 1) == 0)
+    if ((timer & 1) == 0)
     {
         if (!Paused && sysinit)
         {
             // Animate all gobjs
             for (current = sysgobj; current != NULL; current = current->sysnext)
             {
-                //NuMtlUVAnimation(current);
+                NuMtlUVAnimation(current);
             }
         }
     }

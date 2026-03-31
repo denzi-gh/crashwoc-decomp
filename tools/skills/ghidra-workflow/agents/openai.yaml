@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ghidra Workflow"
+  short_description: "Query the local Ghidra project from crashwoc-decomp"
+  default_prompt: "Use $ghidra-workflow to inspect a Crash WOC symbol, address, or datatype through the local Ghidra project."

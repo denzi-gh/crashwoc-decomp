@@ -106,11 +106,7 @@ extern struct nuotitem_s otitem[];
 extern struct nuotitem_s* ot[];
 extern enum nustencilmode_e stencil_mode;
 extern struct nufaceonitem_s faceonitem[];
-extern struct nustenitem_s stenitem[];
 extern struct nufaceonitem_s* faceonmtllist[];
-extern struct nuotitem_s dynamic_glass_items[];
-extern struct nuwateritem_s wateritem[];
-extern f32 sinetime_246;
 
 
 #endif

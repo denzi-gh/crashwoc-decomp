@@ -160,6 +160,7 @@ s32 NuHGobjRndrMtx(struct NUHGOBJ_s *hgobj,struct numtx_s *wm,s32 nlayers,short 
 s32 NuRndrGScnObj(struct nugobj_s *gobj,struct numtx_s *wm);
 float * NuRndrCreateBlendShapeDeformerWeightsArray(s32 nweights);
 float ** NuRndrCreateBlendShapeDWAPointers(s32 size);
+float NuRndrItemDist(struct nurndritem_s *item);
 
 
 struct numtl_s* nurndr_forced_mtl;
