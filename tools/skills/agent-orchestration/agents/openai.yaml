@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Orchestration"
+  short_description: "Drive one unit or function with a single writing workflow"
+  default_prompt: "Use $agent-orchestration to coordinate a file- or function-scoped decomp task in crashwoc-decomp."

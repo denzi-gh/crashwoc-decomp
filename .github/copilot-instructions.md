@@ -19,4 +19,6 @@ These are the most common agent failure modes — duplicated here for visibility
 - **Do not hand-edit generated files**: `build.ninja`, `objdiff.json`, `compile_commands.json`, `config/GCBE7D/splits.generated.txt`, `config/GCBE7D/config.generated.yml`.
 - **4-cycle stall limit**: If a function stops improving after 4 build/measure cycles, note the blocker and move to the next function.
 
+- **No git commits** You are NOT ALLOWED to make git commits. Commits are only done by the user. You tend to overwrite work when trying to "save".
+
 Everything else — autonomous workflow, matching style, anti-stall details, generated file list, configure commands — is in `AGENTS.md`.

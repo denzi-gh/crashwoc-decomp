@@ -1,0 +1,5 @@
+# Pi agent working data – don't commit transient files
+agent-locks/
+dashboard-sessions/
+dashboard-logs/
+dashboard-prompts/

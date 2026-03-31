@@ -8,6 +8,43 @@
 #include "../numath.h"
 #include <string.h>
 
+static const unsigned long D3DSIMPLERENDERSTATEENCODE[82] = {
+    0x00040260, 0x00040264, 0x00040268, 0x0004026C, 0x00040270, 0x00040274,
+    0x00040278, 0x0004027C, 0x00040288, 0x0004028C, 0x00040A60, 0x00040A64,
+    0x00040A68, 0x00040A6C, 0x00040A70, 0x00040A74, 0x00040A78, 0x00040A7C,
+    0x00040A80, 0x00040A84, 0x00040A88, 0x00040A8C, 0x00040A90, 0x00040A94,
+    0x00040A98, 0x00040A9C, 0x00040AA0, 0x00040AA4, 0x00040AA8, 0x00040AAC,
+    0x00040Ab0, 0x00040AB4, 0x00040AB8, 0x00040ABC, 0x00040AC0, 0x00040AC4,
+    0x00040AC8, 0x00040ACC, 0x00040AD0, 0x00040AD4, 0x00040AD8, 0x00040ADC,
+    0x000417F8, 0x00041E20, 0x00041E24, 0x00041E40, 0x00041E44, 0x00041E48,
+    0x00041E4C, 0x00041E50, 0x00041E54, 0x00041E58, 0x00041E5C, 0x00041E60,
+    0x00041D90, 0x00041E74, 0x00041E78, 0x00040354, 0x0004033C, 0x00040304,
+    0x00040300, 0x00040340, 0x00040344, 0x00040348, 0x0004035C, 0x00040310,
+    0x0004037C, 0x00040358, 0x00040374, 0x00040378, 0x00040364, 0x00040368,
+    0x0004036C, 0x00040360, 0x00040350, 0x0004034C, 0x000409F8, 0x00040384,
+    0x00040388, 0x00040330, 0x00040334, 0x00040338
+};
+
+static const unsigned long D3DTEXTUREDIRECTENCODE[4] = {
+    0x00081B00, 0x00081B40, 0x00081B80, 0x00081BC0
+};
+
+static const unsigned long D3DDIRTYFROMRENDERSTATE[35] = {
+    0x00002000, 0x00002000, 0x00002000, 0x00002000, 0x00002000, 0x00002000,
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x00001200, 0x00003000,
+    0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000,
+    0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000, 0x00001000,
+    0x00000100, 0x00000100, 0x00000900, 0x00000100, 0x00000100, 0x00000100,
+    0x00000100, 0x00000100, 0x00000000, 0x00000000, 0x00000000
+};
+
+static const unsigned long D3DDIRTYFROMTEXTURESTATE[22] = {
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F,
+    0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F, 0x0000000F,
+    0x0000480F, 0x00000800, 0x00000800, 0x00000800, 0x00000800, 0x00000800,
+    0x00000800, 0x00000800, 0x00000800, 0x00000400
+};
+
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 //NGC MATCH
@@ -392,6 +429,7 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
     s32 j;
     s32 nbytes;
     s32 next_ix;
+    struct NUBLENDGEOM_s *bg;
 
     nblends = NuFileReadInt(fh);
     if (nblends == 0) {
@@ -427,11 +465,12 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
         geom->blendgeom = NULL;
     }
 
-    if (geom->blendgeom != NULL) {
+    bg = geom->blendgeom;
+    if (bg != NULL) {
         for (i = 0; i < geom->vtxcnt; i++) {
             for (j = 0; j < nblends; j++) {
-                if (geom->blendgeom->blend_offsets[j] != NULL) {
-                    if (NuFabs(geom->blendgeom->blend_offsets[j][i].x) < 0.00001f) {
+                if (bg->blend_offsets[j] != NULL) {
+                    if (NuFabs(bg->blend_offsets[j][i].x) < 0.00001f) {
                         geom->blendgeom->blend_offsets[j][i].x = 0.0f;
                     }
                     if (NuFabs(geom->blendgeom->blend_offsets[j][i].y) < 0.00001f) {
@@ -440,6 +479,7 @@ static void ReadNuIFFBlendShape(s32 fh,struct nugeom_s *geom) {
                     if (NuFabs(geom->blendgeom->blend_offsets[j][i].z) < 0.00001f) {
                         geom->blendgeom->blend_offsets[j][i].z = 0.0f;
                     }
+                    bg = geom->blendgeom;
                 }
             }
         }

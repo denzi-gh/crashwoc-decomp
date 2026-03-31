@@ -88,7 +88,6 @@ void NuMtxInvR(struct Mtx* dest, struct Mtx* m);
 void NuMtxInvRSS(struct Mtx* dest, struct Mtx* m);
 
 //NuMtxInvH
-//NuMtxInvH
 void NuMtxInvH(struct numtx_s *mi, struct numtx_s *m0);
 
 //NuMtxAlignZ
