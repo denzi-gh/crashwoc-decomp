@@ -2,6 +2,8 @@
 #include <stddef.h>
 #include <string.h>
 
+struct nuquat_s { float x, y, z, w; };
+
 /* ---- function declarations ---- */
 struct nuvec_s SetNuVec(f32 x, f32 y, f32 z);
 struct nuvec_s *SetNuVecPntr(f32 x, f32 y, f32 z);
@@ -24,6 +26,24 @@ float GetGunBoatBestTarget(float Best, struct nuvec_s **TargetPos,
                            struct nuvec_s **TargetVel, s32 *Moving);
 float GetZoffaBestTarget(float Best, struct nuvec_s **TargetPos,
                          struct nuvec_s **TargetVel, s32 *Moving);
+static s32 CollideGliderBombs(struct nuvec_s *, struct nuvec_s *, s32, float);
+void DebFree(s32 *key);
+void ProcessWesternArenaLevel(struct nupad_s *Pad);
+void ProcessEarthBossLevel(struct nupad_s *Pad);
+void ProcessFireBossLevel(struct nupad_s *Pad);
+void WesternArenaReset(s32 PlayerDead);
+void FireBossReset(s32 PlayerDead);
+void MyResetAnimPacket(struct MYDRAW *Draw, s32 Action);
+void UnleashLighteningHail(struct nuvec_s *Pos, s32 AttNum);
+s32 NuHGobjRndr(void *hgobj, struct numtx_s *wm, s32 nlayers, short *layers);
+void edppRegisterPointerToGameCharLocation(struct nuvec_s *charloc);
+s32 NewRayCastMask(struct nuvec_s *Pos, struct nuvec_s *Dir, s32 mask);
+void AddExtraLife(struct nuvec_s *Pos, s32 type);
+s32 TerrainPlatId(void);
+void TerrainPlatGetMtx(s32 platid, struct numtx_s **old, struct numtx_s **cur);
+s32 NewRayCastPlatForm(struct nuvec_s *vpos, struct nuvec_s *vvel, float size, float timeadj, s32 platformid);
+s32 NewRayCastSetHandel(struct nuvec_s *Pos, struct nuvec_s *Dir, float size, float a, float b, short *handle);
+void ProcessVehMasks(void);
 static const struct nuvec_s kHalfScale = {0.5f, 0.5f, 0.5f};
 
 /* ---- struct definitions ---- */
@@ -594,6 +614,16 @@ struct VEHMASK {
     int Seen;
 };
 
+void ProcessJeepRock(struct JEEPROCK *Rock);
+void ProcessBattleShip(struct BATTLESHIPSTRUCT *BattleShip);
+void ProcessBigGun(struct BIGGUNSTRUCT *BigGun);
+void ProcessGunBoat(struct GUNBOATSTRUCT *GunBoat);
+void ProcessSpaceStation(struct SPACESTATIONSTRUCT *SpaceStation);
+void ProcessAtlas(struct ATLASSTRUCT *Atlas);
+void ProcessAtlasTrail(struct ATLASSTRUCT *Atlas);
+void ProcessHovaBlimp(struct HOVASTRUCT *Hova);
+void ProcessEarthBossActions(struct ATLASSTRUCT *EarthBoss);
+
 /* ---- vehicle.c globals ---- */
 
 GLIDERBOMBSTRUCT GliderBombs[10];
@@ -780,8 +810,8 @@ extern s32 BEENHITBIGBUZZTIME;
 extern s32 BEENHITBIGRUMTIME;
 extern float GLIDERHITSOUNDFREQUENCY;
 extern s32 GLIDERHITSOUNDOTHERID;
-extern short CRASHTEROIDSSATELLITEVOL;
-extern short CRASHTEROIDSAMBIENTVOL;
+extern int CRASHTEROIDSSATELLITEVOL;
+extern int CRASHTEROIDSAMBIENTVOL;
 extern float HAILCOLLRAD;
 extern float HAILHIDDENTIME;
 extern float HailFallSpeed;
@@ -824,12 +854,12 @@ extern float WBLeftStartFrame;
 extern float WBLeftStopFrame;
 extern float WBLeftStopTurnFrame;
 extern struct nuvec_s WBLeftFirePos;
-extern short BALLATTACKVOL;
-extern short CHESTATTACKAVOL;
-extern short CHESTATTACKBVOL;
+extern int BALLATTACKVOL;
+extern int CHESTATTACKAVOL;
+extern int CHESTATTACKBVOL;
 extern float CHESTATTACKSOUNDTIME;
-extern short BEAMVOL;
-extern short EYEATTACKVOL;
+extern int BEAMVOL;
+extern int EYEATTACKVOL;
 extern float EYESTOPTIME;
 extern float EYEBOLTFIRESCALEX;
 extern float EYEBOLTFIRESCALEY;
@@ -844,7 +874,7 @@ extern float RadarX;
 extern float RadarY;
 extern float RadarZ;
 extern float ATLASBOOSTSPEED;
-extern short ATLASBOOSTVOL;
+extern int ATLASBOOSTVOL;
 extern float ATLASLOOPVOL;
 extern float BALLRUMBLESLOPE;
 extern s32 LIFTPLAYER;
@@ -880,6 +910,83 @@ extern s32 UsedEnemyGliderBulletNum;
 extern s32 UsedGliderBulletNum;
 extern s32 BulletEnemyNumFrees;
 extern s32 BulletNumFrees;
+extern struct creature_s *player;
+extern s32 BEENHITBUZZTIME;
+extern float BIGSCALE;
+extern s32 CRASHTEROIDSENGINEVOL;
+extern s32 CRASHTEROIDSZOFFAVOL;
+extern float CrashteroidsStartAngle;
+extern float FIREFLYVICDANCETIME;
+extern float FIXVELBUMPAMOUNT;
+extern float FIXVELTIME;
+extern s32 GLIDENGINEVOL;
+extern float GLIDENGPITCHSLOPE;
+extern float GLIDENGRUMBLESLOPE;
+extern float GLIDRUMTIM;
+extern s32 GLIDRUMVOL;
+extern s32 GliderRumble;
+extern s32 HITSHIELDVOL;
+extern s32 HITSHIELDVOLA;
+extern float HovaRad;
+extern float HovaY;
+extern s32 LastNumZoffasFiring;
+extern float MOSENGPITCHSLOPE;
+extern float MOSENGRUMBLESLOPE;
+extern float OIDENGPITCHSLOPE;
+extern float OIDENGRUMBLESLOPE;
+extern float OIDZOFPITCHSLOPE;
+extern float SHIELDSCALEY;
+extern s32 SINKENGINEVOL;
+extern float SMALLSCALE;
+extern float SPACEMINSPEEDIN;
+extern s32 SPACESTATIONEXPLODEVOL;
+extern float SPACETORNADOSCALE;
+extern s32 UFOEXPLODEID;
+extern float ZoffaAlter;
+extern s32 jonemit;
+extern s32 jonframe1;
+extern float jtemp1;
+extern float torndist;
+extern float ROCKSMASHVOL;
+extern float HAILFLYUPSPEED;
+extern float HAILTIMERANGE;
+extern s32 SkipNum;
+extern float SkipLeftA;
+extern float SkipLeftB;
+extern float SkipLeftC;
+extern float LighteningFallXMin;
+extern float LighteningFallXMax;
+extern struct nuvec_s ExtroStillCamPos;
+extern struct nuvec_s ExtroStillInterest;
+extern struct nuvec_s ExtroStillVelocity;
+extern struct nuvec_s GliderBulletReflectPos;
+extern struct numtx_s GliderInvMtx;
+extern struct nuvec_s GliderBombCollisionPos;
+extern float FireFlyStartAngle;
+extern float CrashteroidsStartAngle;
+extern float TimeTrialWait;
+extern struct nuvec_s ExhaustPosA;
+extern struct nuvec_s ExhaustPosB;
+float WBCamDist;
+float SeekGliderCamTime;
+struct nuvec_s TORNADOCAMIDEAL;
+float TORNADOINTERESTY;
+float ExtroAngOff;
+float ExtroChangeVal;
+struct nuvec_s ExtroIdealPos;
+float ExtroSeekZeroTime;
+float ExtroStillToEndTime;
+float ExtroTargAng;
+float FFTWEENTIME;
+float CameraSeekSpeedAutoPilot;
+s32 *GliderBulletReflectMtx;
+float MOSENGPITCH;
+float OIDENGPITCH;
+float GLIDENGPITCH;
+s32 GUNBOATVOLUME;
+struct nuvec_s FireFlyStart;
+struct nuvec_s CrashteroidsStart;
+struct nuvec_s LighteningHailVel;
 s32 jonfirst = 0;
 struct VEHMASK VehicleMask[2];
 ZOFFASTRUCT EnemyZoffa[4];
@@ -906,7 +1013,7 @@ void MoveVehicle(struct creature_s *Cre, struct nupad_s *Pad) {
   case 0x81:
   case 0x8B:
   case 0x36:
-    MoveGlider();
+    MoveGlider(Cre, Pad);
     return;
   case 0x53:
     MoveAtlas(Cre, Pad);
@@ -936,6 +1043,7 @@ s32 PickGliderTarget(struct nuvec_s **Target, struct nuvec_s **Vel,
     }
     return (best > 0.96f);
   }
+}
 
 // NGC MATCH
 s32 StillLockedOnTarget(struct nuvec_s *Target) {
@@ -1419,6 +1527,290 @@ void ProcessGliderMovementWB(GLIDERSTRUCT *Glider) {
   }
   return;
 }
+
+// NGC MATCH
+void MoveGlider(struct creature_s *Cre, struct nupad_s *Pad) {
+  GLIDERSTRUCT *Glider;
+  struct nuvec_s *PosPtr;
+  struct nuvec_s Temp;
+  struct nuvec_s Temp2;
+  struct nuvec_s Temp3;
+  struct nuvec_s ClockPos;
+  void *Clock;
+  s32 Collided;
+  s32 debIndex;
+  s32 GliderRumbleVal;
+  float RumbleSlope;
+  float f31;
+
+  Glider = (GLIDERSTRUCT *)Cre->Buggy;
+  if (Glider == NULL) {
+    Glider = &PlayerGlider;
+    Cre->Buggy = (struct NEWBUGGY *)Glider;
+    PlayerGlider.Cre = Cre;
+    return;
+  }
+
+  ProcessTimer(&Glider->NextHitSoundTimer);
+  ProcessTimer(&Glider->ImmuneAsteroidsTimer);
+  Glider->OldPosition = Glider->Position;
+
+  if (Glider->TerminalDive != 0) {
+    Glider->HitPoints = 0;
+  }
+
+  if (Glider->HitPoints <= 0) {
+    if (Level == 0x1a) {
+      DeadGliderCoco(Glider);
+      return;
+    }
+    if (Level == 0x18) {
+      Glider->HitTimer = Level_DeadTime;
+      GliderSmoke(Glider);
+      DeadGliderWB(Glider);
+      return;
+    }
+  }
+
+  if (Glider->Dead != 0) {
+    Glider->HitTimer = Level_DeadTime;
+    GliderSmoke(Glider);
+    Glider->Dead--;
+    if (Glider->Dead > 0) return;
+    Glider->Dead = 60;
+    AddGameDebris(0x18, &Glider->Position);
+    return;
+  }
+
+  ProcessTimer(&Glider->HitTimer);
+  ControlGlider(Glider, Pad);
+  if (Level == 0x18) {
+    ProcessGliderMovementWB(Glider);
+  } else {
+    ProcessGliderMovement(Glider, 0.016666668f);
+  }
+  if (Level == 0x18) {
+    ControlGliderWeatherBoss(Glider, Pad);
+  }
+
+  if (CollideGliderBullets(&Glider->Position, 0.8f, 1, 1.0f, 0, 0) != 0) {
+    Glider->HitTimer += 0.5f;
+    if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+      Glider->HitPoints--;
+    }
+    if (Glider->HitPoints < 0) {
+      Glider->HitPoints = 0;
+    }
+    NewBuzz(&player->rumble, BEENHITBUZZTIME);
+    if (Glider->NextHitSoundTimer == 0.0f) {
+      if (Level == 0x1a) {
+        MyGameSfx(0xc0, &Glider->Position, 0x7fff);
+      } else {
+        MyGameSfx(0x5a, &Glider->Position, 0x7fff);
+      }
+      Glider->NextHitSoundTimer = GLIDERHITSOUNDFREQUENCY;
+    } else {
+      MyGameSfx(GLIDERHITSOUNDOTHERID, &Glider->Position, 0x4fff);
+    }
+  }
+
+  GliderBulletsHitThings(Glider);
+  if (Level == 0x12 || Level == 0x24) {
+    GliderBombsHitThings(Glider);
+  }
+
+  if (Glider->HitPoints <= 0) {
+    Glider->HitPoints = 0;
+    Glider->TerminalDive = 1;
+    Glider->HitTimer = Level_DeadTime;
+  }
+
+  if (Level != 0x18 && Glider->Dead == 0 && new_mode == -1 && new_level == -1 &&
+      GameTimer.frame > 0x3c) {
+    Collided = 0;
+    if (Glider->Position.y < 6.0f) {
+      Collided = (Level == 0xd);
+    }
+    if (Glider->Position.y < 0.0f) {
+      Collided |= (Level == 0x12);
+    }
+    if (Collided == 0) {
+      if (Level == 0x12 && Glider->TerminalDive == 0) {
+        Temp = *(struct nuvec_s *)&v000;
+        Temp.y = -11.0f;
+        Temp2 = Glider->Position;
+        Temp2.y += 10.0f;
+        if (NewRayCastMask(&Temp2, &Temp, 0xff) != 0) {
+          NuVecAdd(&Temp3, &Temp2, &Temp);
+          if (Temp3.y > Glider->Position.y) {
+            Glider->Position = Temp3;
+          }
+          Glider->PullUpTimer = 0.5f;
+        }
+      } else {
+        NuVecSub(&Temp, &Glider->Position, &Glider->OldPosition);
+        if (NewRayCast(&Glider->OldPosition, &Temp, 0.0f) != 0) {
+          Collided = 1;
+        }
+      }
+    }
+    if (Collided == 0 && Level == 0x12) {
+      if (CollideWithBattleShips(&PlayerGlider.Position, 1.0f) != 0) {
+        Collided = 1;
+      }
+    }
+    if (Collided != 0) {
+      ExplodeGlider(Glider);
+    }
+  }
+
+  GliderSmoke(Glider);
+  Cre->obj.pos = Glider->Position;
+
+  if (HitCrates(&Cre->obj, 1) != 0) {
+    if (temp_crate_type == 5) {
+      if (Level == 0x12) {
+        if (qrand() <= 0xbfff) {
+          Glider->HitPoints += 50;
+          if (Glider->HitPoints > 100) {
+            Glider->HitPoints = 100;
+          }
+        }
+      } else {
+        AddExtraLife(&temp_pCrate->pos, 2);
+      }
+    }
+  } else {
+    f31 = Cre->obj.SCALE;
+    f31 += CRATEBALLOONRADIUS;
+    if (HitCrateBalloons(&Cre->obj.pos, f31) != 0) {
+      AddGameDebris(0x1a, &Cre->obj.pos);
+      AddScreenWumpa(1, temp_pCrate->pos.x,
+                     temp_pCrate->pos.y + CRATEBALLOONOFFSET,
+                     temp_pCrate->pos.z);
+      temp_pCrate->flags = (temp_pCrate->flags | 0x400) ^ 0x400;
+    } else {
+      if (HitItems(&Cre->obj) != 0) {
+        AddGameDebris(0x1a, &Cre->obj.pos);
+      } else {
+        Clock = FindClock();
+        if (Clock != NULL) {
+          PosPtr = (struct nuvec_s *)((char *)Clock + 0x6c);
+          ClockPos.x = PosPtr->x;
+          ClockPos.y = PosPtr->y + CRATEBALLOONOFFSET;
+          ClockPos.z = PosPtr->z;
+          f31 = Cre->obj.SCALE;
+          f31 += CRATEBALLOONRADIUS;
+          if (NuVecDistSqr(&Cre->obj.pos, &ClockPos, &Temp) < f31 * f31) {
+            AddGameDebris(0x1a, &Cre->obj.pos);
+            StartTimeTrial(PosPtr, 1);
+          }
+        }
+      }
+    }
+  }
+
+  Glider->LastInTornado = Glider->InTornado;
+  Glider->ApparentPosition = Glider->PositionStack[Glider->StackIndx];
+  Glider->ApparentVelocity = Glider->VelocityStack[Glider->StackIndx];
+  Glider->PositionStack[Glider->StackIndx] = Glider->Position;
+  Glider->VelocityStack[Glider->StackIndx] = Glider->Velocity;
+  NuVecScaleAccum(0.5f, &Glider->PositionStack[Glider->StackIndx],
+                  &Glider->Velocity);
+  Glider->StackIndx++;
+  if (Glider->StackIndx > 29) {
+    Glider->StackIndx = 0;
+  }
+
+  ProcessTimer(&Glider->OverideTiltZ);
+  GliderFire(Glider, Pad);
+
+  if (Level == 0x12) {
+    debIndex = 0x86;
+    NuMtxSetRotationZ(&mTEMP, (int)(Glider->TiltZ * 182.04445f));
+    NuMtxRotateX(&mTEMP, (int)((Glider->TiltX + 15.0f) * 182.04445f));
+    NuMtxRotateY(&mTEMP, (int)(Glider->AngleY * 182.04445f));
+    NuMtxTranslate(&mTEMP, &Glider->Position);
+    if (Glider->HitPoints == 0) {
+      debIndex = 0x84;
+    }
+    NuVecMtxTransform(&Temp, &ExhaustPosA, &mTEMP);
+    AddVariableShotDebrisEffect(GDeb[debIndex].i, &Temp, 1, 0, 0);
+    NuVecMtxTransform(&Temp, &ExhaustPosB, &mTEMP);
+    AddVariableShotDebrisEffect(GDeb[debIndex].i, &Temp, 1, 0, 0);
+  }
+
+  if (Glider->InTornadoTime == 0.0) {
+    if (ProcessTimer(&Glider->CamTornRecoverTimer) != 0) {
+      Glider->CamAngleY = Glider->AngleY;
+      Glider->CamTiltX = Glider->TiltX;
+    } else {
+      float rangle;
+      float t;
+      rangle = Glider->AngleY - Glider->CamAngleY;
+      rangle = Rationalise360f(rangle);
+      t = 1.0f - Glider->CamTornRecoverTimer;
+      Glider->CamAngleY = t * rangle + Glider->CamAngleY;
+      rangle = Glider->TiltX - Glider->CamTiltX;
+      rangle = Rationalise360f(rangle);
+      t = 1.0f - Glider->CamTornRecoverTimer;
+      Glider->CamTiltX = t * rangle + Glider->CamTiltX;
+    }
+  }
+
+  if (Level == 0x12) ProcessFireFlyIntro();
+  if (Level == 0x1a) ProcessCrashteroidsIntro();
+
+  f31 = NuFabs(Glider->TiltZ) * 0.5f;
+  if (Glider->DestTiltX > 0.0f) {
+    f31 = Glider->DestTiltX * 0.5f + f31;
+  } else {
+    f31 -= Glider->DestTiltX;
+  }
+
+  GliderRumble = 0;
+  if (Level == 0x1a) {
+    MyGameSfxLoopVolPitch(0xb5, &Glider->Position, (short)CRASHTEROIDSENGINEVOL,
+                          (short)(OIDENGPITCH + (int)(OIDENGPITCHSLOPE * Glider->TiltX)));
+    RumbleSlope = OIDENGRUMBLESLOPE;
+  } else if (Level == 0x12) {
+    MyGameSfxLoopVolPitch(0xb6, &Glider->Position, (short)SINKENGINEVOL,
+                          (short)(MOSENGPITCH + (int)(MOSENGPITCHSLOPE * Glider->TiltX)));
+    RumbleSlope = MOSENGRUMBLESLOPE * 1.25f;
+  } else if (Level == 0x0d || Level == 0x18 || Level == 0x24) {
+    MyGameSfxLoopVolPitch(0x5b, &Glider->Position, (short)GLIDENGINEVOL,
+                          (short)(GLIDENGPITCH + (int)(GLIDENGPITCHSLOPE * Glider->TiltX)));
+    RumbleSlope = GLIDENGRUMBLESLOPE;
+  } else {
+    goto skip_rumble;
+  }
+  GliderRumbleVal = (short)(int)(RumbleSlope * f31);
+  if (GliderRumbleVal > 255) GliderRumbleVal = 255;
+  if (GliderRumbleVal < 0) GliderRumbleVal = 0;
+  GliderRumble = GliderRumbleVal;
+skip_rumble:
+
+  NewRumble(&player->rumble, GliderRumble);
+
+  if (ProcessTimer(&Glider->NextEngRum) != 0) {
+    frand();
+    GliderRumble = GLIDRUMVOL;
+    NewRumble(&player->rumble, GliderRumble);
+    Glider->NextEngRum = GLIDRUMTIM;
+  }
+
+  if (Level == 0x1a) {
+    if (PlayerGlider.InTornadoTime == 0.0f) {
+      AddVariableShotDebrisEffect(GDeb[0x9f].i,
+          (struct nuvec_s *)&Glider->Cre->mtxLOCATOR[8][0]._30, 1, 0, 0);
+      AddVariableShotDebrisEffect(GDeb[0x9f].i,
+          (struct nuvec_s *)&Glider->Cre->mtxLOCATOR[8][1]._30, 1, 0, 0);
+      AddVariableShotDebrisEffect(GDeb[0x9f].i,
+          (struct nuvec_s *)&Glider->Cre->mtxLOCATOR[9][0]._30, 1, 0, 0);
+    }
+  }
+}
+
 
 // NGC MATCH
 void DrawGlider(struct creature_s *Cre) {
@@ -2474,6 +2866,56 @@ static ZOFFASTRUCT *FindFreeZoffa(void) {
 }
 
 // NGC MATCH
+static ZOFFASTRUCT *InitZoffa(ZOFFASTRUCT *Zoffa, ZOFFASTART *Start) {
+  s32 Indx;
+  s32 Id;
+
+  if (Zoffa == NULL) {
+    Zoffa = FindFreeZoffa();
+    if (Zoffa == NULL) {
+      return NULL;
+    }
+  }
+
+  Indx = Zoffa - EnemyZoffa;
+  memset(Zoffa, 0, 0x5b0);
+
+  Zoffa->Position.x = Start->x;
+  Zoffa->Position.y = Start->y;
+  Zoffa->Position.z = Start->z;
+  Zoffa->AngleY = Start->Angle;
+  Zoffa->ActiveMode = 1;
+  Zoffa->DestAngleY = Start->Angle;
+  Zoffa->NewAltitudeTarget = -100.0f;
+  Zoffa->HitPoints = 2;
+  Zoffa->RespawnTimer = 10.0f;
+
+  if (Level == 0xd) {
+    switch (Indx) {
+      case 0: Id = 0x5b; break;
+      case 1: Id = 0x5e; break;
+      case 2: Id = 0x5d; break;
+      default: Id = 0x5c; break;
+    }
+  } else if (Level == 0x12) {
+    Id = 0x5f;
+  } else {
+    switch (Indx) {
+      case 0: Id = 0x82; break;
+      case 1: Id = 0x83; break;
+      case 2: Id = 0x84; break;
+      default: Id = 0x85; break;
+    }
+  }
+
+  if (MyInitModelNew(&Zoffa->MainDraw, Id, 0x1d, 0, NULL, &Zoffa->Position) == 0) {
+    return NULL;
+  }
+  return Zoffa;
+}
+
+
+// NGC MATCH
 static void InitZoffaUFOs(void) {
   s32 i;
 
@@ -2672,6 +3114,192 @@ float GetZoffaBestTarget(float Best, struct nuvec_s **TargetPos,
 }
 
 // NGC MATCH
+void MoveZoffaUFO(ZOFFASTRUCT *Zoffa) {
+  struct nuvec_s delta;
+  float one = 1.0f;
+  float dist;
+  float diff;
+  float seekAng;
+  float angDiff;
+  struct nuvec_s Target;
+  struct nuvec_s Rel;
+  struct nuvec_s TempVel;
+  struct numtx_s Mat;
+  s32 Mode;
+  s32 Aggressive;
+  float Speed;
+  float TargetX;
+  float TargetZ;
+
+  if (Zoffa->ActiveMode == 0) return;
+
+  ProcessTimer(&Zoffa->NoTeleportTimer);
+  ProcessTimer(&Zoffa->KeepSameVelocityTimer);
+  ProcessTimer(&Zoffa->RespawnTimer);
+
+  ZoffaSmoke(Zoffa);
+  MyAnimateModelNew(&Zoffa->MainDraw, one);
+
+  if (Zoffa->TerminalDive != 0) {
+    Zoffa->Position.x += Zoffa->Velocity.x * 0.01666667f;
+    Zoffa->Position.y += Zoffa->Velocity.y * 0.01666667f;
+    Zoffa->Position.z += Zoffa->Velocity.z * 0.01666667f;
+    Zoffa->Velocity.y -= 0.5f;
+
+    diff = Rationalise360f(Zoffa->DestAngleY - Zoffa->AngleY);
+    {
+      s32 spin = 1;
+      if (diff < 0.0f) spin = -1;
+      Zoffa->TiltZ += (float)spin * 6.0f * 0.01666667f;
+    }
+
+    Zoffa->AngleY += Zoffa->TiltZ * 2.0f * 0.01666667f;
+
+    if (Zoffa->Position.y < Level_GliderFloor - 10.0f) {
+      AddGameDebris(0x18, &Zoffa->Position);
+      MyGameSfx(0xb4, &Zoffa->Position, 0x3fff);
+      Zoffa->ActiveMode = 0;
+      Zoffa->RespawnTimer = 5.0f;
+      AddScreenWumpa(Zoffa->Position.x, Zoffa->Position.y, Zoffa->Position.z, one);
+      ClockOff();
+    }
+    return;
+  }
+
+  CollideGliderBullets(&Zoffa->Position, 3.0f, 1, one, 0, 0);
+  if (CollideGliderBullets(&Zoffa->Position, 3.0f, 0, one, 0, 0) != 0) {
+    Zoffa->HitPoints--;
+    AddScreenWumpa(Zoffa->Position.x, Zoffa->Position.y, Zoffa->Position.z, one);
+    ClockOff();
+    if (Zoffa->HitPoints <= 0) {
+      Zoffa->TerminalDive = 1;
+      Zoffa->DestAngleY = Zoffa->AngleY + 90.0f;
+      MyGameSfx(0xb4, &Zoffa->Position, 0x7fff);
+    } else {
+      MyGameSfx(0xbb, &Zoffa->Position, 0x3fff);
+    }
+  }
+
+  Mode = Zoffa->ActiveMode;
+  Aggressive = (Zoffa == &EnemyZoffa[CurrentAggressor]);
+
+  NuVecSub(&Rel, &PlayerGlider.Position, &Zoffa->Position);
+  dist = NuVecMag(&Rel);
+
+  switch (Mode) {
+  case 0: // Approach
+    if (dist < 40.0f) {
+      Zoffa->ActiveMode = 1;
+    }
+
+    Target = PlayerGlider.Position;
+    break;
+
+  case 1: // Circle
+    if (dist > 80.0f) {
+      Zoffa->ActiveMode = 0;
+    }
+    if (Aggressive && dist < 60.0f) {
+      Zoffa->ActiveMode = 2;
+    }
+
+    {
+      float circleAngle;
+      circleAngle = Zoffa->VisibleTimer;
+      circleAngle += 1.0f * 0.01666667f;
+      Zoffa->VisibleTimer = circleAngle;
+
+      Target.x = PlayerGlider.Position.x + NuFsin(circleAngle) * 50.0f;
+      Target.y = PlayerGlider.Position.y;
+      Target.z = PlayerGlider.Position.z + NuFcos(circleAngle) * 50.0f;
+    }
+    break;
+
+  case 2: // Attack
+    if (dist > 100.0f) {
+      Zoffa->ActiveMode = 1;
+    }
+
+    Target = PlayerGlider.Position;
+    NuVecScaleAccum(0.5f, &Target, &PlayerGlider.Velocity);
+
+    if (ProcessTimer(&Zoffa->FireTimer) != 0) {
+      if (Zoffa->Seen != 0) {
+        struct nuvec_s FireDir;
+        NuVecSub(&FireDir, &PlayerGlider.Position, &Zoffa->Position);
+        NuVecNorm(&FireDir, &FireDir);
+        NuVecScale(-120.0f, &FireDir, &FireDir);
+
+        NuMtxSetRotationZ(&Mat, (s32)(Zoffa->TiltZ * 182.04445f));
+        NuMtxRotateX(&Mat, (s32)(-Zoffa->TiltX * 182.04445f));
+        NuMtxRotateY(&Mat, (s32)((Zoffa->AngleY + 180.0f) * 182.04445f));
+
+        AddGliderBullet(&Mat, &Zoffa->Position, &FireDir, 1);
+        MyGameSfx(0x60, &Zoffa->Position, 0x3fff);
+      }
+      Zoffa->FireTimer = 2.0f;
+    }
+    break;
+
+  case 3: // Flee/teleport
+    Zoffa->Teleport = 1;
+    break;
+  }
+
+  if (Zoffa->TerminalDive == 0) {
+    SeekHalfLife(&Zoffa->Speed, 14.0f, 0.5f, 0.01666667f);
+
+    if (Zoffa->KeepSameVelocityTimer <= 0.0f) {
+      NuVecSub(&Rel, &Target, &Zoffa->Position);
+      dist = NuVecMag(&Rel);
+      if (dist > 1.0f) {
+        NuVecScale(one / dist, &Rel, &Rel);
+
+        angDiff = Rationalise360f(
+            NuAtan2D(Rel.x, Rel.z) / 182.04445f - Zoffa->AngleY);
+
+        if (angDiff > 3.0f) {
+          seekAng = 3.0f;
+        } else if (angDiff < -3.0f) {
+          seekAng = -3.0f;
+        } else {
+          seekAng = angDiff;
+        }
+
+        Zoffa->AngleY += seekAng * 0.01666667f;
+      }
+
+      NuVecRotateY(&TempVel, SetNuVecPntr(0.0f, 0.0f, -Zoffa->Speed), (s32)(Zoffa->AngleY * 182.04445f));
+      Zoffa->Velocity = TempVel;
+    }
+
+    NuVecScaleAccum(0.01666667f, &Zoffa->Position, &Zoffa->Velocity);
+
+    {
+      float targetY;
+      targetY = PlayerGlider.Position.y;
+      SeekHalfLife(&Zoffa->Position.y, targetY, 0.5f, 0.01666667f);
+    }
+
+    if (Zoffa->Position.y < Level_GliderFloor) {
+      Zoffa->Position.y = Level_GliderFloor;
+    }
+
+    {
+      float targetTiltX;
+      targetTiltX = 0.0f;
+      SeekAngHalfLife360f(&Zoffa->TiltX, targetTiltX, 0.5f, 0.01666667f);
+      SeekAngHalfLife360f(&Zoffa->TiltZ, 0.0f, 0.5f, 0.01666667f);
+    }
+  }
+
+  if (Level != 0x1a) {
+    MyGameSfxLoop(0xbc, &Zoffa->Position, 0x3fff);
+  }
+}
+
+
+// NGC MATCH
 HOVASTRUCT *FindFreeHova(void) {
   s32 i;
 
@@ -2682,6 +3310,46 @@ HOVASTRUCT *FindFreeHova(void) {
   }
   return NULL;
 }
+
+// NGC MATCH
+void InitHova(struct nuvec_s *Pos, float AngleY) {
+  HOVASTRUCT *Hova;
+  TORNADOSTRUCT *Tornado;
+  struct nuvec_s Vel;
+  s32 HovaIndx;
+
+  Hova = FindFreeHova();
+  if (Hova == NULL) return;
+
+  Hova->ActiveMode = 1;
+  Hova->Position = *Pos;
+  Hova->StartPos = *Pos;
+
+  Hova->Position.y += frand() - 0.5f;
+
+  Vel = SetNuVec(0.0f, (frand() - 0.5f) * 5.0f, 0.5f);
+
+  HovaIndx = Hova - HovaBlimp;
+  Hova->Velocity = Vel;
+  Hova->ThrustOff = 0.1f;
+  Hova->AngleY = AngleY;
+
+  Tornado = &TornadoList[HovaIndx];
+  Hova->HitPoints = 10;
+  Tornado->Active = 1;
+
+  Tornado->Position = Hova->Position;
+  Tornado->Position.y = 27.0f;
+  Tornado->StartPosition = Tornado->Position;
+
+  Tornado->YAng = frand() * 360.0f;
+
+  Tornado->Scale = 2.0f;
+  Tornado->YAngInc = frand() * 40.0f + 160.0f;
+
+  MyInitModelNew(&Hova->MainDraw, 0x43, 0x46, 0, NULL, &Hova->Position);
+}
+
 
 // NGC MATCH
 void InitialiseHovaBlimps(void) {
@@ -2735,6 +3403,97 @@ void DrawHovaBlimp(HOVASTRUCT *Hova) {
 }
 
 // NGC MATCH
+void ProcessHovaBlimp(HOVASTRUCT *Hova) {
+  struct nuvec_s newPos;
+  struct nuvec_s temp1;
+  struct nuvec_s temp2;
+  float maxDist2;
+  s32 i;
+
+  Hova->MainDraw.Anim.oldaction = Hova->MainDraw.Anim.action;
+  MyAnimateModelNew(&Hova->MainDraw, 0.5f);
+  SeekHalfLifeNUVEC(&Hova->Velocity, &Hova->TargetVelocity, 1.0f, 1.0f / 60.0f);
+
+  newPos = Hova->Position;
+  NuVecScaleAccum(1.0f / 60.0f, &newPos, &Hova->Velocity);
+
+  maxDist2 = Level_GliderRadius - 15.0f;
+  maxDist2 = maxDist2 * maxDist2;
+
+  if (newPos.x * newPos.x + newPos.z * newPos.z > maxDist2 &&
+      newPos.x * newPos.x + newPos.z * newPos.z >= Hova->Position.x * Hova->Position.x + Hova->Position.z * Hova->Position.z) {
+    Hova->MoveTimer = 0.0f;
+  } else {
+    for (i = 0; i <= 5; i++) {
+      if (HovaBlimp[i].ActiveMode != 0) {
+        NuVecSub(&temp1, &newPos, &HovaBlimp[i].Position);
+        NuVecSub(&temp2, &Hova->Position, &HovaBlimp[i].Position);
+        if (temp1.x * temp1.x + temp1.z * temp1.z < 20.0f &&
+            temp1.x * temp1.x + temp1.z * temp1.z < temp2.x * temp2.x + temp2.z * temp2.z) {
+          Hova->MoveTimer = 0.0f;
+          goto update_pos;
+        }
+      }
+    }
+  }
+update_pos:
+  Hova->Position = newPos;
+
+  if (Hova->Thrust != 0) {
+    if (Hova->Position.y > Hova->StartPos.y + Hova->ThrustOff) {
+      Hova->Thrust = 0;
+    }
+  } else {
+    if (Hova->Position.y < Hova->StartPos.y) {
+      Hova->Thrust = 1;
+      Hova->ThrustOff = frand() * 0.5f;
+    }
+  }
+
+  if (Hova->Thrust != 0) {
+    Hova->Velocity.y = Hova->Velocity.y + 0.05f;
+  } else {
+    Hova->Velocity.y = Hova->Velocity.y - 0.1f;
+  }
+
+  if (Hova->Velocity.y > 1.0f) {
+    Hova->Velocity.y = 1.0f;
+  }
+  if (Hova->Velocity.y < -2.0f) {
+    Hova->Velocity.y = -2.0f;
+  }
+
+  if (Hova->Velocity.y < 0.0f) {
+    Hova->AngleY = Hova->Velocity.y * 5.0f + Hova->AngleY;
+  }
+
+  Hova->Position.y = Hova->Velocity.y * (1.0f / 60.0f) + Hova->Position.y;
+
+  CollideGliderBullets(&Hova->Position, HovaRad, 1.0f / HovaY, 1, 1, 1);
+
+  if (CollideGliderBullets(&Hova->Position, HovaRad, 1.0f / HovaY, 0, 1, 0) != 0) {
+    Hova->HitPoints--;
+    if (Hova->HitPoints <= 0) {
+      Hova->Explode = 1;
+    }
+    MyGameSfx(0x8c, &Hova->Position, 0x3fff);
+    AddScreenWumpa(1, Hova->Position.x, Hova->Position.y, Hova->Position.z);
+    MyGameSfx(0x8c, &Hova->Position, 0x3fff);
+    ClockOff();
+  }
+
+  if (Hova->Explode != 0) {
+    MyGameSfx(0x5f, &Hova->Position, 0x3fff);
+    AddGameDebris(0x17, &Hova->Position);
+    AddDeb3(&Hova->Position, 6, 4, 0);
+    AddDeb3(&Hova->Position, 7, 4, 0);
+    AddDeb3(&Hova->Position, 8, 4, 0);
+    Hova->ActiveMode = 0;
+  }
+}
+
+
+// NGC MATCH
 static s32 ProcessAllHovaBlimps(void) {
   s32 i;
   s32 Ret;
@@ -2757,6 +3516,60 @@ static s32 ProcessAllHovaBlimps(void) {
   }
   return Ret;
 }
+
+// NGC MATCH
+void DrawAllHovaBlimps(void) {
+  s32 i;
+  struct nuvec_s pos;
+  float dist;
+
+  torndist = 99999.0f;
+  for (i = 0; i < 6; i++) {
+    if (HovaBlimp[i].ActiveMode != 0) {
+      DrawHovaBlimp(&HovaBlimp[i]);
+    }
+  }
+
+  jonemit += 60;
+  if (jonemit > 179) {
+    jonemit = 0;
+  }
+
+  for (i = 0; i <= 5; i++) {
+    if (TornadoList[i].Active != 0) {
+      if (jonemit == 0 && Paused == 0) {
+        pos = TornadoList[i].Position;
+        pos.y -= 20.0f;
+        AddVariableShotDebrisEffect(GDeb[0xb4].i, &pos, 1, 0, 0);
+        pos.y -= 3.0f;
+        AddVariableShotDebrisEffect(GDeb[0xb8].i, &pos, 1, 0, 0);
+      }
+      pos = TornadoList[i].Position;
+      dist = pos.z - player->obj.pos.z;
+      dist = dist * dist;
+      dist = (pos.x - player->obj.pos.x) * (pos.x - player->obj.pos.x) + dist;
+      if (dist < torndist) {
+        torndist = dist;
+      }
+      if (jontorn[i * 2] == -1) {
+        AddDebrisEffect(&jontorn[i * 2], GDeb[0x1a8].i, pos.x, pos.y + jtemp1, pos.z);
+      }
+      if (jontorn[i * 2 + 1] == -1) {
+        AddDebrisEffect(&jontorn[i * 2 + 1], GDeb[0x1ac].i, pos.x, pos.y + jtemp1, pos.z);
+      }
+    } else {
+      if (jontorn[i * 2] != -1) {
+        DebFree(&jontorn[i * 2]);
+        jontorn[i * 2] = -1;
+      }
+      if (jontorn[i * 2 + 1] != -1) {
+        DebFree(&jontorn[i * 2 + 1]);
+        jontorn[i * 2 + 1] = -1;
+      }
+    }
+  }
+}
+
 
 // NGC MATCH
 SATELLITESTRUCT *InitSatellite(SPACESTATIONSTRUCT *SpaceStation, float AngleY) {
@@ -2939,6 +3752,146 @@ void DrawSpaceStation(SPACESTATIONSTRUCT *SpaceStation) {
 }
 
 // NGC MATCH
+void ProcessSpaceStation(SPACESTATIONSTRUCT *SpaceStation) {
+  struct nuvec_s delta;
+  struct nuvec_s diff;
+  struct nuvec_s reflectNorm;
+  struct nuvec_s reflectPos;
+  struct nuvec_s TempPos;
+  s32 i;
+  s32 ShieldActive;
+  float dist;
+  float f31;
+  float f30;
+  float f29;
+  s32 angY;
+  s32 angX;
+  GLIDERBULLET *Bullet;
+
+  ShieldActive = 0;
+  for (i = 0; i < 3; i++) {
+    if (SpaceStation->Satellite[i] != NULL) {
+      if (SpaceStation->Satellite[i]->Active != 0) {
+        ShieldActive = 1;
+      }
+    }
+  }
+
+  GliderBulletReflectMtx = NULL;
+
+  CollideGliderBullets(&SpaceStation->AppCentre, 18.0f, 1, 0.6666667f, 0,
+                       ShieldActive);
+  if (CollideGliderBullets(&SpaceStation->AppCentre, 18.0f, 0, 0.6666667f, 0,
+                           ShieldActive) != 0) {
+    SpaceStation->ShieldDraw = 0;
+    if (ShieldActive == 0) {
+      AddScreenWumpa(SpaceStation->Position.x, SpaceStation->Position.y,
+                     SpaceStation->Position.z, 1);
+      SpaceStation->HitPoints--;
+      if (SpaceStation->HitPoints > 0) {
+        MyGameSfx(0xbc, &SpaceStation->Position, 0x3fff);
+      }
+    } else {
+      MyGameSfx(0xbe, &SpaceStation->Position, HITSHIELDVOLA);
+      ClockOff();
+    }
+  }
+
+  NuVecSub(&delta, &PlayerGlider.Position, &SpaceStation->AppCentre);
+  diff = delta;
+  diff.y /= SHIELDSCALEY;
+  dist = NuVecMag(&delta);
+
+  if (dist < 30.0f) {
+    float dot;
+
+    dot = DotProduct(&PlayerGlider.Velocity, &delta);
+    if (dot < 0.0f) {
+      float speed;
+      speed = NuVecMag(&PlayerGlider.Velocity);
+      if (speed < SPACEMINSPEEDIN) {
+        speed = SPACEMINSPEEDIN;
+      }
+
+      NuVecScaleAccum(-dot / (dist * dist), &PlayerGlider.Velocity, &delta);
+      NuVecNorm(&PlayerGlider.Velocity, &PlayerGlider.Velocity);
+      NuVecScale(speed, &PlayerGlider.Velocity, &PlayerGlider.Velocity);
+
+      NuVecScaleAccum(FIXVELBUMPAMOUNT / dist, &PlayerGlider.Velocity, &delta);
+
+      {
+        GLIDERSTRUCT *pg;
+        pg = &PlayerGlider;
+        pg->FixVelTimer = FIXVELTIME;
+        pg->InTornado = 1;
+        pg->InTornadoScale = SPACETORNADOSCALE;
+      }
+
+      if (Level == 0x1a) {
+        MyGameSfx(0xc0, &PlayerGlider.Position, 0x7fff);
+      }
+    }
+
+    {
+      struct nuvec_s scaledDelta;
+      struct nuvec_s rotResult;
+
+      NuVecScale(30.0f / dist, &delta, &delta);
+      scaledDelta = delta;
+      scaledDelta.y *= SHIELDSCALEY;
+
+      NuVecAdd(&reflectPos, &PlayerGlider.Position, &SpaceStation->AppCentre);
+
+      f31 = 182.04445f;
+      angY = NuAtan2D(delta.x * f31, delta.z * f31);
+      NuVecRotateY(&rotResult, &delta, -angY);
+
+      angX = NuAtan2D(rotResult.y * -1.0f, rotResult.z * f31);
+      delta = *(struct nuvec_s *)&(Bullet->Mat._30);
+
+      NuMtxSetRotationX(&mTEMP, angX);
+      NuMtxRotateY(&mTEMP, angY);
+
+      {
+        struct nuvec_s scl;
+        scl = *SetNuVecPntr(18.0f, 18.0f / 0.6666667f, 18.0f);
+        NuMtxScale(&mTEMP, &scl);
+      }
+
+      GliderBulletReflectMtx = &mTEMP;
+      NuVecScale(2.0f, &scaledDelta, &scaledDelta);
+      NuVecAdd(&TempPos, &SpaceStation->AppCentre, &scaledDelta);
+
+      AddGameDebris(0x1a, &TempPos);
+      MyGameSfx(0xbe, NULL, HITSHIELDVOL);
+    }
+    SpaceStation->ShieldDraw = 0;
+  }
+
+  SpaceStation->SatelliteAngleY += 0.6f;
+  if (SpaceStation->HitPoints <= 0 && SpaceStation->Explode == 0) {
+    ;
+  } else if (SpaceStation->HitPoints <= 0 || SpaceStation->Explode != 0) {
+    SpaceStation->Active = 0;
+    AddGameDebris(0x47, &SpaceStation->Position);
+    MyGameSfx(0xbf, &SpaceStation->Position, SPACESTATIONEXPLODEVOL);
+  }
+
+  if (GliderBulletReflectMtx != NULL) {
+    mTEMP = *(struct numtx_s *)GliderBulletReflectMtx;
+
+    NuMtxPreScale(&mTEMP, SetNuVecPntr(18.0f, 18.0f, 18.0f));
+    NuMtxPreRotateX(&mTEMP, -0x4000);
+    NuMtxPreRotateY(&mTEMP, rand());
+
+    *(struct nuvec_s *)&mTEMP._30 = SpaceStation->Position;
+    SpaceStation->ShieldMtx = mTEMP;
+    SpaceStation->ShieldDraw = 2;
+  }
+}
+
+
+// NGC MATCH
 void ProcessSpaceStations(void) {
   s32 i;
 
@@ -3049,6 +4002,234 @@ s32 AddGliderBullet(struct numtx_s *Mat, struct nuvec_s *Pos,
 }
 
 // NGC MATCH
+s32 CollideGliderBullets(struct nuvec_s *Pos, float Radius, s32 Enemy,
+                         float ScaleY, s32 HitFlag, s32 Reflect) {
+  struct nuvec_s delta;
+  s32 i;
+  s32 hit;
+  s32 Count;
+  s32 EffectId;
+  GLIDERBULLET **List;
+  GLIDERBULLET *Bullet;
+  float RadSqr;
+  float ScaledRadius;
+  float f30, f31;
+  float f29, f28, f27;
+  float f26, f25, f24, f23;
+  float f22, f21, f20;
+
+  RadSqr = Radius * Radius;
+  ScaledRadius = Radius / ScaleY;
+  hit = 0;
+
+  if (Enemy != 0) {
+    if (Level == 0x1a || Level == 0x12) {
+      EffectId = 0x1a;
+    } else {
+      EffectId = 0x19;
+    }
+    List = UsedEnemyGliderBulletList;
+    Count = UsedEnemyGliderBulletNum;
+  } else {
+    List = UsedGliderBulletList;
+    Count = UsedGliderBulletNum;
+    EffectId = 0x1a;
+  }
+
+  i = 0;
+  if (Count <= 0) {
+    return hit;
+  }
+
+  do {
+    Bullet = List[i];
+    i++;
+
+    if (Bullet->Life >= Bullet->FirstLife) {
+      goto next;
+    }
+
+    delta.x = Bullet->Mat._30 - Pos->x;
+    if (delta.x > Radius || delta.x < -Radius) goto next;
+
+    delta.y = Bullet->Mat._31 - Pos->y;
+    if (delta.y > ScaledRadius || delta.y < -ScaledRadius) goto next;
+
+    delta.z = Bullet->Mat._32 - Pos->z;
+    if (delta.z > Radius || delta.z < -Radius) goto next;
+
+    delta.y *= ScaleY;
+    {
+      float distSqr;
+      distSqr = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+      if (!(distSqr <= RadSqr)) goto next;
+    }
+
+    hit = 1;
+
+    if (Reflect != 0) {
+      float VdotV, VdotD, DdotD;
+      float disc;
+
+      VdotV = DotProduct(&Bullet->Vel, &Bullet->Vel);
+      f30 = VdotV;
+      VdotD = DotProduct(&Bullet->Vel, &delta);
+      f31 = VdotD + VdotD;
+      DdotD = DotProduct(&delta, &delta);
+
+      disc = f31 * f31 - 4.0f * f30 * (DdotD - RadSqr);
+      disc = NuFsqrt(disc);
+      disc = NuFabs(disc);
+      f31 = -(f31 + disc);
+      f30 = f30 + f30;
+
+      NuVecScaleAccum(f31 / f30, &delta, &Bullet->Vel);
+      NuVecAdd((struct nuvec_s *)&Bullet->Mat._30, &delta, Pos);
+
+      {
+        float newDot;
+        newDot = DotProduct(&Bullet->Vel, &delta);
+        f31 = newDot;
+        if (f31 < 0.0f) {
+          float magSqr;
+          magSqr = NuVecMagSqr(&delta);
+          NuVecScaleAccum(f31 * -2.0f / magSqr, &Bullet->Vel, &delta);
+        }
+      }
+
+      GliderBulletReflectPos = *(struct nuvec_s *)&Bullet->Mat._30;
+
+      {
+        s32 angY;
+        s32 angX;
+
+        angY = (s32)(float)(s32)(u16)NuAtan2D(delta.x * 182.04445f, delta.z * 182.04445f);
+
+        NuVecRotateY(&delta, &delta, -angY);
+
+        angX = (s32)(float)(s32)(u16)NuAtan2D(delta.y * -1.0f, delta.z * 182.04445f);
+
+        *(struct nuvec_s *)&Bullet->Mat._12 = *(struct nuvec_s *)&Bullet->Mat._30;
+
+        NuMtxSetRotationX(Bullet, angX);
+        NuMtxRotateY(Bullet, angY);
+        {
+          struct nuvec_s scaleVec;
+          scaleVec.x = Radius;
+          scaleVec.y = Radius / ScaleY;
+          scaleVec.z = Radius;
+          NuMtxScale(Bullet, &scaleVec);
+        }
+        NuMtxTranslate(Bullet, &delta);
+      }
+
+      if (Level == 0x1a) {
+        if (Enemy != 0) {
+          AddGameDebris(0x48, (struct nuvec_s *)&Bullet->Mat._30);
+        } else {
+          AddGameDebris(0x49, (struct nuvec_s *)&Bullet->Mat._30);
+        }
+      } else {
+        AddGameDebris(EffectId, (struct nuvec_s *)&Bullet->Mat._30);
+      }
+    } else {
+      AddGameDebris(EffectId, (struct nuvec_s *)&Bullet->Mat._30);
+      i--;
+      FreeGliderBullet(i, Enemy);
+
+      if (HitFlag != 0) {
+        s32 r;
+        r = qrand();
+        AddDeb3(Pos, r % 3 + 3, 3, 0);
+      }
+    }
+
+  next:
+    Count--;
+  } while (Count != 0);
+
+  return hit;
+}
+
+// NGC MATCH
+void GliderBulletsHitThings(GLIDERSTRUCT *Glider) {
+  struct obj_s obj;
+  s32 count;
+  struct nuvec_s v;
+  float r;
+  struct creature_s *c;
+  GLIDERBULLET **bp;
+
+  obj.bot = -0.3f;
+  obj.top = 0.3f;
+  obj.attack = 0;
+  obj.SCALE = 1.0f;
+  obj.RADIUS = 0.3f;
+  obj.pLOCATOR = NULL;
+
+  count = UsedGliderBulletNum;
+  bp = UsedGliderBulletList;
+
+  if (count > 0) {
+    do {
+      GLIDERBULLET *Bullet;
+      Bullet = *bp;
+      bp++;
+      count--;
+
+      obj.pos.x = Bullet->Mat._30;
+      obj.pos.y = Bullet->Mat._31;
+      obj.pos.z = Bullet->Mat._32;
+
+      if (HitCrates(&obj, 1) != 0) {
+        AddGameDebris(0x1a, &obj.pos);
+        count++;
+        bp--;
+        AddScreenWumpa(temp_pCrate->pos.x, temp_pCrate->pos.y + 0.25f,
+                       temp_pCrate->pos.z, 1);
+        FreeGliderBullet(count, 0);
+        if (temp_crate_type == 5) {
+          Glider->HitPoints += 0x32;
+          if (Glider->HitPoints > 100) {
+            Glider->HitPoints = 100;
+          }
+        }
+      } else if (HitCrateBalloons(&obj.pos, obj.RADIUS) != NULL) {
+        AddGameDebris(0x1a, &obj.pos);
+        count++;
+        bp--;
+        AddScreenWumpa(temp_pCrate->pos.x,
+                       temp_pCrate->pos.y + CRATEBALLOONOFFSET,
+                       temp_pCrate->pos.z, 1);
+        FreeGliderBullet(count, 0);
+        temp_pCrate->flags = (temp_pCrate->flags | 0x400) ^ 0x400;
+      } else if (HitItems(&obj) != 0) {
+        AddGameDebris(0x1a, &obj.pos);
+        count++;
+        bp--;
+        FreeGliderBullet(count, 0);
+      } else {
+        c = FindClock();
+        if (c != NULL) {
+          v.x = c->obj.pos.x;
+          v.y = c->obj.pos.y + CRATEBALLOONOFFSET;
+          v.z = c->obj.pos.z;
+          r = obj.RADIUS + CRATEBALLOONRADIUS;
+          if (NuVecDistSqr(&obj.pos, &v, NULL) < (r * r)) {
+            AddGameDebris(0x1a, &obj.pos);
+            count++;
+            FreeGliderBullet(count, 0);
+            bp--;
+            StartTimeTrial(&c->obj.pos, 1);
+          }
+        }
+      }
+    } while (count != 0);
+  }
+}
+
+
+// NGC MATCH
 void GliderBombsHitThings(GLIDERSTRUCT *Glider) {
   struct obj_s obj;
   s32 i;
@@ -3107,6 +4288,53 @@ void GliderBombsHitThings(GLIDERSTRUCT *Glider) {
     }
   }
 }
+
+// NGC MATCH
+void DrawGliderBullets(void) {
+  s32 i;
+  GLIDERBULLET **bp;
+
+  if (Level == 0x1A) {
+    bp = UsedGliderBulletList - 1;
+    for (i = 0; i < UsedGliderBulletNum; i++) {
+      NuRndrGScnObj(ObjTab[0x6F].obj.scene->gobjs[ObjTab[0x6F].obj.special->instance->objid],
+                    *++bp);
+    }
+    if (UsedEnemyGliderBulletNum > 0) {
+      bp = UsedEnemyGliderBulletList - 1;
+      for (i = 0; i < UsedEnemyGliderBulletNum; i++) {
+        NuRndrGScnObj(ObjTab[0x6E].obj.scene->gobjs[ObjTab[0x6E].obj.special->instance->objid],
+                      *++bp);
+      }
+    }
+  } else {
+    if (UsedGliderBulletNum > 0) {
+      bp = UsedGliderBulletList - 1;
+      for (i = 0; i < UsedGliderBulletNum; i++) {
+        NuRndrGScnObj(ObjTab[0].obj.scene->gobjs[ObjTab[0].obj.special->instance->objid],
+                      *++bp);
+      }
+    }
+    if (Level == 0x24) {
+      if (UsedEnemyGliderBulletNum > 0) {
+        bp = UsedEnemyGliderBulletList - 1;
+        for (i = 0; i < UsedEnemyGliderBulletNum; i++) {
+          NuRndrGScnObj(ObjTab[0xE].obj.scene->gobjs[ObjTab[0xE].obj.special->instance->objid],
+                        *++bp);
+        }
+      }
+    } else {
+      if (UsedEnemyGliderBulletNum > 0) {
+        bp = UsedEnemyGliderBulletList - 1;
+        for (i = 0; i < UsedEnemyGliderBulletNum; i++) {
+          NuRndrGScnObj(ObjTab[0xE].obj.scene->gobjs[ObjTab[0xE].obj.special->instance->objid],
+                        *++bp);
+        }
+      }
+    }
+  }
+}
+
 
 static void ProcessGliderBullets(void) {
     int i;
@@ -3313,6 +4541,341 @@ void DrawFarmLevelExtra(void) {
 }
 
 // NGC MATCH
+void GliderCamWeatherBoss(struct cammtx_s *CamMtx) {
+  struct nuvec_s delta;
+  struct nuvec_s CamPos;
+  struct nuvec_s Interest;
+  struct nuvec_s SplinePos;
+  struct nuvec_s SplineInterest;
+  struct nuvec_s SplineClosest;
+  float f31;
+  float dist;
+  float tween;
+  float VehCamX_360;
+  float VehCamY_361;
+
+  CamPos = PlayerGlider.Position;
+  if (WBIntroOn == 0) {
+    ProcessTimer(&WBIntroTweenTimer);
+  }
+
+  SplinePos = PlayerGlider.Position;
+  Interest = PlayerGlider.Position;
+  SplineClosest = PlayerGlider.Position;
+  SplinePos.y += WBCamDist;
+  Interest.y += WBCamDist;
+  FindSplineClosestPointAndDist((struct MYSPLINE *)&WeatherBossCamSpline, 0x300, &CamPos, &SplineClosest, 0, 0);
+
+  tween = WBIntroTweenTimer / WBIntroTweenTime;
+  SplineInterest.x = (PlayerGlider.Position.x - SplineClosest.x) * 0.8f + SplineClosest.x;
+  SplineInterest.y = SplineClosest.y;
+  SplineInterest.z = PlayerGlider.Position.z;
+
+  NuVecScale(tween, &CamPos, &SplinePos);
+  NuVecScaleAccum(1.0f - WBIntroTweenTimer / WBIntroTweenTime, &CamPos, &SplineInterest);
+
+  NuVecScale(WBIntroTweenTimer / WBIntroTweenTime, &Interest, &Interest);
+  NuVecScaleAccum(1.0f - WBIntroTweenTimer / WBIntroTweenTime, &Interest, &SplineClosest);
+
+  delta.x = CamPos.x - Interest.x;
+  delta.y = CamPos.y - Interest.y;
+  delta.z = CamPos.z - Interest.z;
+
+  dist = NuFsqrt(delta.x * delta.x + delta.z * delta.z);
+
+  {
+    s32 angX;
+    s32 angY;
+
+    f31 = 182.04445f;
+    angX = NuAtani((s32)(-delta.y * f31), (s32)(dist * f31));
+    CamMtx->xrot = angX;
+    angY = NuAtani((s32)(delta.x * f31), (s32)(delta.z * f31));
+    angY ^= 0x8000;
+
+    {
+      s32 tmp;
+      tmp = CamMtx->xrot ^ 0x8000;
+      VehCamY_361 = (float)(s32)(u16)tmp / f31;
+      VehCamX_360 = (float)(s32)(u16)angY / f31;
+    }
+
+    NuMtxSetRotationX(CamMtx, (s32)(VehCamX_360 * f31));
+    NuMtxRotateY(CamMtx, (s32)(VehCamY_361 * f31));
+    NuMtxTranslate(CamMtx, &Interest);
+  }
+
+  *(struct nuvec_s *)&CamMtx->pos = Interest;
+  WeatherBossCamMtx = CamMtx->m;
+}
+
+// NGC MATCH
+void GliderCam(struct cammtx_s *CamMtx) {
+  struct nuvec_s delta;
+  struct nuvec_s Interest;
+  struct nuvec_s CamPos;
+  struct nuvec_s Ideal;
+  struct nuvec_s CamTarget;
+  struct nuvec_s TempCam;
+  static struct nuvec_s LastVel;
+  float f31;
+  float f30;
+  float dist;
+  float VehCamX_360;
+  float VehCamY_361;
+  float VehCamX_365;
+  float VehCamY_366;
+  float idx;
+  float idy;
+  float idz;
+  struct nuvec_s PlayerPos;
+
+  if (Level == 0x18) {
+    GliderCamWeatherBoss(CamMtx);
+    return;
+  }
+
+  Interest = GliderIntroInterest;
+  CamPos.x = CamMtx->m._30;
+  CamPos.y = CamMtx->m._31;
+  CamPos.z = CamMtx->m._32;
+  CamTarget = CamPos;
+
+  SeekHalfLifeNUVEC(&CamTarget, &GliderIntroCamPos, SeekGliderCamTime, 0.01666667f);
+
+  if ((Level == 0x12 || Level == 0x1a) && FireFlyIntroOn != 0) {
+    goto intro_path;
+  }
+
+  {
+    struct nuvec_s PlayerPos;
+
+    f31 = PlayerGlider.AngleY;
+    PlayerPos = PlayerGlider.Position;
+    PlayerPos.y += 1.0f;
+
+    if (Level == 0xd) {
+      Ideal = TORNADOCAMIDEAL;
+      PlayerPos.y += TORNADOINTERESTY;
+    } else if (Level == 0x1a) {
+      Ideal = SetNuVec(idx, idy, idz);
+    } else {
+      Ideal = SetNuVec(-3.0f, 5.0f, 20.0f);
+    }
+
+    f30 = 182.04445f;
+    NuVecRotateX(&Ideal, &Ideal, (s32)(f31 * f30));
+
+    if (FlyingLevelExtro != 0) {
+      SeekAngLimHalfLife360f(&ExtroAngOff, ExtroTargAng, 0.01666667f, 60.0f);
+      dist = NuFabs(ExtroAngOff);
+      NuVecScale(1.0f - dist / 90.0f, &TempCam, &Ideal);
+      dist = NuFabs(ExtroAngOff);
+      NuVecScaleAccum(dist / 90.0f, &TempCam, &ExtroIdealPos);
+
+      {
+        float abs_diff;
+        abs_diff = NuFabs(ExtroAngOff - ExtroTargAng);
+        abs_diff = Rationalise360f(abs_diff);
+        abs_diff = NuFabs(abs_diff);
+
+        if (abs_diff < ExtroChangeVal) {
+          NuVecScaleAccum(0.01666667f, &ExtroStillCamPos, &ExtroStillVelocity);
+          NuVecScaleAccum(0.01666667f, &ExtroStillInterest, &ExtroStillVelocity);
+
+          CamTarget = ExtroStillCamPos;
+          PlayerPos = ExtroStillInterest;
+
+          SeekHalfLifeNUVEC(&ExtroStillVelocity, &v000, ExtroSeekZeroTime, 0.01666667f);
+          FlyingLevelVictoryDance = 1;
+          Ideal = CamTarget;
+        } else {
+          NuVecRotateY(&TempCam, &Ideal, (s32)((PlayerGlider.AngleY + ExtroAngOff) * f30));
+          NuVecAdd(&TempCam, &TempCam, &PlayerPos);
+
+          ExtroStillCamPos = TempCam;
+          ExtroStillInterest = PlayerPos;
+          ExtroStillVelocity = PlayerGlider.Velocity;
+          FlyingLevelCompleteTimer = ExtroStillToEndTime;
+          Ideal = TempCam;
+        }
+      }
+    } else {
+      NuVecRotateY(&TempCam, &Ideal, (s32)(PlayerGlider.AngleY * f30));
+      ExtroAngOff = -3.0f;
+      NuVecAdd(&TempCam, &TempCam, &PlayerPos);
+      Ideal = TempCam;
+    }
+
+    CamPos.x = CamMtx->m._30;
+    CamPos.y = CamMtx->m._31;
+    CamPos.z = CamMtx->m._32;
+
+    if (PlayerGlider.InTornado != 0 || PlayerGlider.TerminalDive != 0 ||
+        PlayerGlider.TerminalDir != 0) {
+      SeekHalfLifeNUVEC(&LastVel, SetNuVecPntr(0.0f, 0.0f, 0.0f), 3.0f, 0.01666667f);
+      NuVecAdd(&CamPos, &CamPos, &LastVel);
+    } else {
+      if (PlayerGlider.AutoPilot != 0) {
+        f31 = CameraSeekSpeedAutoPilot;
+      } else {
+        f31 = SeekGliderCamTime;
+      }
+
+      LastVel = CamPos;
+      SeekHalfLifeNUVEC(&CamPos, &Ideal, f31, 0.01666667f);
+
+      if (Level == 0x12 || Level == 0x1a) {
+        if (FireFlyIntroTween != 0.0f && FFTWEENTIME != 0.0f) {
+          f31 = FireFlyIntroTween / FFTWEENTIME;
+          f30 = 1.0f - f31;
+
+          NuVecScale(f30, &PlayerPos, &PlayerPos);
+          NuVecScaleAccum(f31, &PlayerPos, &Interest);
+          NuVecScale(f30, &CamPos, &CamPos);
+          NuVecScaleAccum(f31, &CamPos, &CamTarget);
+          ProcessTimer(&FireFlyIntroTween);
+        }
+      }
+
+      if (Level == 0x12) {
+        if (CamPos.y >= Level_GliderCeiling - 8.0f) {
+          CamPos.y = Level_GliderCeiling - 8.0f;
+        }
+      }
+
+      NuVecSub(&LastVel, &CamPos, &LastVel);
+    }
+    goto end_cam;
+  }
+
+intro_path:
+  PlayerPos = Interest;
+  CamPos = CamTarget;
+  CamTarget = CamTarget;
+  FireFlyIntroTween = FFTWEENTIME;
+
+end_cam:
+  delta.x = CamPos.x - PlayerPos.x;
+  delta.y = CamPos.y - PlayerPos.y;
+  delta.z = CamPos.z - PlayerPos.z;
+
+  dist = NuFsqrt(delta.x * delta.x + delta.z * delta.z);
+
+  {
+    s32 angX;
+    s32 angY;
+
+    f31 = 182.04445f;
+    angX = NuAtani((s32)(-delta.y * f31), (s32)(dist * f31));
+    CamMtx->xrot = angX;
+    angY = NuAtani((s32)(delta.x * f31), (s32)(delta.z * f31));
+    angY ^= 0x8000;
+
+    {
+      s32 cvx;
+      s32 cvy;
+      cvx = CamMtx->xrot ^ 0x8000;
+      VehCamY_366 = (float)(s32)(u16)cvx / f31;
+      VehCamX_365 = (float)(s32)(u16)angY / f31;
+    }
+
+    NuMtxSetRotationX(CamMtx, (s32)(VehCamX_365 * f31));
+    NuMtxRotateY(CamMtx, (s32)(VehCamY_366 * f31));
+    NuMtxTranslate(CamMtx, &CamPos);
+
+    NuMtxRotateY(&GliderInvMtx, (s32)(-VehCamY_366 * f31));
+    NuMtxSetRotationX(&GliderInvMtx, (s32)(-VehCamX_365 * f31));
+    NuMtxTranslate(&GliderInvMtx, &CamPos);
+  }
+
+  *(struct nuvec_s *)&CamMtx->pos = CamPos;
+}
+
+// NGC MATCH
+ASTEROIDSTRUCT *FindFreeAsteroid(s32 Priority) {
+  s32 i;
+  s32 p;
+
+  for (i = 0; i < 100; i++) {
+    if (AsteroidList[i].Active == 0) {
+      return &AsteroidList[i];
+    }
+  }
+
+  for (p = 0; p < Priority; p++) {
+    for (i = 0; i < 100; i++) {
+      if (AsteroidList[i].HitPoints <= p) {
+        if (AsteroidList[i].Seen == 0) {
+          return &AsteroidList[i];
+        }
+      }
+    }
+  }
+
+  return NULL;
+}
+
+// NGC MATCH
+struct nuvec_s *GetRandomGliderLevelEdgePoint(struct nuvec_s *Out) {
+  struct nuvec_s pos;
+  struct nuvec_s local;
+
+  pos.x = 0.0f;
+  pos.y = 0.0f;
+  pos.z = Level_GliderRadius;
+  local = pos;
+
+  NuVecRotateY(&local, &local, (s32)(frand() * 360.0f * 182.04445f));
+
+  Out->x = local.x;
+  local.y = frand() * (Level_GliderCeiling - Level_GliderFloor) + Level_GliderFloor;
+  Out->z = local.z;
+  Out->y = local.y;
+  return Out;
+}
+
+// NGC MATCH
+void InitAsteroid(s32 Type) {
+  ASTEROIDSTRUCT *ast;
+  struct nuvec_s pos;
+  struct nuvec_s dir;
+  struct nuvec_s vel;
+  struct nuvec_s scl;
+  float angX, angY;
+  float speed;
+
+  ast = FindFreeAsteroid(3);
+  if (ast == NULL) return;
+  if (ast->Active != 0) return;
+
+  memset(ast, 0, 0x4c);
+
+  GetRandomGliderLevelEdgePoint(&pos);
+  ast->Position = pos;
+
+  GetRandomGliderLevelEdgePoint(&dir);
+  NuVecSub(&dir, &dir, &ast->Position);
+  NuVecNorm(&dir, &dir);
+  NuVecScale(0.5f, &ast->Velocity, &dir);
+
+  ast->AngleX = frand() * 360.0f;
+  ast->AngleY = frand() * 360.0f;
+  speed = (frand() - 0.5f) * 2.0f * 5.0f;
+  ast->AngVelX = speed;
+  speed = (frand() - 0.5f) * 2.0f * 5.0f;
+
+  scl = SetNuVec(speed, speed, speed);
+  ast->Scale = scl;
+  ast->Stealth = Type;
+  ast->Active = 1;
+  ast->HitPoints = 3;
+  ast->AngVelY = speed;
+  NuVecScale(5.0f, &ast->Velocity, &ast->Velocity);
+}
+
+
+// NGC MATCH
 void DrawSpaceArenaLevelExtra(void) {
   DrawGliderBullets();
   DrawAsteroids();
@@ -3457,6 +5020,41 @@ static s32 CheckSphereCollide(struct nuvec_s *A, struct nuvec_s *B,
 }
 
 // NGC MATCH
+s32 PossIntersect(struct nuvec_s *PosA, struct nuvec_s *VelA, struct nuvec_s *PosB,
+                  struct nuvec_s *VelB, float Radius, float MaxTime) {
+  struct nuvec_s A, AV;
+  float MagA, MagVelA, Angle, Time;
+
+  A.x = PosA->x - PosB->x;
+  A.y = PosA->y - PosB->y;
+  A.z = PosA->z - PosB->z;
+  AV.x = VelB->x - VelA->x;
+  AV.y = VelB->y - VelA->y;
+  AV.z = VelB->z - VelA->z;
+
+  MagA = NuVecMag(&A);
+
+  if (MagA < Radius) {
+    if (DotProduct(VelA, VelB) <= 0.0f) return 1;
+    return -1;
+  }
+
+  MagVelA = NuVecMag(VelA);
+  NuVecMag(&AV);
+
+  Angle = -DotProduct(&A, VelA) / (MagA * MagVelA);
+  if (Angle < 0.866f) return 0;
+
+  Time = DotProduct(&A, &A) / DotProduct(&A, &AV);
+  if (Time <= 0.0f) return 0;
+  if (Time >= MaxTime) return 0;
+
+  if (DotProduct(VelA, VelB) <= 0.0f) return 1;
+  return -1;
+}
+
+
+// NGC MATCH
 static s32 SafeFromCollisions(struct nuvec_s *Pos) {
   s32 i;
 
@@ -3472,6 +5070,59 @@ static s32 SafeFromCollisions(struct nuvec_s *Pos) {
 }
 
 // NGC MATCH
+s32 LinesIntersectEllipse(struct nuvec_s *Points, s32 NumPoints,
+                          struct nuvec_s *Centre, float RadiusY, float Radius) {
+    struct nuvec_s ScaledPoints[10];
+    struct nuvec_s ToCenter;
+    struct nuvec_s ToCenter2;
+    struct nuvec_s Edge;
+    s32 result = 0;
+    s32 i;
+    float dot;
+    float Radius2;
+    float perpDist;
+
+    for (i = 0; i < NumPoints; i++) {
+        ScaledPoints[i].x = Points[i].x;
+        ScaledPoints[i].y = Centre->y + (Points[i].y - Centre->y) / RadiusY;
+        ScaledPoints[i].z = Points[i].z;
+    }
+
+    ScaledPoints[NumPoints] = ScaledPoints[0];
+
+    Radius2 = Radius * Radius;
+
+    for (i = 0; i < NumPoints; i++) {
+        NuVecSub(&Edge, &ScaledPoints[i + 1], &ScaledPoints[i]);
+        NuVecSub(&ToCenter, Centre, &ScaledPoints[i]);
+        dot = DotProduct(&ToCenter, &Edge);
+
+        if (dot < 0.0f) {
+            if (NuVecMagSqr(&ToCenter) < Radius2) {
+                result |= (1 << i);
+            }
+        } else {
+            NuVecSub(&ToCenter2, Centre, &ScaledPoints[i + 1]);
+            if (DotProduct(&ToCenter2, &Edge) > 0.0f) {
+                if (NuVecMagSqr(&ToCenter2) < Radius2) {
+                    result |= (1 << i);
+                }
+            } else {
+                float toCenterMagSqr = NuVecMagSqr(&ToCenter);
+                float edgeMagSqr = NuVecMagSqr(&Edge);
+                perpDist = toCenterMagSqr - (dot * dot) / edgeMagSqr;
+                if (perpDist < Radius2) {
+                    result |= (1 << i);
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+
+// NGC MATCH
 static void GenerateGliderLines(GLIDERSTRUCT *Glider, struct nuvec_s *Lines) {
   struct numtx_s Mat;
   s32 i;
@@ -3485,6 +5136,167 @@ static void GenerateGliderLines(GLIDERSTRUCT *Glider, struct nuvec_s *Lines) {
   }
   Lines[5] = *Lines;
 }
+
+// NGC MATCH
+void CheckGliderCollisions(void) {
+  struct nuvec_s diff, diff2, diff3, diff4;
+  static struct nuvec_s NullVec = {0.0f, 0.0f, 0.0f};
+  GLIDERSTRUCT *Glider;
+  s32 i;
+  float dist;
+
+  Glider = (GLIDERSTRUCT *)player->Buggy;
+  if (Glider == NULL) return;
+  if (Glider->Dead != 0) return;
+
+  // Check Zoffa collisions
+  for (i = 0; i < 4; i++) {
+    if (EnemyZoffa[i].ActiveMode != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &EnemyZoffa[i].Position, &diff);
+      if (dist < 25.0f) {
+        NuVecSub(&diff, &Glider->Position, &EnemyZoffa[i].Position);
+        NuVecNorm(&diff, &diff);
+        NuVecScale(5.0f, &diff, &diff);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff);
+
+        if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+          Glider->HitPoints -= 10;
+          if (Glider->HitPoints < 0) {
+            Glider->HitPoints = 0;
+          }
+        }
+
+        NewBuzz(&player->rumble, 6);
+        NewRumble(&player->rumble, 0xb4);
+        MyGameSfx(0xb7, NULL, 0x3fff);
+      }
+    }
+  }
+
+  // Check Space Stations
+  for (i = 0; i < 3; i++) {
+    if (SpaceStationList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &SpaceStationList[i].Position, &diff2);
+      if (dist < 400.0f) {
+        NuVecSub(&diff2, &Glider->Position, &SpaceStationList[i].Position);
+        NuVecNorm(&diff2, &diff2);
+        NuVecScale(20.0f, &diff2, &diff2);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff2);
+      }
+    }
+  }
+
+  // Check Satellites
+  for (i = 0; i < 9; i++) {
+    if (SatelliteList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &SatelliteList[i].Position, &diff3);
+      if (dist < 9.0f) {
+        NuVecSub(&diff3, &Glider->Position, &SatelliteList[i].Position);
+        NuVecNorm(&diff3, &diff3);
+        NuVecScale(3.0f, &diff3, &diff3);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff3);
+
+        if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+          Glider->HitPoints -= 5;
+          if (Glider->HitPoints < 0) {
+            Glider->HitPoints = 0;
+          }
+        }
+      }
+    }
+  }
+
+  // Check Big Guns
+  for (i = 0; i < 12; i++) {
+    if (BigGunList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &BigGunList[i].Position, &diff4);
+      if (dist < 16.0f) {
+        NuVecSub(&diff4, &Glider->Position, &BigGunList[i].Position);
+        NuVecNorm(&diff4, &diff4);
+        NuVecScale(4.0f, &diff4, &diff4);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff4);
+      }
+    }
+  }
+
+  // Check Gun Boats
+  for (i = 0; i < 4; i++) {
+    if (GunBoatList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &GunBoatList[i].Position, &diff);
+      if (dist < 25.0f) {
+        NuVecSub(&diff, &Glider->Position, &GunBoatList[i].Position);
+        NuVecNorm(&diff, &diff);
+        NuVecScale(5.0f, &diff, &diff);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff);
+      }
+    }
+  }
+
+  // Check BattleShips
+  for (i = 0; i < 6; i++) {
+    if (BattleShipList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &BattleShipList[i].Position, &diff2);
+      if (dist < 100.0f) {
+        NuVecSub(&diff2, &Glider->Position, &BattleShipList[i].Position);
+        NuVecNorm(&diff2, &diff2);
+        NuVecScale(10.0f, &diff2, &diff2);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff2);
+      }
+    }
+  }
+
+  // Check Hova Blimps
+  for (i = 0; i < 6; i++) {
+    if (HovaBlimp[i].ActiveMode != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &HovaBlimp[i].Position, &diff3);
+      if (dist < 36.0f) {
+        NuVecSub(&diff3, &Glider->Position, &HovaBlimp[i].Position);
+        NuVecNorm(&diff3, &diff3);
+        NuVecScale(6.0f, &diff3, &diff3);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff3);
+
+        if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+          Glider->HitPoints -= 10;
+          if (Glider->HitPoints < 0) {
+            Glider->HitPoints = 0;
+          }
+        }
+      }
+    }
+  }
+
+  // Check Asteroids
+  for (i = 0; i < 100; i++) {
+    if (AsteroidList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &AsteroidList[i].Position, &diff4);
+      if (dist < AsteroidList[i].CentreDist2 * AsteroidList[i].CentreDist2) {
+        NuVecSub(&diff4, &Glider->Position, &AsteroidList[i].Position);
+        NuVecNorm(&diff4, &diff4);
+        NuVecScale(AsteroidList[i].CentreDist2, &diff4, &diff4);
+        NuVecAdd(&Glider->Velocity, &Glider->Velocity, &diff4);
+
+        if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+          Glider->HitPoints -= 5;
+          if (Glider->HitPoints < 0) {
+            Glider->HitPoints = 0;
+          }
+        }
+      }
+    }
+  }
+
+  // Check Tornado collisions
+  for (i = 0; i < 6; i++) {
+    if (TornadoList[i].Active != 0) {
+      dist = NuVecDistSqr(&Glider->Position, &TornadoList[i].Position, &diff);
+      if (dist < 100.0f) {
+        Glider->InTornado = 1;
+        Glider->InTornadoScale = 1.0f;
+      }
+    }
+  }
+}
+
 
 // NGC MATCH
 s32 GetCurrentFarmObjectives(void) {
@@ -3589,6 +5401,184 @@ float GetGunBoatBestTarget(float Best, struct nuvec_s **TargetPos,
 }
 
 // NGC MATCH
+void ProcessGunBoat(GUNBOATSTRUCT *GunBoat) {
+  struct nuvec_s delta;
+  struct nuvec_s diff;
+  struct nuvec_s RotResult;
+  struct numtx_s Mat;
+  struct nuvec_s Vel;
+  struct nuvec_s Pos;
+  struct nuvec_s DirVec;
+  float f31;
+  float f30;
+  float f29;
+  float f28;
+  float dist;
+  float seekAng;
+  float seekRate;
+  s32 angY;
+
+  MyAnimateModelNew(&GunBoat->MainDraw, 0.5f);
+
+  if (GunBoat->Action != 2) {
+    SetNuVecPntr(1.5f, 1.5f, 1.5f);
+    CollideGliderBombs(&GunBoat->Position, NULL, 0, 5.0f);
+
+    if (CollideGliderBombs(&GunBoat->Position, NULL, 0, 5.0f) != 0) {
+      AddGameDebris(0x43, &GliderBombCollisionPos);
+      GunBoat->Action = 2;
+      AddScreenWumpa(GunBoat->Position.x, GunBoat->Position.y,
+                     GunBoat->Position.z, 1);
+      MyGameSfx(0xb5, &GunBoat->Position, GUNBOATVOLUME);
+      ClockOff();
+    }
+  }
+
+  if (GunBoat->LastAction != GunBoat->Action) {
+    switch (GunBoat->Action) {
+    case 1:
+      GunBoat->BurstTimer = 5.0f;
+      break;
+    case 2:
+      GunBoat->SunkTimer = 3.0f;
+      break;
+    }
+  }
+
+  GunBoat->LastAction = GunBoat->Action;
+  dist = NuVecDist(&PlayerGlider.Position + 0x124, &GunBoat->Position, &diff);
+
+  if (PlayerGlider.AutoPilot != 0) {
+    diff.y -= 20.0f;
+  }
+
+  NuVecScaleAccum(dist / 300.0f, &diff, &PlayerGlider.Velocity + 0x130);
+
+  switch (GunBoat->Action) {
+  case 0:
+    if (dist <= 200.0f) {
+      GunBoat->Action = 1;
+    }
+    break;
+
+  case 1:
+    if (dist > 300.0f) {
+      GunBoat->Action = 0;
+      break;
+    }
+
+    f29 = 182.04445f;
+
+    NuMtxSetRotationY(&Mat, (s32)(-GunBoat->AngleY * f29));
+    NuVecMtxRotate(&RotResult, &diff, &Mat);
+
+    f31 = 182.04445f;
+    angY = NuAtan2D(RotResult.x * f31, RotResult.z * f31);
+    angY ^= 0x8000;
+
+    {
+      float angFloat;
+      angFloat = (float)(s32)(u16)angY;
+      f28 = angFloat / f29;
+    }
+
+    {
+      float negAng;
+      negAng = -f28;
+      NuVecRotateY(&RotResult, &RotResult, (s32)(negAng * f29));
+    }
+
+    {
+      s32 angXi;
+      angXi = (s32)NuAtan2D(RotResult.y * -1.0f, RotResult.z * f31);
+      angXi ^= 0x8000;
+    }
+
+    {
+      float seekYaw;
+      seekYaw = f28 - GunBoat->AngleY;
+      seekYaw = Rationalise360f(seekYaw);
+
+      if (seekYaw > 5.0f) {
+        seekRate = 0.5f;
+      } else if (seekYaw < -5.0f) {
+        seekRate = -0.5f;
+      } else {
+        seekRate = seekYaw * 0.5f / 5.0f;
+      }
+
+      GunBoat->FireAngMomY = seekRate;
+      GunBoat->AngleY = seekRate * 0.01666667f + GunBoat->AngleY;
+    }
+
+    {
+      float elev;
+      elev = f28 - GunBoat->FireAngleX;
+      elev = Rationalise360f(elev);
+
+      if (elev > 5.0f) {
+        seekRate = 0.5f;
+      } else if (elev < -5.0f) {
+        seekRate = -0.5f;
+      } else {
+        seekRate = elev * 0.5f / 5.0f;
+      }
+
+      GunBoat->FireAngMomX = seekRate;
+      GunBoat->FireAngleX = seekRate * 0.01666667f + GunBoat->FireAngleX;
+    }
+
+    if (ProcessTimer(&GunBoat->BurstTimer) != 0) {
+      GunBoat->FireFrame = 0;
+      GunBoat->BurstTimer = 1.0f;
+    }
+
+    if (GunBoat->BurstTimer >= 0.5f) {
+      GunBoat->FireFrame--;
+      if (GunBoat->FireFrame < 0) {
+        if (frand() - 0.5f + GunBoat->AngleY + GunBoat->FireAngleX) {
+          ;
+        }
+
+        NuMtxSetRotationX(&Mat, (s32)((frand() - 0.5f) * 30.0f + GunBoat->AngleY + GunBoat->FireAngleX) * f29);
+        NuMtxRotateY(&Mat, (s32)((frand() - 0.5f) * 30.0f + GunBoat->AngleY) * f29);
+
+        SetNuVec(0.0f, 0.0f, -200.0f);
+        NuVecMtxRotate(&Vel, &Vel, &Mat);
+        NuVecScaleAccum(3.0f, &diff, &Vel);
+
+        if (AddGliderBullet(&Mat, &diff, &Vel, 1) != 0) {
+          GunBoat->FireFrame = 6;
+          MyGameSfx(0x60, &GunBoat->Position, 0x3fff);
+        }
+      }
+    }
+    break;
+
+  case 2:
+    if (ProcessTimer(&GunBoat->SunkTimer) != 0) {
+      GunBoat->Position.y += 1.0f;
+      if (GunBoat->Position.y > 0.0f) {
+        GunBoat->Position.y = 0.0f;
+        GunBoat->Action = 0;
+      }
+    } else {
+      GunBoat->Position.y -= 1.0f;
+    }
+
+    if ((jonframe1 & 3) == 0) {
+      DirVec.x = GunBoat->Position.x;
+      DirVec.y = 0.0f;
+      DirVec.z = GunBoat->Position.z;
+      AddVariableShotDebrisEffect(GDeb[0x850 / sizeof(struct gdeb_s)].i, &DirVec,
+                                  1, 0, 0);
+    }
+    break;
+  }
+}
+
+
+// NGC MATCH
 void ProcessGunBoats(void) {
   s32 i;
 
@@ -3664,6 +5654,95 @@ static s32 AddGliderBomb(struct nuvec_s *Pos, struct nuvec_s *Vel, float AngY,
   }
   return 0;
 }
+
+// NGC MATCH
+static void DrawGliderBombs(void) {
+  struct numtx_s Mat;
+  GLIDERBOMBSTRUCT *Bombs;
+  s32 i, j, count;
+  s32 Obj;
+  float horiz;
+
+  Bombs = GliderBombs;
+  Obj = 0x4D;
+  count = 10;
+  if (ObjTab[0x4D].obj.special == NULL) return;
+
+  for (i = 0; i < 2; i++) {
+    for (j = 0; j < count; j++) {
+      if (Bombs[j].Life != 0) {
+        horiz = NuFsqrt(Bombs[j].Vel.x * Bombs[j].Vel.x + Bombs[j].Vel.z * Bombs[j].Vel.z);
+        NuMtxSetRotationX(&Mat, NuAtan2D(Bombs[j].Vel.y * 100.0f, horiz * 100.0f));
+        NuMtxRotateY(&Mat, (s32)(Bombs[j].AngY * 182.04445f));
+        NuMtxTranslate(&Mat, &Bombs[j].Pos);
+        NuRndrGScnObj(ObjTab[Obj].obj.scene->gobjs[ObjTab[Obj].obj.special->instance->objid], &Mat);
+      }
+    }
+    Obj = 0x4D;
+    Bombs = EnemyGliderBombs;
+    count = 0x1e;
+  }
+}
+
+// NGC MATCH
+s32 CollideGliderBombs(struct nuvec_s *Pos, struct nuvec_s *Extent, s32 Enemy,
+                       float Angle) {
+    s32 i;
+    s32 NumBombs;
+    GLIDERBOMBSTRUCT *Bombs;
+    GLIDERBOMBSTRUCT *Bomb;
+    struct nuvec_s delta;
+    float maxExt;
+    float negMax;
+
+    maxExt = Extent->y;
+    if (Extent->x > maxExt) {
+        maxExt = Extent->x;
+    }
+    if (Extent->z > maxExt) {
+        maxExt = Extent->z;
+    }
+    negMax = -maxExt;
+
+    if (Enemy != 0) {
+        NumBombs = 30;
+        Bombs = EnemyGliderBombs;
+    } else {
+        NumBombs = 10;
+        Bombs = GliderBombs;
+    }
+
+    for (i = 0; i < NumBombs; i++) {
+        Bomb = &Bombs[i];
+        if (Bomb->Life != 0) {
+            delta.x = Bomb->Pos.x - Pos->x;
+            if (delta.x <= maxExt && delta.x >= negMax) {
+                delta.y = Bomb->Pos.y - Pos->y;
+                if (delta.y <= maxExt && delta.y >= negMax) {
+                    delta.z = Bomb->Pos.z - Pos->z;
+                    if (delta.z <= maxExt && delta.z >= negMax) {
+                        NuVecRotateY(&delta, &delta,
+                                     (int)(-Angle * 182.04445f));
+
+                        delta.y /= Extent->y;
+                        delta.x /= Extent->x;
+                        delta.z /= Extent->z;
+
+                        if (delta.y * delta.y + delta.x * delta.x +
+                                delta.z * delta.z <=
+                            1.0f) {
+                            Bomb->Life = 0;
+                            GliderBombCollisionPos = Bomb->Pos;
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 
 // NGC MATCH
 void InitBigGun(struct nuvec_s *Pos, float AngleY, int Type, float MinX,
@@ -3752,6 +5831,198 @@ void DrawBigGun(BIGGUNSTRUCT *BigGun) {
                (int)((BigGun->AngleY + BigGun->FireAngleY) * 182.04445f));
   NuMtxTranslate(&mTEMP, &BigGun->Position);
 }
+
+// NGC MATCH
+float GetBigGunBestTarget(float Best, struct nuvec_s **TargetPos,
+                          struct nuvec_s **Vel, s32 *Moving) {
+  struct nuvec_s CamDir;
+  struct nuvec_s Rel;
+  struct nuvec_s ShootDir;
+  s32 i;
+  float Dot;
+  float Mag;
+
+  NuVecMtxRotate(&CamDir, SetNuVecPntr(0.0f, 0.0f, 1.0f), &GameCam[0].m);
+  for (i = 0; i < 0xd; i++) {
+    if (BigGunList[i].Active != 0) {
+      if (BigGunList[i].HitPoints > 0) {
+        NuVecSub(&Rel, &BigGunList[i].Position, &GameCam[0].pos);
+        Mag = NuVecMag(&Rel);
+        if (Mag > 10.0f) {
+          NuVecScale((1.0f / Mag), &Rel, &Rel);
+          Dot = DotProduct(&CamDir, &Rel);
+          if (Dot > Best) {
+            NuVecSub(&ShootDir, &PlayerGlider.ApparentPosition, &BigGunList[i].Position);
+            NuVecNorm(&ShootDir, &ShootDir);
+            NuVecScale(30.0f, &ShootDir, &ShootDir);
+            if (NewRayCast(&BigGunList[i].Position, &ShootDir, 0.0f) == 0) {
+              *TargetPos = &BigGunList[i].Position;
+              Best = Dot;
+              *Vel = &v000;
+              *Moving = 0;
+            }
+          }
+        }
+      }
+    }
+  }
+  return Best;
+}
+
+// NGC MATCH
+void ProcessBigGun(BIGGUNSTRUCT *BigGun) {
+  struct nuvec_s delta;
+  struct nuvec_s diff;
+  struct nuvec_s RotResult;
+  struct numtx_s Mat;
+  struct nuvec_s Vel;
+  struct nuvec_s Pos;
+  float f31;
+  float f30;
+  float f29;
+  float f28;
+  float dist;
+  float seekRate;
+  s32 angY;
+
+  SetNuVecPntr(1.0f, 1.0f, 1.0f);
+  CollideGliderBombs(&BigGun->Position, NULL, 0, 4.0f);
+
+  if (CollideGliderBombs(&BigGun->Position, NULL, 0, 4.0f) != 0) {
+    AddGameDebris(0x1a, &BigGun->Position);
+    if (BigGun->HitPoints > 0) {
+      BigGun->Action = 2;
+    }
+  }
+
+  if (BigGun->LastAction != BigGun->Action) {
+    switch (BigGun->Action) {
+    case 1:
+      BigGun->BurstTimer = 4.0f;
+      break;
+    case 2:
+      if (TimeTrial != 0) {
+        BigGun->HitPoints = 0;
+        if (TimeTrial != 0) {
+          TimeTrialWait += 5.0f;
+        }
+      }
+      break;
+    }
+  }
+
+  BigGun->LastAction = BigGun->Action;
+  dist = NuVecDist(&PlayerGlider.Position + 0x124, &BigGun->Position, &diff);
+
+  NuVecScaleAccum(dist / 250.0f, &diff, &PlayerGlider.Velocity + 0x130);
+
+  switch (BigGun->Action) {
+  case 0:
+    BigGun->Action = 1;
+    break;
+
+  case 1:
+    f29 = 182.04445f;
+
+    NuMtxSetRotationY(&Mat, (s32)(-BigGun->AngleY * f29));
+    NuVecMtxRotate(&RotResult, &diff, &Mat);
+
+    f31 = 182.04445f;
+    angY = NuAtan2D(RotResult.x * f31, RotResult.z * f31);
+    angY ^= 0x8000;
+
+    {
+      float angFloat;
+      angFloat = (float)(s32)(u16)angY;
+      LimitAng360f(&BigGun->FireAngMinX);
+      f28 = angFloat / f29;
+    }
+
+    {
+      float negAng;
+      negAng = -f28;
+      NuVecRotateY(&RotResult, &RotResult, (s32)(negAng * f29));
+    }
+
+    {
+      s32 angXi;
+      angXi = (s32)NuAtan2D(RotResult.y * -1.0f, RotResult.z * f31);
+      angXi ^= 0x8000;
+      LimitAng360f(&BigGun->FireAngMaxX);
+    }
+
+    {
+      float seekYaw;
+      seekYaw = f28 - BigGun->AngleY;
+      seekYaw = Rationalise360f(seekYaw);
+
+      if (seekYaw > 5.0f) {
+        seekRate = 0.5f;
+      } else if (seekYaw < -5.0f) {
+        seekRate = -0.5f;
+      } else {
+        seekRate = seekYaw * 0.5f / 5.0f;
+      }
+
+      BigGun->FireAngMomY = seekRate;
+      BigGun->AngleY = seekRate * 0.01666667f + BigGun->AngleY;
+    }
+
+    {
+      float elev;
+      elev = f28 - BigGun->FireAngleX;
+      elev = Rationalise360f(elev);
+
+      if (elev > 5.0f) {
+        seekRate = 0.5f;
+      } else if (elev < -5.0f) {
+        seekRate = -0.5f;
+      } else {
+        seekRate = elev * 0.5f / 5.0f;
+      }
+
+      BigGun->FireAngMomX = seekRate;
+      BigGun->FireAngleX = seekRate * 0.01666667f + BigGun->FireAngleX;
+    }
+
+    if (ProcessTimer(&BigGun->BurstTimer) != 0) {
+      if (BigGun->Seen != 0) {
+        BigGun->FireFrame = 0;
+        BigGun->BurstTimer = 5.0f;
+      }
+    }
+
+    if (BigGun->BurstTimer >= 1.0f) {
+      BigGun->FireFrame--;
+      if (BigGun->FireFrame < 0) {
+        Pos = diff;
+
+        NuMtxSetRotationX(&Mat, (s32)((frand() - 0.5f) * 30.0f + BigGun->FireAngleX + BigGun->AngleY) * f29);
+        NuMtxRotateY(&Mat, (s32)((frand() - 0.5f) * 30.0f + BigGun->AngleY + BigGun->FireAngleX) * f29);
+
+        Vel = SetNuVec(0.0f, 0.0f, -180.0f);
+        NuVecMtxRotate(&Vel, &Vel, &Mat);
+        NuVecScaleAccum(3.0f, &Pos, &Vel);
+
+        if (AddGliderBullet(&Mat, &Pos, &Vel, 1) != 0) {
+          BigGun->FireFrame = 5;
+          MyGameSfx(0x60, &Pos, 0x3fff);
+        }
+      }
+    }
+    break;
+
+  case 2:
+    {
+      struct nuvec_s debrisPos;
+
+      debrisPos = BigGun->Position;
+      AddGameDebrisRot(BigGun->ExplosionEffect, &debrisPos, 1, 0, 0);
+    }
+    break;
+  }
+}
+
 
 // NGC MATCH
 void ProcessBigGuns(void) {
@@ -3979,6 +6250,22 @@ void InitWeatherBoss_a(void) {
 
 // NGC MATCH
 void InitWeatherBoss(void) { InitWeatherBoss_a(); }
+
+// NGC MATCH
+void ProcessBazookaToken(void) {
+  struct nuvec_s Pos;
+  float f31;
+
+  if (BazookaIconOn == 0) return;
+
+  f31 = WeatherBoss.ActionTimer / WeatherBoss.Locator[WeatherBoss.Action]._01;
+  NuVecScale(1.0f - f31, &Pos, &BazookaTokenPos);
+  NuVecScaleAccum(f31, &Pos, &PlayerGlider.ApparentPosition);
+  Pos.y = f31 * 3.0f + Pos.y;
+  BazookaTokenCurrentPos = Pos;
+  MyAnimateModelNew(&IconMainDraw, 0.5f);
+}
+
 
 // NGC MATCH
 void DrawBazookaToken(void) {
@@ -4399,6 +6686,149 @@ void DrawGliderTarget(void) {
 }
 
 // NGC MATCH
+void DrawTorpedoTarget(void) {
+  struct nuvec_s ScaledPos;
+  struct nuvec_s ProjPos[4];
+  struct nuvec_s Centre;
+  struct nuvec_s Corner[4];
+  struct nuvec_s Direction;
+  struct nuvec_s Delta;
+  struct nuvec_s *Target;
+  struct nuvec_s *Vel;
+  s32 Moving;
+  s32 Obj;
+  s32 Angle;
+  s32 i;
+  float ratio;
+  float MiddleScale;
+  float RocketScale;
+
+  if (PlayerGlider.TerminalDive != 0) return;
+  if (Level == 0x12) {
+    if (GetCurrentLevelObjectives() == 0) return;
+  }
+
+  if (PlayerGlider.TargetOn == 0) {
+    Obj = 0x5a;
+    if (Level == 0x24) Obj = 0x5e;
+    if (PickGliderTarget(&Target, &Vel, &Moving) == 0) return;
+    if (ObjTab[Obj].obj.special == NULL) return;
+
+    NuVecSub(&Centre, Target, &GameCam[0].pos);
+    NuVecScale(10.0f / NuVecMag(&Centre), &Centre, &Centre);
+    NuVecAdd(&Centre, &Centre, (struct nuvec_s *)&GameCam[0].m._30);
+    mTEMP = GameCam[0].m;
+    NuMtxPreScale(&mTEMP, SetNuVecPntr(BIGSCALE, BIGSCALE, 0.0f));
+    *(struct nuvec_s *)&mTEMP._30 = Centre;
+    NuRndrGScnObj(
+        (ObjTab[Obj].obj.scene)
+            ->gobjs[(ObjTab[Obj].obj.special)->instance->objid],
+        &mTEMP);
+    return;
+  }
+
+  NuVecSub(&Centre, PlayerGlider.MovingTargetPoint, &GameCam[0].pos);
+  NuVecScale(10.0f / NuVecMag(&Centre), &ScaledPos, &Centre);
+  NuVecAdd(&ScaledPos, &ScaledPos, (struct nuvec_s *)&GameCam[0].m._30);
+
+  NuVecMtxTransform(&Corner[0], SetNuVecPntr(-4.5f, 3.5f, 10.0f), &GameCam[0].m);
+  NuVecMtxTransform(&Corner[1], SetNuVecPntr(4.5f, 3.5f, 10.0f), &GameCam[0].m);
+  NuVecMtxTransform(&Corner[2], SetNuVecPntr(4.5f, -3.5f, 10.0f), &GameCam[0].m);
+  NuVecMtxTransform(&Corner[3], SetNuVecPntr(-4.5f, -3.5f, 10.0f), &GameCam[0].m);
+
+  i = 0;
+  do {
+    s32 next = (i + 1) & 3;
+    float dot;
+    struct nuvec_s *pProj = &ProjPos[i];
+    NuVecSub(&Direction, &Corner[next], &Corner[i]);
+    NuVecSub(&Delta, &ScaledPos, &Corner[i]);
+    ProjPos[i] = Corner[i];
+    dot = DotProduct(&Direction, &Delta);
+    NuVecScaleAccum(dot / NuVecMagSqr(&Direction), pProj, &Direction);
+    i++;
+  } while (i <= 3);
+
+  ratio = PlayerGlider.TargetTimer / Level_TargetTime;
+  MiddleScale = ratio * (BIGSCALE - SMALLSCALE) + SMALLSCALE;
+  RocketScale = ratio * (BIGSCALE - SMALLSCALE) * 4.0f + SMALLSCALE;
+
+  if (ratio == 0.0f) {
+    Obj = 0x5b;
+    if (GliderFrameCounter & 2) Obj = 0x5a;
+  } else {
+    Obj = 0x5a;
+  }
+  if (Level == 0x24) Obj += 4;
+
+  if (ObjTab[Obj].obj.special != NULL) {
+    mTEMP = GameCam[0].m;
+    NuMtxPreScale(&mTEMP, SetNuVecPntr(MiddleScale, MiddleScale, 0.0f));
+    *(struct nuvec_s *)&mTEMP._30 = ScaledPos;
+    NuRndrGScnObj(
+        (ObjTab[Obj].obj.scene)
+            ->gobjs[(ObjTab[Obj].obj.special)->instance->objid],
+        &mTEMP);
+  }
+
+  Angle = 0;
+  if (ratio == 0.0f) {
+    Obj = 0x5d;
+    if (GliderFrameCounter & 2) Obj = 0x5c;
+  } else {
+    Obj = 0x5c;
+  }
+  if (Level == 0x24) Obj += 4;
+
+  if (ObjTab[Obj].obj.special == NULL) return;
+
+  for (i = 0; i <= 3; i++) {
+    s32 NextAngle = Angle - 0x4000;
+    mTEMP = GameCam[0].m;
+    NuMtxPreScale(&mTEMP, SetNuVecPntr(RocketScale, RocketScale, 0.0f));
+    NuVecScale(ratio, (struct nuvec_s *)&mTEMP._30, &ProjPos[i]);
+    NuVecScaleAccum(1.0f - ratio, (struct nuvec_s *)&mTEMP._30, &ScaledPos);
+    NuMtxPreRotateZ(&mTEMP, Angle);
+    NuRndrGScnObj(
+        (ObjTab[Obj].obj.scene)
+            ->gobjs[(ObjTab[Obj].obj.special)->instance->objid],
+        &mTEMP);
+    Angle = (s16)NextAngle;
+  }
+}
+
+// NGC MATCH
+void FireFlyReset(s32 PlayerDead) {
+  Level_DeadTime = 8.0f;
+  Level_GliderSpeed = 8.0f;
+  Level_GliderFloor = 3.0f;
+  Level_GliderCurrentCeiling = 25.0f;
+  Level_GliderCeiling = 25.0f;
+  Level_GliderRadius = 90.0f;
+  Level_GliderCentreX = 40.32f;
+  Level_GliderCentreZ = 52.09f;
+  Level_TargetTime = 1.3f;
+  GliderFrameCounter = 0;
+  FireFlyIntroOn = 0;
+  FireFlyIntroAction = 0;
+  LevelResetTimer = 0;
+  FlyingLevelVictoryDanceTimer = FIREFLYVICDANCETIME;
+  FireFlyIntroOldAction = -1;
+  InitGlider(&PlayerGlider, &FireFlyStart, FireFlyStartAngle);
+  GameCam[0].m._30 = FireFlyStart.x + 0.0f;
+  GameCam[0].m._31 = FireFlyStart.y + 2.0f;
+  GameCam[0].m._32 = FireFlyStart.z + 5.0f;
+  GliderCamHighTimer = 0.0f;
+  ResetGameCameras(GameCam, 1);
+  InitZoffaUFOs();
+  InitGunBoats();
+  InitBattleShips();
+  InitGliderBullets();
+  InitGliderBombs();
+}
+
+
+// NGC MATCH
 void DrawFireFlyLevelExtra(void) {
   s32 i;
 
@@ -4645,6 +7075,33 @@ s32 GetCurrentWeatherResearchObjectives(void) {
 }
 
 // NGC MATCH
+void SpaceArenaReset(s32 PlayerDead) {
+  Level_DeadTime = 8.0f;
+  Level_GliderFloor = -30.0f;
+  Level_GliderCurrentCeiling = 35.0f;
+  Level_GliderRadius = 180.0f;
+  Level_GliderCentreX = 0.0f;
+  Level_GliderCentreZ = 0.0f;
+  FireFlyIntroOn = 0;
+  LevelResetTimer = 0;
+  FireFlyIntroAction = 0;
+  FireFlyIntroOldAction = -1;
+  Level_GliderSpeed = 8.0f;
+  Level_GliderCeiling = 35.0f;
+  InitGlider(&PlayerGlider, &CrashteroidsStart, CrashteroidsStartAngle);
+  GameCam[0].m._30 = CrashteroidsStart.x + 0.0f;
+  GameCam[0].m._31 = CrashteroidsStart.y + 2.0f;
+  GameCam[0].m._32 = CrashteroidsStart.z + 5.0f;
+  GliderCamHighTimer = 0.0f;
+  ResetGameCameras(GameCam, 1);
+  InitZoffaUFOs();
+  InitSpaceStations();
+  InitAsteroids();
+  InitGliderBullets();
+}
+
+
+// NGC MATCH
 s32 GetCurrentSpaceArenaObjectives(void) {
   s32 j;
   s32 i;
@@ -4759,11 +7216,131 @@ void ProcessLighteningHail(void) {
 }
 
 // NGC MATCH
+void UnleashLighteningHail(struct nuvec_s *Pos, s32 AttNum) {
+    struct nuvec_s vel;
+    float upSpeed;
+    float Timer;
+    float FallX;
+    float timeIncrement;
+    float xIncrement;
+    float fallXIncrement;
+    float count;
+    s32 SkipLeft;
+    s32 i;
+
+    upSpeed = HAILFLYUPSPEED * (1.0f / 60.0f);
+    memset(&HailList, 0, 0x438);
+    NuVecScale(1.0f / 60.0f, &vel, &LighteningHailVel);
+
+    Timer = 2.0f;
+    FallX = LighteningFallXMax;
+
+    switch (AttNum) {
+    case 0:
+        SkipLeft = SkipLeftA;
+        break;
+    case 1:
+        SkipLeft = SkipLeftB;
+        break;
+    default:
+        SkipLeft = SkipLeftC;
+        break;
+    }
+
+    count = (float)(SkipNum + 29);
+    LighteningHailVel.z = -Level_GliderSpeed;
+
+    timeIncrement = HAILTIMERANGE / count;
+    xIncrement = (-vel.x - vel.x) / count;
+    fallXIncrement = (LighteningFallXMin - LighteningFallXMax) / count;
+
+    for (i = 0; i <= 29; i++) {
+        HailList[i].Mode = 1;
+        HailList[i].Timer = Timer;
+        HailList[i].Position = *Pos;
+        HailList[i].Velocity = vel;
+        NuVecNorm(&HailList[i].Velocity, &HailList[i].Velocity);
+        NuVecScale(upSpeed, &HailList[i].Velocity, &HailList[i].Velocity);
+        HailList[i].FallX = FallX;
+
+        if (i == SkipLeft) {
+            float skip = (float)SkipNum;
+            vel.x += xIncrement * skip;
+            Timer += timeIncrement * skip;
+            FallX += fallXIncrement * skip;
+        } else {
+            vel.x += xIncrement;
+            Timer += timeIncrement;
+            FallX += fallXIncrement;
+        }
+    }
+}
+
+
+// NGC MATCH
 void InitWBBolts(void) {
   memset(BoltList, 0, 0x1680);
   NuMtxSetScale(&BoltMtxA, SetNuVecPntr(1.5f, 1.5f, 1.5f));
   NuMtxSetScale(&BoltMtxB, SetNuVecPntr(8.0f, 8.0f, 8.0f));
 }
+
+// NGC MATCH
+void DrawWBBolts(void) {
+    s32 i;
+    s32 debType;
+    WBBOLT *Bolt;
+    struct nugscn_s **scn;
+    void *objPtr;
+    s32 idx;
+
+    Bolt = BoltList;
+    for (i = 0; i < 0x78; i++) {
+        if (Bolt->Mode != 0) {
+            if (Bolt->Type == 2) {
+                if (Paused == 0) {
+                    AddVariableShotDebrisEffect(GDeb[0x91].i, &Bolt->Position,
+                                                1, 0, 0);
+                }
+                {
+                    float s = Bolt->Scale * 8.0f;
+                    NuMtxSetScale(&BoltMtxB, SetNuVecPntr(s, s, s));
+                }
+                scn = ObjTab[0xBD].scene;
+                if (scn != NULL) {
+                    *(struct nuvec_s *)&BoltMtxB._30 = Bolt->Position;
+                    objPtr = *(void **)&ObjTab[0xBD].obj;
+                    idx = *(s32 *)((u8 *)*(void **)((u8 *)scn + 0x40) + 0x40);
+                    NuRndrGScnObj(
+                        ((void **)(*(void **)((u8 *)objPtr + 0x14)))[idx],
+                        &BoltMtxB);
+                }
+            } else {
+                if (Paused == 0) {
+                    debType = 0x92;
+                    if (Bolt->Owner == 2) {
+                        debType = 0x94;
+                    }
+                    AddVariableShotDebrisEffect(GDeb[debType].i,
+                                                &Bolt->Position, 1, 0, 0);
+                }
+                if (Bolt->Owner == 2) {
+                    scn = ObjTab[0xBD].scene;
+                    if (scn != NULL) {
+                        *(struct nuvec_s *)&BoltMtxA._30 = Bolt->Position;
+                        objPtr = *(void **)&ObjTab[0xBD].obj;
+                        idx = *(s32 *)((u8 *)*(void **)((u8 *)scn + 0x40) +
+                                       0x40);
+                        NuRndrGScnObj(
+                            ((void **)(*(void **)((u8 *)objPtr + 0x14)))[idx],
+                            &BoltMtxA);
+                    }
+                }
+            }
+        }
+        Bolt++;
+    }
+}
+
 
 // NGC MATCH
 struct WBBOLT *FindFreeWBBoltOfType(s32 Type) {
@@ -5229,6 +7806,121 @@ s32 UnembedRayCastAtlasSimple(struct ATLASSTRUCT *Atlas, short *TerrHandle) {
 }
 
 // NGC MATCH
+void AdjustAtlasRotations(struct ATLASSTRUCT *Atlas, struct nuvec_s *Velocity,
+                          struct nuvec_s *Normal, float dt) {
+    struct nuvec_s vel;
+    struct numtx_s mtx;
+    struct numtx_s mtxInv;
+    struct nuquat_s quat;
+    float yaw;
+    float pitch;
+    float rollScale;
+    s32 yawInt;
+    s32 pitchInt;
+
+    vel = *Velocity;
+
+    if (NuFabs(Normal->x) < 0.01f && NuFabs(Normal->z) < 0.01f) {
+        yaw = 0.0f;
+    } else {
+        yaw = (float)(-(s32)(s32)(u16)NuAtan2D(Normal->x, Normal->z)) /
+              182.04445f;
+    }
+
+    {
+        float xzMag;
+
+        xzMag = NuFsqrt(Normal->z * Normal->z + Normal->x * Normal->x);
+        pitch = (float)(-(s32)(s32)(u16)NuAtan2D(xzMag, Normal->y)) /
+                182.04445f;
+    }
+
+    NuVecScaleAccum(-DotProduct(&vel, Normal), &vel, Normal);
+
+    yawInt = (s32)(yaw * 182.04445f);
+    NuVecRotateY(&vel, &vel, yawInt);
+
+    pitchInt = (s32)(pitch * 182.04445f);
+    NuVecRotateX(&vel, &vel, pitchInt);
+
+    rollScale = NuVecMag(&vel) * 180.0f;
+    rollScale /= dt * 3.1415927f;
+
+    {
+        float roll;
+        roll = (float)(-(s32)(s32)(u16)NuAtan2D(vel.x, vel.z)) / 182.04445f;
+
+        NuMtxSetRotationY(&mtx, yawInt);
+        NuMtxRotateX(&mtx, pitchInt);
+
+        NuMtxRotateY(&mtx, (s32)(-roll * 182.04445f));
+        NuMtxInv(&mtxInv, &mtx);
+
+        NuMtxRotateX(&mtx, (s32)(rollScale * 182.04445f));
+        NuMtxMul(&mtx, &mtx, &mtxInv);
+        NuMtxToQuat(&mtx, &quat);
+        NuQuatMul(&Atlas->Quat, &quat, &Atlas->Quat);
+    }
+}
+
+// NGC MATCH
+void TerrainAtlas(struct ATLASSTRUCT *Atlas) {
+  struct nuvec_s delta;
+  struct nuvec_s Normal;
+  struct nuvec_s RayStart;
+  struct nuvec_s RayEnd;
+  float dist;
+  float Height;
+  s32 PlatId;
+
+  RayStart = Atlas->Position;
+  RayStart.y += Atlas->Radius + 1.0f;
+  RayEnd = Atlas->Position;
+  RayEnd.y -= Atlas->Radius + 1.0f;
+
+  PlatId = NewRayCast(&RayStart, &RayEnd, 0.0f);
+  if (PlatId != -1) {
+    if (Atlas->Position.y < Height + Atlas->Radius) {
+      Atlas->Position.y = Height + Atlas->Radius;
+      if (Atlas->Velocity.y < 0.0f) {
+        Atlas->Velocity.y = -Atlas->Velocity.y * 0.3f;
+      }
+
+      // Friction
+      SeekHalfLife(&Atlas->Velocity.x, 0.0f, 0.5f, 0.01666667f);
+      SeekHalfLife(&Atlas->Velocity.z, 0.0f, 0.5f, 0.01666667f);
+    }
+  }
+
+  // Gravity
+  Atlas->Velocity.y -= 0.3f;
+
+  // Apply velocity
+  Atlas->Position.x += Atlas->Velocity.x * 0.01666667f;
+  Atlas->Position.y += Atlas->Velocity.y * 0.01666667f;
+  Atlas->Position.z += Atlas->Velocity.z * 0.01666667f;
+
+  // Rolling angle
+  if (Atlas->Velocity.x != 0.0f || Atlas->Velocity.z != 0.0f) {
+    float speed;
+    speed = NuFsqrt(Atlas->Velocity.x * Atlas->Velocity.x +
+                    Atlas->Velocity.z * Atlas->Velocity.z);
+    Atlas->AngleY = NuAtan2D(Atlas->Velocity.x, Atlas->Velocity.z) / 182.04445f;
+    Atlas->AngleX += speed * 0.01666667f / Atlas->Radius;
+  }
+
+  // Collision with walls
+  if (Atlas->Position.y < Level_GliderFloor) {
+    Atlas->Position.y = Level_GliderFloor;
+    Atlas->Velocity.y = 0.0f;
+  }
+
+  // Shadow
+  NewShadow(&Atlas->Position, Atlas->Radius * 2.0f);
+}
+
+
+// NGC MATCH
 void CheckAtlasGround(struct ATLASSTRUCT *Atlas) {
   struct nuvec_s Rel;
   struct nuvec_s Normal = {0.0f, 1.0f, 0.0f};
@@ -5397,6 +8089,110 @@ void UpdateRumbleCamTween(void) {
 }
 
 // NGC MATCH
+void ProcessEarthBossActions(struct ATLASSTRUCT *EarthBoss) {
+  struct nuvec_s delta;
+  float dist;
+  float ang;
+
+  switch (EarthBoss->Action) {
+  case 0: // Idle
+    MyAnimateModelNew(&EarthBoss->Shell, 1.0f);
+    dist = NuVecDistSqr(&PlayerGlider.Position, &EarthBoss->Position, &delta);
+    if (dist < 2500.0f) {
+      EarthBoss->Action = 1;
+      EarthBoss->ActionTimer = 3.0f;
+    }
+    break;
+
+  case 1: // Aggro
+    MyAnimateModelNew(&EarthBoss->Shell, 1.0f);
+    if (ProcessTimer(&EarthBoss->ActionTimer) != 0) {
+      EarthBoss->Action = 2;
+      EarthBoss->ActionTimer = 5.0f;
+    }
+
+    NuVecSub(&delta, &PlayerGlider.Position, &EarthBoss->Position);
+    ang = NuAtan2D(delta.x, delta.z) / 182.04445f;
+    SeekAngHalfLife360f(&EarthBoss->AngleY, ang, 0.3f, 0.01666667f);
+    break;
+
+  case 2: // Attack
+    MyAnimateModelNew(&EarthBoss->Shell, 1.5f);
+    if (ProcessTimer(&EarthBoss->ActionTimer) != 0) {
+      EarthBoss->Action = 3;
+      EarthBoss->ActionTimer = 2.0f;
+    }
+
+    NuVecSub(&delta, &PlayerGlider.Position, &EarthBoss->Position);
+    ang = NuAtan2D(delta.x, delta.z) / 182.04445f;
+    SeekAngHalfLife360f(&EarthBoss->AngleY, ang, 0.5f, 0.01666667f);
+
+    // Fire projectile
+    if (ProcessTimer(&EarthBoss->BoostTimer) != 0) {
+      struct nuvec_s FireDir;
+      struct numtx_s Mat;
+
+      NuVecSub(&FireDir, &PlayerGlider.Position, &EarthBoss->Position);
+      NuVecNorm(&FireDir, &FireDir);
+      NuVecScale(-80.0f, &FireDir, &FireDir);
+
+      NuMtxSetRotationY(&Mat, (s32)(EarthBoss->AngleY * 182.04445f));
+      AddGliderBullet(&Mat, &EarthBoss->Position, &FireDir, 1);
+      EarthBoss->BoostTimer = 0.5f;
+      MyGameSfx(0x60, &EarthBoss->Position, 0x3fff);
+    }
+    break;
+
+  case 3: // Vulnerable
+    MyAnimateModelNew(&EarthBoss->Shell, 0.5f);
+    if (ProcessTimer(&EarthBoss->ActionTimer) != 0) {
+      EarthBoss->Action = 0;
+    }
+
+    CollideGliderBullets(&EarthBoss->Position, 5.0f, 1, 1.0f, 0, 0);
+    if (CollideGliderBullets(&EarthBoss->Position, 5.0f, 0, 1.0f, 0, 0) != 0) {
+      EarthBoss->HitPoints--;
+      AddScreenWumpa(EarthBoss->Position.x, EarthBoss->Position.y,
+                     EarthBoss->Position.z, 1);
+      if (EarthBoss->HitPoints <= 0) {
+        EarthBoss->Action = 4;
+        AddGameDebris(0x47, &EarthBoss->Position);
+        MyGameSfx(0xb4, &EarthBoss->Position, 0x7fff);
+      } else {
+        MyGameSfx(0xbb, &EarthBoss->Position, 0x3fff);
+      }
+      ClockOff();
+    }
+    break;
+
+  case 4: // Dead
+    EarthBoss->Whacko = 0;
+    break;
+  }
+
+  // Collision with player
+  if (EarthBoss->Whacko != 0) {
+    dist = NuVecDistSqr(&PlayerGlider.Position, &EarthBoss->Position, &delta);
+    if (dist < 100.0f) {
+      NuVecSub(&delta, &PlayerGlider.Position, &EarthBoss->Position);
+      NuVecNorm(&delta, &delta);
+      NuVecScale(10.0f, &delta, &delta);
+      NuVecAdd(&PlayerGlider.Velocity, &PlayerGlider.Velocity, &delta);
+
+      if (InvincibilityCHEAT == 0 && VehicleLevelImmune == 0) {
+        PlayerGlider.HitPoints -= 25;
+        if (PlayerGlider.HitPoints < 0) {
+          PlayerGlider.HitPoints = 0;
+        }
+      }
+      NewBuzz(&player->rumble, 6);
+      NewRumble(&player->rumble, 0xb4);
+    }
+  }
+}
+
+
+// NGC MATCH
 void RumbleHeadUpDisplay(void) {
   s32 i;
   s32 Obj;
@@ -5503,6 +8299,31 @@ void InitTrail(void) {
 }
 
 // NGC MATCH
+void FadeOutLastTrail(s32 pos, s32 count) {
+  s32 i;
+  s32 idx;
+  float step;
+  float accum;
+  float val;
+
+  step = 1.0f / (float)(count + 1);
+  accum = step + 0.0f;
+  i = 0;
+  if (i >= count) return;
+
+  do {
+    idx = pos & 0x7f;
+    if (trail[idx].pos1.x == -10000.0f) break;
+    val = (float)trail[idx].intensity;
+    accum += step;
+    trail[idx].intensity = (s32)(val * accum);
+    pos--;
+    i++;
+  } while (i < count);
+}
+
+
+// NGC MATCH
 s32 PointsSame(struct nuvec_s *A, struct nuvec_s *B) {
   s32 ret = 0;
 
@@ -5526,6 +8347,46 @@ float PointLineSide(struct nuvec_s *A, struct nuvec_s *B, struct nuvec_s *C) {
 
   return ACx * ACz - BCz * BCx;
 }
+
+// NGC MATCH
+s32 TrailPointInPoly(struct nuvec_s *Point, struct nuvec_s *A, struct nuvec_s *B,
+                     struct nuvec_s *C, struct nuvec_s *D) {
+  s32 i;
+  struct nuvec_s *Src;
+  struct nuvec_s *Pt;
+  float side;
+
+  Src = A;
+  Pt = Point;
+  for (i = 0; i <= 1; i++) {
+    side = PointLineSide(Pt, A, B);
+    if (side > 0.0f) {
+      if (PointLineSide(Pt, B, C) > 0.0f) {
+        if (PointLineSide(Pt, C, D) > 0.0f) {
+          if (PointLineSide(Pt, D, A) > 0.0f) {
+            goto found;
+          }
+        }
+      }
+    } else {
+      if (PointLineSide(Pt, B, C) <= 0.0f) {
+        if (PointLineSide(Pt, C, D) <= 0.0f) {
+          if (PointLineSide(Pt, D, A) <= 0.0f) {
+            goto found;
+          }
+        }
+      }
+    }
+    Src = B;
+    Pt = Point + 1;
+    continue;
+  found:
+    *Pt = *Src;
+    return 1;
+  }
+  return 0;
+}
+
 
 // NGC MATCH
 s32 FindTrailAng(struct nuvec_s *A, struct nuvec_s *B) {
@@ -5569,6 +8430,63 @@ void KeepHoldOnRock(struct JEEPROCK *Rock, struct nuvec_s *Pos,
   Rock->Atlas.Velocity = *Vel;
   Rock->Grabbed = 1;
 }
+
+// NGC MATCH
+struct JEEPROCK *AddRockVel(struct nuvec_s *Pos, struct nuvec_s *Vel,
+                            float Radius, s32 Type) {
+    struct JEEPROCK *Rock;
+    struct nuquat_s quat;
+    s32 index;
+
+    Rock = FindJeepRock();
+    if (Rock == NULL) {
+        return NULL;
+    }
+
+    memset(Rock, 0, sizeof(struct JEEPROCK));
+
+    NuMtxSetRotationY(&mTEMP,
+                       (int)(frand() * 180.0f * (1.0f / 60.0f) * 182.04445f));
+    NuMtxRotateX(&mTEMP,
+                 (int)(frand() * 720.0f * (1.0f / 60.0f) * 182.04445f));
+    NuMtxToQuat(&mTEMP, &quat);
+    NuQuatNormalise(&quat, &quat);
+
+    Rock->Pos = *Pos;
+
+    switch (Type) {
+    case 1:
+        Rock->FireBlob = Type;
+        break;
+    case 2:
+        Rock->SmashMe = 1;
+        break;
+    default:
+        break;
+    }
+
+    Rock->Scale = SetNuVec(Radius + Radius, Radius + Radius, Radius + Radius);
+
+    Rock->Active = 1;
+    Rock->Vel = *Vel;
+    Rock->Life = 5.5f;
+
+    index = Rock - JeepRock;
+    InitAtlas(&Rock->Atlas, &Rock->Pos, Radius, index);
+
+    Rock->Atlas.Position = *Vel;
+    Rock->Atlas.Quat = *(struct Quat *)&quat;
+    Rock->Atlas.FrameQuat[0] = *(struct Quat *)&quat;
+    Rock->Atlas.FrameQuat[1] = *(struct Quat *)&quat;
+    Rock->Atlas.FrameQuat[2] = *(struct Quat *)&quat;
+    Rock->Atlas.LastQuat = *(struct Quat *)&quat;
+
+    Rock->Atlas.PlatformId = 1;
+    Rock->Atlas.Type = index - 3;
+
+    return Rock;
+}
+
 
 // NGC MATCH
 struct JEEPROCK *AddRock(struct nuvec_s *Pos, float Radius, s32 Type) {
@@ -5726,6 +8644,120 @@ void DrawJeepRocks(void) {
     }
   }
 }
+
+// NGC MATCH
+void ProcessJeepRock(struct JEEPROCK *Rock) {
+    struct JEEPROCK *OtherRock;
+
+    if (Level == 21) {
+        if (Rock->Mode != 1 && Rock->Mode != 20) {
+            if (ProcessTimer(&Rock->FlameTimer) != 0) {
+                Rock->Mode = 0;
+            }
+        }
+    }
+
+    if (Rock->Grabbed != 0) {
+        Rock->Grabbed = 0;
+        return;
+    }
+
+    if (Rock->Stuck == 0) {
+        if (Rock->Life < 4.0f) {
+            Rock->Active = 0;
+        }
+    }
+
+    if (Rock->SmallDamage > 2) {
+        if (Rock->Mode != 20) {
+            OtherRock = &JeepRock[Rock->SmallDamage];
+            if (OtherRock->Mode != 0) {
+                s32 combined = Rock->Mode + OtherRock->Mode;
+                if (combined == 0) {
+                    OtherRock->Mode = 0;
+                    Rock->Mode = 0;
+                    OtherRock->FlameTimer = 0.0f;
+                    Rock->FlameTimer = 0.0f;
+                } else if (OtherRock->Mode == -1) {
+                    Rock->Mode = OtherRock->Mode;
+                    OtherRock->FlameTimer = 7.0f;
+                    Rock->FlameTimer = 7.0f;
+                }
+                OtherRock->SmallDamage = 0;
+            }
+            Rock->SmallDamage = 0;
+        }
+    }
+
+    if (Level == 21) {
+        Rock->Life = 10.0f;
+    }
+
+    if (ProcessTimer(&Rock->Life) != 0) {
+        Rock->Explode = 1;
+    } else if (Rock->FireBlob == 2) {
+        /* no-op */
+    } else if (Rock->Mode != 20) {
+        ProcessAtlas(&Rock->Atlas);
+        Rock->Pos = Rock->Atlas.Position;
+
+        if (Rock->Atlas.PlatformId != 0) {
+            if (Level != 21) {
+                Rock->Explode = 1;
+            }
+        }
+
+        if (Rock->SmashMe != 0) {
+            if (Rock->Atlas.SurfaceType & 3) {
+                SmashRockIntoTwo(Rock);
+            }
+        }
+
+        if (Rock->FireBlob == 1) {
+            if (Rock->Atlas.SurfaceType & 3) {
+                Rock->FireBlob = 2;
+            }
+        }
+    } else {
+        NuVecScaleAccum(1.0f / 60.0f, &Rock->Atlas.Position,
+                        &Rock->Atlas.Velocity);
+        Rock->Pos = Rock->Atlas.Position;
+    }
+
+    {
+        s32 debrisEffect;
+
+        debrisEffect = GDeb[0x3D].i;
+
+        if (Level == 21) {
+            switch (Rock->Mode) {
+            case 1:
+                debrisEffect = GDeb[0x3E].i;
+                break;
+            case 20:
+                debrisEffect = GDeb[0x40].i;
+                break;
+            case -1:
+                break;
+            default:
+                debrisEffect = GDeb[0x3F].i;
+                break;
+            }
+        }
+
+        if (debrisEffect != -1) {
+            AddVariableShotDebrisEffect(debrisEffect, &Rock->Pos, 1, 0, 0);
+        }
+    }
+
+    if (Rock->Explode != 0) {
+        MyGameSfx(0x56, &Rock->Pos,
+                   (s32)(Rock->Atlas.Radius * (float)ROCKSMASHVOL));
+        AddGameDebris(0x42, &Rock->Pos);
+        Rock->Active = 0;
+    }
+}
+
 
 // NGC MATCH
 void ProcessJeepRocks(void) {
