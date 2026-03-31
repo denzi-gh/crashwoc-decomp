@@ -1013,7 +1013,7 @@ void MoveVehicle(struct creature_s *Cre, struct nupad_s *Pad) {
   case 0x81:
   case 0x8B:
   case 0x36:
-    MoveGlider(Cre, Pad);
+    MoveGlider();
     return;
   case 0x53:
     MoveAtlas(Cre, Pad);
