@@ -5746,7 +5746,7 @@ void DeathTransporter(struct creature_s *c) {
   }
 }
 
-void GemPathTransporter(creature_s *c) {
+void GemPathTransporter(struct creature_s *c) {
   struct rail_s *rail;
   struct nuvec_s spl_pos;
   s32 finished;
