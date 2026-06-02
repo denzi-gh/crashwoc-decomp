@@ -92,6 +92,16 @@ Use the repo-local helpers before manual grep when possible:
 - [`tools/ai_decompme_zip.py`](tools/ai_decompme_zip.py): inspect a decomp.me-style zip or extracted directory, resolve target functions to repo units, and surface insertion/missing-declaration hints
   - `python tools/ai_decompme_zip.py C:/Users/denis/Downloads/MoveMINETUB.zip`
   - `python tools/ai_decompme_zip.py path/to/extracted_bundle_dir`
+- [`tools/ai_task.py`](tools/ai_task.py): generate a provider-neutral task pack under `.ai/tasks/` (`task.json`, `prompt.md`, `context.md`, `verify.sh`, `notes.md`)
+  - `python tools/ai_task.py unit src/gamecode/crate.c`
+  - `python tools/ai_task.py function MoveCrate`
+  - `python tools/ai_task.py decompme path/to/export.zip`
+- [`tools/ai_run.py`](tools/ai_run.py): run a task pack against a backend (`print`, `copilot`, or best-effort `codex`/`claude`/`aider`/`gemini`)
+  - `python tools/ai_run.py --backend print .ai/tasks/<task>`
+  - `python tools/ai_run.py --backend copilot .ai/tasks/<task>`
+- [`tools/mcp_decomp.py`](tools/mcp_decomp.py): read-only MCP scaffold documenting/dispatching the repo-index tools (no write/build/shell tools exposed)
+  - `python tools/mcp_decomp.py list`
+
 Existing helper scripts:
 
 - [`tools/triage_build.py`](tools/triage_build.py): compile target triage
@@ -111,6 +121,19 @@ Repo-local skills live under `tools/skills/`:
 - [`tools/skills/split-maintenance/SKILL.md`](tools/skills/split-maintenance/SKILL.md): use when editing `splits.txt` or importing ranges safely
 - [`tools/skills/build-triage/SKILL.md`](tools/skills/build-triage/SKILL.md): use for compile failures, progress checks, and regression review
 - [`tools/skills/match-workflow/SKILL.md`](tools/skills/match-workflow/SKILL.md): use for symbol-to-verification matching workflows
+
+## Provider-neutral AI workflow
+
+Task packs let the same decomp task drive any agent (Codex, Claude Code, Aider, GitHub Copilot, Gemini, local models, or browser ChatGPT):
+
+1. Create a task pack with [`tools/ai_task.py`](tools/ai_task.py) (`unit`, `function`, or `decompme`).
+2. Inspect `task.json` (machine-readable canonical task), `prompt.md`, and `context.md` in the generated `.ai/tasks/<task>/` directory.
+3. For browser ChatGPT or any agent without a local CLI, run `python tools/ai_run.py --backend print <task>` and paste the combined prompt/context.
+4. Use a backend-specific runner only when its CLI is available: `python tools/ai_run.py --backend copilot <task>` (or `codex`/`claude`/`aider`/`gemini`).
+5. Verify with the task's commands: `sh <task>/verify.sh` (or the `verify_commands` listed in `task.json`).
+6. Record attempts and blockers in `<task>/notes.md`.
+
+The Copilot entry points remain as compatibility, not as the primary architecture: `python tools/ai_launch_copilot.py <unit-or-path>` now builds a unit task pack and launches the `copilot` backend internally.
 
 ## Workflow
 
