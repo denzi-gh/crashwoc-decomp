@@ -5439,6 +5439,7 @@ void BonusTransporter(struct creature_s *plr) {
   float ratio;
   s32 finished;
   s32 active;
+  u16 idx;
 
   finished = 0;
   active = 0;
@@ -5584,7 +5585,9 @@ void BonusTransporter(struct creature_s *plr) {
     plr->jump = 0;
     (plr->obj).mom.y = 0.0f;
     active_obj->oldpos = active_obj->pos;
-    ratio = (-NuTrigTable[(s32)((bonus_time / bonus_duration) * 32768.0f + 16384.0f)] + 1.0f) * 0.5f;
+    ratio = bonus_time / bonus_duration;
+    idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
+    ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
     PointAlongSpline(bonus_pPLAT, ratio, &spl_pos, NULL, NULL);
     active_obj->pos.x = (spl_pos.x - active_obj->pos.x) * 0.1f + active_obj->pos.x;
     active_obj->pos.y = (spl_pos.y - active_obj->pos.y) * 0.1f + active_obj->pos.y;
@@ -5614,6 +5617,7 @@ void DeathTransporter(struct creature_s *c) {
   s32 state;
   float ratio;
   u16 idx;
+  struct obj_s *active_obj;
 
   finished = 0;
   active = 0;
@@ -5678,18 +5682,19 @@ void DeathTransporter(struct creature_s *c) {
     FinishTransporter(&death_obj, &c->obj);
     BlendGameCamera(GameCam, 1.0f);
     death_lock = state;
-    goto death_set_active;
+    active = 1;
+    active_obj = &death_obj;
+    break;
   case 2:
     {
       s32 r = ObjectCylinderCollision(&c->obj, &death_obj, 1.0f, 0);
-      if (death_lock == 0) {
-        if (r != 2) break;
-        Death = 3;
-      } else {
+      if (death_lock != 0) {
         if (r == 2) break;
         death_lock = active;
         break;
       }
+      if (r != 2) break;
+      Death = 3;
     }
   start_death_leg:
     TransporterGo();
@@ -5700,13 +5705,15 @@ void DeathTransporter(struct creature_s *c) {
     BlendGameCamera(GameCam, 1.0f);
     break;
   case 3:
-    if (death_time >= death_duration) goto death_case3_done;
+    if (!(death_time < death_duration)) goto death_case3_done;
   death_time_step:
     death_time += (1.0f / 60.0f);
     if (death_time >= death_duration) {
       death_time = death_duration;
     }
-    goto death_set_active;
+    active = 1;
+    active_obj = &death_obj;
+    break;
   death_case3_done:
     Death = active;
     finished = 1;
@@ -5714,15 +5721,15 @@ void DeathTransporter(struct creature_s *c) {
     FinishTransporter(&death_obj, &c->obj);
     BlendGameCamera(GameCam, 1.0f);
     death_lock = 1;
-  death_set_active:
     active = 1;
+    active_obj = &death_obj;
     break;
   }
 
   if (active != 0) {
     c->jump = 0;
     (c->obj).mom.y = 0.0f;
-    death_obj.oldpos = death_obj.pos;
+    active_obj->oldpos = active_obj->pos;
     ratio = death_time / death_duration;
     if (Death == 3 || state == 3) {
       ratio = 1.0f - ratio;
@@ -5730,13 +5737,13 @@ void DeathTransporter(struct creature_s *c) {
     idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
     ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
     PointAlongSpline((struct nugspline_s *)death_pPLAT, ratio, &spl_pos, NULL, NULL);
-    death_obj.pos.x = (spl_pos.x - death_obj.pos.x) * 0.1f + death_obj.pos.x;
-    death_obj.pos.y = (spl_pos.y - death_obj.pos.y) * 0.1f + death_obj.pos.y;
-    death_obj.pos.z = (spl_pos.z - death_obj.pos.z) * 0.1f + death_obj.pos.z;
-    NuVecSub(&death_obj.mom, &death_obj.pos, &death_obj.oldpos);
-    death_obj.dyrot = 0;
-    (c->obj).pos.y = death_obj.top * death_obj.SCALE + death_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
-    ObjectCylinderCollision(&c->obj, &death_obj, 1.0f - death_time / death_duration, 1);
+    active_obj->pos.x = (spl_pos.x - active_obj->pos.x) * 0.1f + active_obj->pos.x;
+    active_obj->pos.y = (spl_pos.y - active_obj->pos.y) * 0.1f + active_obj->pos.y;
+    active_obj->pos.z = (spl_pos.z - active_obj->pos.z) * 0.1f + active_obj->pos.z;
+    NuVecSub(&active_obj->mom, &active_obj->pos, &active_obj->oldpos);
+    active_obj->dyrot = 0;
+    (c->obj).pos.y = active_obj->top * active_obj->SCALE + active_obj->pos.y - (c->obj).min.y * (c->obj).SCALE;
+    ObjectCylinderCollision(&c->obj, active_obj, 1.0f - death_time / death_duration, 1);
     if (finished != 0) return;
     (c->obj).transporting = 1;
   } else {
