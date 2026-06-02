@@ -37,6 +37,7 @@ REQUIRED_SKILLS = [
     "split-maintenance",
     "build-triage",
     "match-workflow",
+    "task-pack",
 ]
 MARKDOWN_DOCS = [
     "AGENTS.md",

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Task Pack Workflow"
+  short_description: "Generate and run provider-neutral decomp task packs"
+  default_prompt: "Use $task-pack to turn a unit, function, or decomp.me bundle into a task pack and run it against any backend."

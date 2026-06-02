@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""MCP scaffold for the crashwoc-decomp read-only repo index.
+"""Read-only MCP server for the crashwoc-decomp repo index.
 
-This is a **dependency-free scaffold**, not a full Model Context Protocol
-server. A complete MCP server would speak JSON-RPC over stdio with capability
-negotiation and typically depend on the `mcp` package. To keep this repo
-stdlib-only, this module instead:
+This is a minimal **Model Context Protocol** server implemented with the stdlib
+only (no `mcp` package, no other dependencies). ``serve`` speaks JSON-RPC 2.0
+over the stdio transport (newline-delimited JSON on stdin/stdout) and implements
+``initialize``, ``tools/list``, ``tools/call``, and ``ping``. Each tool maps to
+an existing ``tools/ai_*.py`` helper invoked with ``--json``.
 
-1. Documents the intended **read-only** tool surface (``TOOLS`` below) and maps
-   each tool to an existing ``tools/ai_*.py`` helper.
-2. Dispatches those tools to the helper scripts with ``--json`` so the mapping
-   can be tested today (``python tools/mcp_decomp.py call ...``).
-3. Provides a minimal newline-delimited JSON stdio bridge (``serve``) for local
-   experimentation. This is NOT the MCP wire protocol.
+The ``list`` and ``call`` subcommands stay available for inspection and for
+testing the tool mapping outside an MCP client.
 
 Read-only tools (mapped to existing scripts):
 
@@ -21,17 +18,14 @@ Read-only tools (mapped to existing scripts):
     match_plan(query, version)         -> tools/ai_match_plan.py
     decompme_inspect(path, version)    -> tools/ai_decompme_zip.py
 
-Deferred / unavailable tools (Ghidra tooling is not present in this repo):
-
-    ghidra_find_function(query, ...)
-    ghidra_decompile(address, ...)
+Deferred / unavailable tools (Ghidra tooling is not present in this repo; not
+advertised via tools/list): ghidra_find_function, ghidra_decompile.
 
 Intentionally NOT exposed (would require explicit, non-interactive gating before
 ever being added): build_object(unit), build_ctx(unit), changes(), and any form
-of arbitrary shell execution. This scaffold is read-only.
+of arbitrary shell execution. This server is read-only.
 
-To implement a real MCP server later, wire each entry in ``TOOLS`` to an MCP
-tool definition and route ``call_tool`` through the JSON-RPC dispatch loop.
+Run it from an MCP client with: ``python tools/mcp_decomp.py serve``.
 """
 from __future__ import annotations
 
@@ -133,35 +127,117 @@ def print_tool_list() -> None:
     print("\nNot exposed (read-only scaffold): build_object, build_ctx, changes, shell execution.")
 
 
-def serve() -> int:
-    """Minimal newline-delimited JSON stdio bridge (NOT the MCP wire protocol).
+# --------------------------------------------------------------------------- #
+# Minimal MCP server (JSON-RPC 2.0 over stdio, stdlib only)
+# --------------------------------------------------------------------------- #
+PROTOCOL_VERSION = "2025-06-18"
+SERVER_INFO = {"name": "crashwoc-decomp", "version": "0.1.0"}
 
-    Reads one JSON object per line: {"tool": "...", "query": "...", "version": "..."}
-    (use "path" instead of "query" for decompme_inspect). Writes one JSON
-    response per line: {"ok": true, "result": ...} or {"ok": false, "error": ...}.
-    """
-    print(
-        "mcp_decomp scaffold stdio bridge (JSON lines; not MCP protocol). "
-        "Send one request object per line; Ctrl-D to exit.",
-        file=sys.stderr,
-    )
+
+def tool_definitions() -> list[dict[str, Any]]:
+    """MCP tool definitions for the advertised read-only tools."""
+    definitions: list[dict[str, Any]] = []
+    for spec in READONLY_TOOLS:
+        properties: dict[str, Any] = {
+            spec.param: {"type": "string", "description": spec.summary},
+        }
+        if spec.supports_version:
+            properties["version"] = {
+                "type": "string",
+                "default": DEFAULT_VERSION,
+                "description": "Project version under config/ and build/.",
+            }
+        definitions.append(
+            {
+                "name": spec.name,
+                "description": spec.summary,
+                "inputSchema": {
+                    "type": "object",
+                    "properties": properties,
+                    "required": [spec.param],
+                },
+            }
+        )
+    return definitions
+
+
+def _rpc_result(req_id: Any, result: Any) -> dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": req_id, "result": result}
+
+
+def _rpc_error(req_id: Any, code: int, message: str) -> dict[str, Any]:
+    return {"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}}
+
+
+def _call_tool_content(name: Optional[str], arguments: dict[str, Any]) -> list[dict[str, str]]:
+    spec = TOOLS.get(name) if name else None
+    if spec is None:
+        raise McpError(f"Unknown tool: {name}. Known tools: {', '.join(TOOLS)}")
+    value = arguments.get(spec.param) or arguments.get("query") or arguments.get("path")
+    if value is None:
+        raise McpError(f"Tool '{name}' requires '{spec.param}'.")
+    version = arguments.get("version", DEFAULT_VERSION)
+    result = call_tool(name, value, version)
+    return [{"type": "text", "text": json.dumps(result, indent=2)}]
+
+
+def handle_request(message: dict[str, Any]) -> Optional[dict[str, Any]]:
+    """Handle one JSON-RPC message; return a response, or None for notifications."""
+    req_id = message.get("id")
+    method = message.get("method")
+    params = message.get("params") or {}
+
+    if method == "initialize":
+        return _rpc_result(
+            req_id,
+            {
+                "protocolVersion": params.get("protocolVersion") or PROTOCOL_VERSION,
+                "capabilities": {"tools": {}},
+                "serverInfo": SERVER_INFO,
+            },
+        )
+    if method in ("notifications/initialized", "initialized"):
+        return None
+    if method == "ping":
+        return _rpc_result(req_id, {})
+    if method == "tools/list":
+        return _rpc_result(req_id, {"tools": tool_definitions()})
+    if method == "tools/call":
+        try:
+            content = _call_tool_content(params.get("name"), params.get("arguments") or {})
+            return _rpc_result(req_id, {"content": content, "isError": False})
+        except McpError as exc:
+            return _rpc_result(
+                req_id, {"content": [{"type": "text", "text": str(exc)}], "isError": True}
+            )
+
+    if req_id is None:
+        return None  # Unknown notification: ignore.
+    return _rpc_error(req_id, -32601, f"Method not found: {method}")
+
+
+def _emit(obj: dict[str, Any]) -> None:
+    sys.stdout.write(json.dumps(obj) + "\n")
+    sys.stdout.flush()
+
+
+def serve() -> int:
+    """Run the minimal JSON-RPC 2.0 stdio MCP server (stdlib only)."""
     for raw_line in sys.stdin:
         line = raw_line.strip()
         if not line:
             continue
         try:
-            request = json.loads(line)
-            tool = request["tool"]
-            value = request.get("query", request.get("path"))
-            if value is None:
-                raise McpError("Request requires 'query' or 'path'.")
-            version = request.get("version", DEFAULT_VERSION)
-            result = call_tool(tool, value, version)
-            response: dict[str, Any] = {"ok": True, "tool": tool, "result": result}
-        except (McpError, KeyError, json.JSONDecodeError) as exc:
-            response = {"ok": False, "error": str(exc)}
-        sys.stdout.write(json.dumps(response) + "\n")
-        sys.stdout.flush()
+            message = json.loads(line)
+        except json.JSONDecodeError as exc:
+            _emit(_rpc_error(None, -32700, f"Parse error: {exc}"))
+            continue
+        try:
+            response = handle_request(message)
+        except Exception as exc:  # never let one bad request kill the server
+            response = _rpc_error(message.get("id"), -32603, f"Internal error: {exc}")
+        if response is not None:
+            _emit(response)
     return 0
 
 
@@ -177,7 +253,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_call.add_argument("value", help="Query string, or path for decompme_inspect.")
     p_call.add_argument("--version", default=DEFAULT_VERSION)
 
-    sub.add_parser("serve", help="Run the minimal stdio JSON-lines bridge (not MCP protocol).")
+    sub.add_parser("serve", help="Run the JSON-RPC 2.0 stdio MCP server.")
     return parser
 
 

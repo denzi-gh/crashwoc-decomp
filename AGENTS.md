@@ -99,8 +99,9 @@ Use the repo-local helpers before manual grep when possible:
 - [`tools/ai_run.py`](tools/ai_run.py): run a task pack against a backend (`print`, `copilot`, or best-effort `codex`/`claude`/`aider`/`gemini`)
   - `python tools/ai_run.py --backend print .ai/tasks/<task>`
   - `python tools/ai_run.py --backend copilot .ai/tasks/<task>`
-- [`tools/mcp_decomp.py`](tools/mcp_decomp.py): read-only MCP scaffold documenting/dispatching the repo-index tools (no write/build/shell tools exposed)
-  - `python tools/mcp_decomp.py list`
+- [`tools/mcp_decomp.py`](tools/mcp_decomp.py): stdlib-only, read-only MCP server (JSON-RPC over stdio) exposing the repo-index tools; no write/build/shell tools
+  - `python tools/mcp_decomp.py serve` (run the MCP stdio server)
+  - `python tools/mcp_decomp.py list` (inspect the tool surface)
 
 Existing helper scripts:
 
@@ -121,6 +122,7 @@ Repo-local skills live under `tools/skills/`:
 - [`tools/skills/split-maintenance/SKILL.md`](tools/skills/split-maintenance/SKILL.md): use when editing `splits.txt` or importing ranges safely
 - [`tools/skills/build-triage/SKILL.md`](tools/skills/build-triage/SKILL.md): use for compile failures, progress checks, and regression review
 - [`tools/skills/match-workflow/SKILL.md`](tools/skills/match-workflow/SKILL.md): use for symbol-to-verification matching workflows
+- [`tools/skills/task-pack/SKILL.md`](tools/skills/task-pack/SKILL.md): use to generate and run provider-neutral task packs against any backend
 
 ## Provider-neutral AI workflow
 

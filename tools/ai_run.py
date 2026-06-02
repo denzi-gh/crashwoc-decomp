@@ -78,6 +78,8 @@ def backend_print(task_dir: Path, task_json: dict, prompt_md: str, context_md: s
         "",
         "## VERIFY",
         "",
+        "Run `sh verify.sh` (POSIX) or `pwsh verify.ps1` (PowerShell), or directly:",
+        "",
         "```sh",
         *task_json.get("verify_commands", []),
         "```",
