@@ -96,6 +96,7 @@ void InitChase(CHASE *chase) {
 
         {
             struct CharacterModel *model = &CModel[CRemap[chase->character[j]]];
+            short act;
             if (chase->action[j] != -1 && model->anmdata[chase->action[j]] != NULL) {
                 s32 r = qrand();
                 f32 rf = (f32)r * (1.0f / 65536.0f);
@@ -106,9 +107,10 @@ void InitChase(CHASE *chase) {
             }
 
             chase->anim[j].blend = 0;
-            chase->anim[j].action = chase->action[j];
-            chase->anim[j].newaction = chase->action[j];
-            chase->anim[j].oldaction = chase->action[j];
+            act = chase->action[j];
+            chase->anim[j].action = act;
+            chase->anim[j].newaction = act;
+            chase->anim[j].oldaction = act;
         }
 
     start_anim:
@@ -297,27 +299,28 @@ after_time_advance:
         oldpos = chase->pos[j];
         PointAlongSpline(chase->spl_CHASER[j], d, &pos, &chase->yrot[j], NULL);
         chase->pos[j].x = pos.x;
-        y = NewShadowMaskPlat(&pos, 0.0f, -1);
-        chase->pos[j].z = pos.z;
+        {
+            float interp = 0.1f;
+            y = NewShadowMaskPlat(&pos, 0.0f, -1);
+            chase->pos[j].z = pos.z;
 
-        if (y != 2000000.0f) {
-            FindAnglesZX(&ShadNorm);
+            if (y != 2000000.0f) {
+                FindAnglesZX(&ShadNorm);
+                if (Level == 0x8) {
+                    pos.y = y;
+                }
+            } else {
+                temp_xrot = 0;
+                temp_zrot = 0;
+            }
+
+            /* Level 8: interpolate Y */
             if (Level == 0x8) {
-                pos.y = y;
+                float curY = chase->pos[j].y;
+                if (curY < pos.y) {
+                    pos.y = (pos.y - curY) * interp + curY;
+                }
             }
-        } else {
-            temp_xrot = 0;
-            temp_zrot = 0;
-        }
-
-        /* Level 8: interpolate Y */
-        if (Level == 0x8) {
-            float curY = chase->pos[j].y;
-            if (curY < pos.y) {
-                pos.y = (pos.y - curY) * 0.1f + curY;
-            }
-        } else {
-            pos.y = pos.y; /* reload from stack */
         }
         chase->pos[j].y = pos.y;
 
@@ -655,10 +658,9 @@ void InitChases(void) {
     if ((s8)pc->i == -1) return;
 
     do {
+        chase = &Chase[(s8)pc->i];
         sprintf(buf, "chase_%.2i_", (s8)pc->i);
         strcpy(chname, buf);
-
-        chase = &Chase[(s8)pc->i];
 
         strcpy(tbuf, chname);
         strcat(tbuf, "trigger");
@@ -752,7 +754,6 @@ void InitChases(void) {
             }
 
             sprintf(name, "%s%.2i_", buf, j);
-            count = count + 1;
             strcat(name, "trigger_misc_");
 
             for (l = 0; l <= 3; l++) {
@@ -764,6 +765,7 @@ void InitChases(void) {
                 }
             }
 
+            count = count + 1;
             chase->ok[j] = 1;
         }
 
