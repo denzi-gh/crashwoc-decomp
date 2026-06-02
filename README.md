@@ -106,12 +106,42 @@ Repository AI guidance lives in:
 Repo-local helper commands include:
 
 - `python tools/ai_context.py <symbol-or-unit>`
-- `python tools/ai_launch_copilot.py <unit-or-path>`
 - `python tools/ai_lookup_symbol.py <symbol-or-address>`
 - `python tools/ai_lookup_unit.py <unit-or-path>`
 - `python tools/ai_match_plan.py <unit-or-path>`
 
-Run `python tools/ai_launch_copilot.py src/gamecode/crate.c` from a VS Code integrated terminal to generate a filled prompt for that unit and immediately start a terminal Copilot CLI session. Use `--no-launch --print-prompt` if you only want the generated prompt text.
+Provider-neutral task packs (preferred)
+---------------------------------------
+
+The same decompilation task can be driven by any agent (Codex, Claude Code, Aider, GitHub Copilot, Gemini, local models, or browser ChatGPT) via a self-contained task pack:
+
+```sh
+python tools/ai_task.py unit src/gamecode/crate.c
+python tools/ai_run.py --backend print .ai/tasks/<task>
+```
+
+`python tools/ai_task.py` writes `.ai/tasks/<timestamp>-<target>/` containing `task.json` (canonical task), `prompt.md`, `context.md`, `verify.sh`, and `notes.md`. It also supports `function <symbol-or-address>` and `decompme <zip-or-dir>` modes.
+
+Browser ChatGPT / unsupported agents:
+
+1. Generate a task pack with `python tools/ai_task.py`.
+2. Run `python tools/ai_run.py --backend print <task>`.
+3. Paste the combined prompt/context into the browser agent.
+4. Apply the suggested changes locally.
+5. Verify locally with `sh <task>/verify.sh`.
+
+When a local CLI is available, use it directly: `python tools/ai_run.py --backend copilot <task>` (or `codex`/`claude`/`aider`/`gemini`).
+
+GitHub Copilot (compatibility)
+------------------------------
+
+The original command still works and now builds a unit task pack before launching Copilot:
+
+```sh
+python tools/ai_launch_copilot.py src/gamecode/crate.c
+```
+
+Use `--no-launch --print-prompt` if you only want the generated prompt text.
 
 
 

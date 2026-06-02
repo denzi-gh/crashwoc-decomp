@@ -20,6 +20,16 @@ REQUIRED_FILES = [
     "tools/ai_lookup_unit.py",
     "tools/ai_context.py",
     "tools/ai_match_plan.py",
+    "tools/ai_task.py",
+    "tools/ai_run.py",
+    "tools/ai_decompme_zip.py",
+    "tools/mcp_decomp.py",
+]
+# README and/or AGENTS.md must describe the provider-neutral workflow.
+WORKFLOW_MENTIONS = [
+    "tools/ai_task.py",
+    "tools/ai_run.py",
+    "tools/ai_launch_copilot.py",
 ]
 REQUIRED_SKILLS = [
     "project-onboarding",
@@ -91,6 +101,21 @@ def validate_openai_yaml(path: Path, skill_name: str, errors: list[str]) -> None
         )
 
 
+def check_workflow_mentions(errors: list[str]) -> None:
+    """README and/or AGENTS must describe the provider-neutral task-pack workflow."""
+    combined = ""
+    for rel_path in ("README.md", "AGENTS.md"):
+        path = ROOT / rel_path
+        if path.is_file():
+            combined += path.read_text(encoding="utf-8")
+    lowered = combined.lower()
+    for mention in WORKFLOW_MENTIONS:
+        if mention not in combined:
+            errors.append(f"README/AGENTS must mention {mention}")
+    if "task pack" not in lowered and "task-pack" not in lowered:
+        errors.append("README/AGENTS must describe the task-pack workflow")
+
+
 def validate_instruction_frontmatter(path: Path, errors: list[str]) -> None:
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
@@ -119,6 +144,8 @@ def main() -> int:
         path = ROOT / rel_path
         if path.is_file():
             check_markdown_links(path, errors)
+
+    check_workflow_mentions(errors)
 
     for instruction_path in (ROOT / ".github" / "instructions").glob("*.instructions.md"):
         validate_instruction_frontmatter(instruction_path, errors)
