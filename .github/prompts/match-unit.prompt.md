@@ -1,7 +1,12 @@
 # Match One Unit End-to-End
 
+> **Preferred (provider-neutral):** generate a task pack and run it against any agent:
+> `python tools/ai_task.py unit <target-file-or-unit>` then
+> `python tools/ai_run.py --backend print .ai/tasks/<task>` (paste into a browser agent)
+> or `--backend copilot` for a local Copilot session. See the `task-pack` skill.
+
 Use this prompt directly in GitHub Copilot when you want it to take one file or unit and keep pushing it forward.
-If you want a prefilled prompt plus an interactive terminal Copilot session, run `python tools/ai_launch_copilot.py <target-file-or-unit>` from a VS Code integrated terminal.
+If you want a prefilled prompt plus an interactive terminal Copilot session, run `python tools/ai_launch_copilot.py <target-file-or-unit>` from a VS Code integrated terminal (this now builds a unit task pack first).
 
 Target unit or file: `<replace with src/... path or unit name>`
 

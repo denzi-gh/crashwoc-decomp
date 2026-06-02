@@ -54,7 +54,7 @@ from ai_common import (
 from ai_context import resolve_context
 
 DEFAULT_OUT_DIR = ROOT / ".ai" / "tasks"
-TASK_FILES = ("task.json", "prompt.md", "context.md", "verify.sh", "notes.md")
+TASK_FILES = ("task.json", "prompt.md", "context.md", "verify.sh", "verify.ps1", "notes.md")
 SCHEMA_VERSION = 1
 
 STOP_RULES = {
@@ -294,7 +294,7 @@ def render_prompt(task_json: dict[str, Any], *, next_target: Optional[str], work
         "",
         "## Verification",
         "",
-        "Run these one-shot commands (also in `verify.sh`):",
+        "Run these one-shot commands (also in `verify.sh` and `verify.ps1`):",
         "",
         "```sh",
     ]
@@ -662,6 +662,14 @@ def render_verify_sh(commands: list[str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_verify_ps1(commands: list[str]) -> str:
+    lines = ["$ErrorActionPreference = 'Stop'", ""]
+    for command in commands:
+        lines.append(command)
+        lines.append("if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }")
+    return "\n".join(lines) + "\n"
+
+
 def _write(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-8", newline="\n")
 
@@ -678,6 +686,7 @@ def write_task_pack(plan: TaskPlan, out_dir: Path, force: bool) -> Path:
     _write(task_dir / "prompt.md", plan.prompt_md)
     _write(task_dir / "context.md", plan.context_md)
     _write(task_dir / "verify.sh", render_verify_sh(plan.task_json["verify_commands"]))
+    _write(task_dir / "verify.ps1", render_verify_ps1(plan.task_json["verify_commands"]))
     _write(task_dir / "notes.md", NOTES_TEMPLATE)
     return task_dir
 

@@ -130,7 +130,9 @@ Browser ChatGPT / unsupported agents:
 4. Apply the suggested changes locally.
 5. Verify locally with `sh <task>/verify.sh`.
 
-When a local CLI is available, use it directly: `python tools/ai_run.py --backend copilot <task>` (or `codex`/`claude`/`aider`/`gemini`).
+When a local CLI is available, use it directly: `python tools/ai_run.py --backend copilot <task>` (or `codex`/`claude`/`aider`/`gemini`). The `task-pack` skill under `tools/skills/` documents this loop.
+
+MCP clients can connect to the read-only repo-index tools via the stdlib JSON-RPC stdio server: `python tools/mcp_decomp.py serve` (use `list` to inspect the tool surface).
 
 GitHub Copilot (compatibility)
 ------------------------------
