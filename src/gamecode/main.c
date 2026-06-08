@@ -338,6 +338,13 @@ void InitParticleSystem(void) {
 
 //95% NGC
 void InitWorld(void) {
+    void NuGScnUpdate(struct nugscn_s *scn, float dt);
+    void edobjUpdateObjects(float frametime);
+    void edanimUpdateObjects(float dt);
+    void ResetCheckpoint(s32 iRAIL, s32 iALONG, float fALONG, struct nuvec_s *pos);
+    void TerrainSetCur(void *curterr);
+    short *terraininit(int LevelNum, short **store, short *endstore, int opt, char *name, struct nugscn_s *gscene, int gsid);
+    void noterraininit(void);
     int i;
     struct nudathdr_s* dh = 0;// r0
 
@@ -416,7 +423,7 @@ void InitWorld(void) {
     edbitsRegisterBaseScene(world_scene[0]);
     NuBridgeRegisterBaseScene(world_scene[0]);
     edanimRegisterBaseScene(world_scene[0]);
-    edbitsRegisterSfx(SfxTabGLOBAL, LDATA->pSFX, 0xb1, SFXCOUNT_ALL);
+    edbitsRegisterSfx((struct pSFX *)SfxTabGLOBAL, LDATA->pSFX, 0xb1, SFXCOUNT_ALL);
     NuBridgeInit();
     NuWindInit();
     noterraininit();
@@ -845,13 +852,15 @@ block_end:
   return;
 }
 
-//PS2 MATCH
 void SetLevel(void) {
-    LBIT = 1L << (u64)Level; //NGC //LBIT = __ashldi3(0,1);
+  s32 farclip;
+
   LDATA = &LData[Level];
+  LBIT = (u64)1 << Level;
   if (pNuCam != NULL) {
-    if (LDATA->farclip > 9) {
-      pNuCam->farclip = (float) LDATA->farclip;
+    farclip = LDATA->farclip;
+    if ((u32)farclip > 9) {
+      pNuCam->farclip = (float)farclip;
     }
     else {
      pNuCam->farclip = 1000.0f;

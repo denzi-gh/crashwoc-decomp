@@ -10,6 +10,17 @@ s32 LookupDebrisEffect(char *name);
 void AddVariableShotDebrisEffectMtx2(s32 type, struct nuvec_s *pos, s32 numdeb, struct numtx_s *emitrotmtx, struct numtx_s *rotmtx);
 void edbitsSoundPlay(struct nuvec_s *pos, s32 sid);
 s32 edbitsLookupSoundFX(char *name);
+struct nuanimdata_s *NuAnimDataCreate(s32 nchunks);
+struct nuanimdatachunk_s *NuAnimDataChunkCreate(s32 numnodes);
+struct nuanimcurveset_s *NuAnimCurveSetCreate(s32 ncurves);
+struct nuanimcurve_s *NuAnimCurveCreate(s32 numkeys);
+void NuAnimCurveDestroy(struct nuanimcurve_s *curve);
+s32 NewPlatInst(struct numtx_s *mat, s32 instance);
+void UpdatePlatinst(s32 platid, struct numtx_s *mat);
+void PlatInstRotate(s32 platid, s32 state);
+void PlatInstBounce(s32 platid, float plrgrav, float tension, float damp);
+void edobjSoundDestroy(s32 obj, s32 sound);
+void edobjParticleDestroy(s32 obj, s32 ptl);
 
 //NGC MATCH
 float edobjPlayerObjectDistance(s32 objid) {
@@ -475,6 +486,164 @@ void edobjDetermineNearestObject(float ndist) {
 //NGC MATCH
 u32 reverse_endian_32(u32 arg0) {
     return (arg0 >> 0x18U) | ((arg0 >> 8U) & 0xFF00) | ((arg0 << 8) & 0xFF0000) | (arg0 << 0x18);
+}
+
+void edobjConvertPathToAnim(s32 sel) {
+    struct object_path_s *path;
+    struct nuinstance_s *instance;
+    struct nuinstanim_s *instanim;
+    struct nuanimkey_s *akey;
+    s32 i;
+    s32 j;
+    s32 used;
+    s32 last;
+    s32 total;
+    s32 rotanimflag;
+    s32 animated;
+    u32 mask;
+    float value;
+    float prev;
+    float next;
+    float base;
+    float slope;
+
+    path = &ObjectPath[sel];
+    instance = &ObjectInstance[sel];
+    instance->anim = NULL;
+
+    NuMtxSetIdentity((struct Mtx *)&instance->mtx);
+    instance->mtx._30 = path->waypoint[0].x;
+    instance->mtx._31 = path->waypoint[0].y;
+    instance->mtx._32 = path->waypoint[0].z;
+
+    if (path->terrplatid == -1) {
+        path->terrplatid = NewPlatInst(&instance->mtx, edobjLookupInstanceIndex(path->objid));
+    } else {
+        UpdatePlatinst(path->terrplatid, &instance->mtx);
+        PlatInstRotate(path->terrplatid, 0);
+    }
+    PlatInstBounce(path->terrplatid, path->playergrav, path->tension, path->damping);
+
+    used = path->usedway;
+    if (used <= 1) {
+        return;
+    }
+
+    if (ObjectAnim[sel] == NULL) {
+        ObjectAnim[sel] = NuAnimDataCreate(1);
+        ObjectAnim[sel]->chunks[0] = NuAnimDataChunkCreate(1);
+        ObjectAnim[sel]->chunks[0]->animcurvesets[0] = NuAnimCurveSetCreate(9);
+        ObjectAnim[sel]->chunks[0]->animcurvesets[0]->flags = 1;
+    }
+
+    ObjectAnim[sel]->time = 1.0f;
+    total = 0;
+    mask = 1;
+    last = used - 1;
+    for (i = 0; i < last; i++) {
+        ObjectAnim[sel]->time += (float)path->waypoint_time[i];
+        total += path->waypoint_time[i];
+        mask |= 1U << total;
+    }
+
+#define EDOBJ_BUILD_CURVE(curve_ix, value_expr, base_expr, prev_expr, next_expr, const_expr, negated, sets_rot) \
+    do { \
+        animated = 0; \
+        for (i = 1; i < used; i++) { \
+            value = (value_expr); \
+            base = (base_expr); \
+            if (value != base) { \
+                animated = 1; \
+                break; \
+            } \
+        } \
+        if (animated != 0) { \
+            if (sets_rot) { \
+                rotanimflag = 1; \
+            } \
+            ObjectAnim[sel]->chunks[0]->animcurvesets[0]->constants[curve_ix] = 3.4028235e38f; \
+            if (ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix] == NULL) { \
+                ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix] = NuAnimCurveCreate(used); \
+            } \
+            if (ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix]->numkeys != (u32)used) { \
+                NuAnimCurveDestroy(ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix]); \
+                ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix] = NuAnimCurveCreate(used); \
+            } \
+            ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix]->mask = reverse_endian_32(mask); \
+            for (i = 0; i < used; i++) { \
+                akey = &ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix]->animkeys[i]; \
+                akey->time = 1.0f; \
+                for (j = 0; j < i; j++) { \
+                    akey->time += (float)path->waypoint_time[j]; \
+                } \
+                if (i == last) { \
+                    akey->dtime = 0.0f; \
+                } else { \
+                    akey->dtime = 1.0f / (float)path->waypoint_time[i]; \
+                } \
+                value = (value_expr); \
+                base = (const_expr); \
+                if (i == 0) { \
+                    next = (next_expr); \
+                    slope = (next - value) * 0.5f * path->waypoint_speed[i]; \
+                } else if (i == last) { \
+                    prev = (prev_expr); \
+                    slope = (value - prev) * 0.5f * path->waypoint_speed[i]; \
+                } else { \
+                    prev = (prev_expr); \
+                    next = (next_expr); \
+                    slope = (next - prev) * path->waypoint_speed[i]; \
+                } \
+                if (negated) { \
+                    akey->c = -slope; \
+                    akey->d = -(value - base); \
+                } else { \
+                    akey->c = slope; \
+                    akey->d = value - base; \
+                } \
+            } \
+        } else { \
+            ObjectAnim[sel]->chunks[0]->animcurvesets[0]->constants[curve_ix] = (const_expr); \
+            if (ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix] != NULL) { \
+                NuAnimCurveDestroy(ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix]); \
+                ObjectAnim[sel]->chunks[0]->animcurvesets[0]->set[curve_ix] = NULL; \
+            } \
+        } \
+    } while (0)
+
+    rotanimflag = 0;
+    EDOBJ_BUILD_CURVE(0, path->waypoint[i].x, path->waypoint[0].x, path->waypoint[i - 1].x, path->waypoint[i + 1].x, 0.0f, 0, 0);
+    EDOBJ_BUILD_CURVE(1, path->waypoint[i].y, path->waypoint[0].y, path->waypoint[i - 1].y, path->waypoint[i + 1].y, 0.0f, 0, 0);
+    EDOBJ_BUILD_CURVE(2, path->waypoint[i].z, path->waypoint[0].z, path->waypoint[i - 1].z, path->waypoint[i + 1].z, 0.0f, 1, 0);
+    EDOBJ_BUILD_CURVE(3, path->waypoint_rot[i].x, path->waypoint_rot[0].x, path->waypoint_rot[i - 1].x, path->waypoint_rot[i + 1].x, path->waypoint_rot[0].x, 0, 1);
+    EDOBJ_BUILD_CURVE(4, path->waypoint_rot[i].y, path->waypoint_rot[0].y, path->waypoint_rot[i - 1].y, path->waypoint_rot[i + 1].y, path->waypoint_rot[0].y, 0, 1);
+    EDOBJ_BUILD_CURVE(5, path->waypoint_rot[i].z, path->waypoint_rot[0].z, path->waypoint_rot[i - 1].z, path->waypoint_rot[i + 1].z, path->waypoint_rot[0].z, 0, 1);
+#undef EDOBJ_BUILD_CURVE
+
+    if ((path->waypoint_rot[0].x != 0.0f) ||
+        (path->waypoint_rot[0].y != 0.0f) ||
+        (path->waypoint_rot[0].z != 0.0f)) {
+        rotanimflag = 1;
+    }
+
+    instanim = &ObjectInstAnim[sel];
+    instance->anim = instanim;
+    if (path->terrplatid != -1) {
+        UpdatePlatinst(path->terrplatid, &instanim->mtx);
+        if (rotanimflag != 0) {
+            PlatInstRotate(path->terrplatid, 1);
+        }
+    }
+
+    instanim->tfactor = path->speed;
+    instanim->playing = 0;
+    instanim->repeating = path->repeat;
+    instanim->oscillate = path->oscillate;
+    if (path->oscillate == 0) {
+        instanim->backwards = 0;
+    }
+    instanim->anim_ix = sel;
+    instanim->tinterval = path->pause;
 }
 
 //NGC MATCH
