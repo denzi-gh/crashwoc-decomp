@@ -928,17 +928,19 @@ void HubSelect(struct creature_s* c) {
   f32 d;
   f32 xold, zold, xnew, znew;
   s32 i, j, k;
+  s32 cut;
   s32 ispl;
   u8 flags;
   u16 yrot;
 
   closest = &hubmidpos[0];
   d = NuVecDist(&c->obj.pos, &hubmidpos[0], NULL);
+  p1 = &hubmidpos[1];
   {
-    f32 d1 = NuVecDist(&c->obj.pos, &hubmidpos[1], NULL);
+    f32 d1 = NuVecDist(&c->obj.pos, p1, NULL);
     if (d1 < d) {
       d = d1;
-      closest = &hubmidpos[1];
+      closest = p1;
     }
   }
 
@@ -1021,9 +1023,7 @@ void HubSelect(struct creature_s* c) {
         }
       }
 
-      if (k != 0) {
-        hublevelopen[j + i * 6] = 1;
-      } else {
+      if (k == 0) {
         if ((jonframe1 & 3) != 0) goto next_inner;
         if (i == 5 && j == 5) goto next_inner;
 
@@ -1044,6 +1044,8 @@ void HubSelect(struct creature_s* c) {
           }
           AddVariableShotDebrisEffect(GDeb[HData[i].i_gdeb << 2].i, &pos, 1, 0, 0);
         }
+      } else {
+        hublevelopen[j + i * 6] = 1;
       }
       next_inner:;
     }
@@ -1066,32 +1068,25 @@ void HubSelect(struct creature_s* c) {
       e1x = p1->x;
       e1z = p1->z;
 
-      cross_new = (znew - e0z) * (e0x - e1x) + (xnew - e0x) * (e1z - e0z);
       cross_old = (zold - e0z) * (e0x - e1x) + (xold - e0x) * (e1z - e0z);
+      cross_new = (znew - e0z) * (e0x - e1x) + (xnew - e0x) * (e1z - e0z);
 
       old_in = (cross_old >= 0.0f) ? 1 : 0;
       new_in = (cross_new >= 0.0f) ? 1 : 0;
 
-      if (old_in == 0) {
-        if (new_in == 0) continue;
-        {
-          f32 c2 = (znew - zold) * (xold - e0x) + (xnew - xold) * (e0z - zold);
-          if (c2 < 0.0f) continue;
-        }
-        {
-          f32 c3 = (znew - e1z) * (e1x - xold) + (xnew - e1x) * (zold - e1z);
-          if (c3 < 0.0f) continue;
-        }
-      } else {
+      if (old_in != 0) {
         if (new_in != 0) continue;
         {
-          f32 c2 = (znew - zold) * (xold - p1->x) + (xnew - xold) * (p1->z - zold);
-          if (c2 < 0.0f) continue;
+          f32 c2 = (znew - zold) * (xold - p0->x) + (xnew - xold) * (p0->z - zold);
+          if (!(c2 >= 0.0f)) continue;
         }
         {
-          f32 c3 = (znew - p0->z) * (p0->x - xold) + (xnew - p0->x) * (zold - p0->z);
-          if (c3 < 0.0f) continue;
+          f32 c3 = (znew - p1->z) * (p1->x - xold) + (xnew - p1->x) * (zold - p1->z);
+          if (!(c3 >= 0.0f)) continue;
         }
+      } else {
+        if (new_in == 0) continue;
+        goto leave_hub;
       }
     }
 
@@ -1125,8 +1120,6 @@ void HubSelect(struct creature_s* c) {
     {
       struct MoveInfo* mi = c->OnFootMoveInfo;
       f32 camscale = mi->WALKSPEED;
-      s32 camdir = (s16)mi->JUMPFRAMES2;
-      f32 speed;
 
       c->obj.mom.x = NuTrigTable[yrot & 0xFFFF] * camscale;
       c->obj.mom.z = NuTrigTable[(yrot + 0x4000) & 0xFFFF] * camscale;
@@ -1141,9 +1134,9 @@ void HubSelect(struct creature_s* c) {
       c->spin = 0;
 
       if (c->jump_type == 3) {
-        speed = mi->JUMPHEIGHT * 1.5f / (f32)camdir;
+        c->obj.mom.y = mi->JUMPHEIGHT * 1.5f / (f32)(s32)mi->JUMPFRAMES2;
       } else {
-        speed = mi->JUMPHEIGHT / (f32)camdir;
+        c->obj.mom.y = mi->JUMPHEIGHT / (f32)(s32)mi->JUMPFRAMES2;
       }
 
       {
@@ -1164,8 +1157,6 @@ void HubSelect(struct creature_s* c) {
         gamesfx_effect_volume = 0x7FFE;
         GameSfx(0x4B, &c->obj.pos);
 
-        c->obj.mom.y = speed;
-
         {
           f32 fx, fy, fz;
           u16 cosidx = (u16)(yrot + 0x4000);
@@ -1181,6 +1172,41 @@ void HubSelect(struct creature_s* c) {
         }
       }
     }
+    return;
+leave_hub:
+    {
+      f32 c2 = (znew - zold) * (xold - p1->x) + (xnew - xold) * (p1->z - zold);
+      if (!(c2 >= 0.0f)) continue;
+    }
+    {
+      f32 c3 = (znew - p0->z) * (p0->x - xold) + (xnew - p0->x) * (zold - p0->z);
+      if (!(c3 >= 0.0f)) continue;
+    }
+    if (Game.hub[Hub].flags & 4) {
+      cut = -1;
+      switch (Hub) {
+        case 0:
+          if ((Game.cutbits & 0x40) == 0) {
+            cut = 6;
+          }
+          break;
+        case 1:
+          if ((Game.cutbits & 0x800) == 0) {
+            cut = 0xb;
+          }
+          break;
+        case 2:
+          if ((Game.cutbits & 0x10000) == 0) {
+            cut = 0x10;
+          }
+          break;
+      }
+      if (cut != -1) {
+        NewCut(cut);
+        new_mode = 1;
+      }
+    }
+    Hub = -1;
     return;
   }
 }
@@ -5439,6 +5465,7 @@ void BonusTransporter(struct creature_s *plr) {
   float ratio;
   s32 finished;
   s32 active;
+  u16 idx;
 
   finished = 0;
   active = 0;
@@ -5584,7 +5611,9 @@ void BonusTransporter(struct creature_s *plr) {
     plr->jump = 0;
     (plr->obj).mom.y = 0.0f;
     active_obj->oldpos = active_obj->pos;
-    ratio = (-NuTrigTable[(s32)((bonus_time / bonus_duration) * 32768.0f + 16384.0f)] + 1.0f) * 0.5f;
+    ratio = bonus_time / bonus_duration;
+    idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
+    ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
     PointAlongSpline(bonus_pPLAT, ratio, &spl_pos, NULL, NULL);
     active_obj->pos.x = (spl_pos.x - active_obj->pos.x) * 0.1f + active_obj->pos.x;
     active_obj->pos.y = (spl_pos.y - active_obj->pos.y) * 0.1f + active_obj->pos.y;
@@ -5614,6 +5643,7 @@ void DeathTransporter(struct creature_s *c) {
   s32 state;
   float ratio;
   u16 idx;
+  struct obj_s *active_obj;
 
   finished = 0;
   active = 0;
@@ -5678,18 +5708,19 @@ void DeathTransporter(struct creature_s *c) {
     FinishTransporter(&death_obj, &c->obj);
     BlendGameCamera(GameCam, 1.0f);
     death_lock = state;
-    goto death_set_active;
+    active = 1;
+    active_obj = &death_obj;
+    break;
   case 2:
     {
       s32 r = ObjectCylinderCollision(&c->obj, &death_obj, 1.0f, 0);
-      if (death_lock == 0) {
-        if (r != 2) break;
-        Death = 3;
-      } else {
+      if (death_lock != 0) {
         if (r == 2) break;
         death_lock = active;
         break;
       }
+      if (r != 2) break;
+      Death = 3;
     }
   start_death_leg:
     TransporterGo();
@@ -5700,13 +5731,15 @@ void DeathTransporter(struct creature_s *c) {
     BlendGameCamera(GameCam, 1.0f);
     break;
   case 3:
-    if (death_time >= death_duration) goto death_case3_done;
+    if (!(death_time < death_duration)) goto death_case3_done;
   death_time_step:
     death_time += (1.0f / 60.0f);
     if (death_time >= death_duration) {
       death_time = death_duration;
     }
-    goto death_set_active;
+    active = 1;
+    active_obj = &death_obj;
+    break;
   death_case3_done:
     Death = active;
     finished = 1;
@@ -5714,15 +5747,15 @@ void DeathTransporter(struct creature_s *c) {
     FinishTransporter(&death_obj, &c->obj);
     BlendGameCamera(GameCam, 1.0f);
     death_lock = 1;
-  death_set_active:
     active = 1;
+    active_obj = &death_obj;
     break;
   }
 
   if (active != 0) {
     c->jump = 0;
     (c->obj).mom.y = 0.0f;
-    death_obj.oldpos = death_obj.pos;
+    active_obj->oldpos = active_obj->pos;
     ratio = death_time / death_duration;
     if (Death == 3 || state == 3) {
       ratio = 1.0f - ratio;
@@ -5730,13 +5763,13 @@ void DeathTransporter(struct creature_s *c) {
     idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
     ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
     PointAlongSpline((struct nugspline_s *)death_pPLAT, ratio, &spl_pos, NULL, NULL);
-    death_obj.pos.x = (spl_pos.x - death_obj.pos.x) * 0.1f + death_obj.pos.x;
-    death_obj.pos.y = (spl_pos.y - death_obj.pos.y) * 0.1f + death_obj.pos.y;
-    death_obj.pos.z = (spl_pos.z - death_obj.pos.z) * 0.1f + death_obj.pos.z;
-    NuVecSub(&death_obj.mom, &death_obj.pos, &death_obj.oldpos);
-    death_obj.dyrot = 0;
-    (c->obj).pos.y = death_obj.top * death_obj.SCALE + death_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
-    ObjectCylinderCollision(&c->obj, &death_obj, 1.0f - death_time / death_duration, 1);
+    active_obj->pos.x = (spl_pos.x - active_obj->pos.x) * 0.1f + active_obj->pos.x;
+    active_obj->pos.y = (spl_pos.y - active_obj->pos.y) * 0.1f + active_obj->pos.y;
+    active_obj->pos.z = (spl_pos.z - active_obj->pos.z) * 0.1f + active_obj->pos.z;
+    NuVecSub(&active_obj->mom, &active_obj->pos, &active_obj->oldpos);
+    active_obj->dyrot = 0;
+    (c->obj).pos.y = active_obj->top * active_obj->SCALE + active_obj->pos.y - (c->obj).min.y * (c->obj).SCALE;
+    ObjectCylinderCollision(&c->obj, active_obj, 1.0f - death_time / death_duration, 1);
     if (finished != 0) return;
     (c->obj).transporting = 1;
   } else {
@@ -5854,9 +5887,10 @@ void GemPathTransporter(struct creature_s *c) {
   }
 
   if (active != 0) {
+    GameObject *o = &gempath_obj;
     c->jump = 0;
     (c->obj).mom.y = 0.0f;
-    gempath_obj.oldpos = gempath_obj.pos;
+    o->oldpos = o->pos;
     ratio = gempath_time / gempath_duration;
     if (GemPath == 3 || state == 3) {
       ratio = 1.0f - ratio;
@@ -5864,14 +5898,14 @@ void GemPathTransporter(struct creature_s *c) {
     idx = (u16)(s32)(ratio * 32768.0f + 16384.0f);
     ratio = (-NuTrigTable[idx] + 1.0f) * 0.5f;
     PointAlongSpline((struct nugspline_s *)gempath_pPLAT, ratio, &spl_pos, NULL, NULL);
-    gempath_obj.pos.x = (spl_pos.x - gempath_obj.pos.x) * 0.1f + gempath_obj.pos.x;
-    gempath_obj.pos.y = (spl_pos.y - gempath_obj.pos.y) * 0.1f + gempath_obj.pos.y;
-    gempath_obj.pos.z = (spl_pos.z - gempath_obj.pos.z) * 0.1f + gempath_obj.pos.z;
-    NuVecSub(&gempath_obj.mom, &gempath_obj.pos, &gempath_obj.oldpos);
-    gempath_obj.dyrot = 0;
-    (c->obj).pos.y = gempath_obj.top * gempath_obj.SCALE + gempath_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
-    ObjectCylinderCollision(&c->obj, &gempath_obj, 1.0f - gempath_time / gempath_duration, 1);
-    (c->obj).pos.y = gempath_obj.top * gempath_obj.SCALE + gempath_obj.pos.y - (c->obj).min.y * (c->obj).SCALE;
+    o->pos.x = (spl_pos.x - o->pos.x) * 0.1f + o->pos.x;
+    o->pos.y = (spl_pos.y - o->pos.y) * 0.1f + o->pos.y;
+    o->pos.z = (spl_pos.z - o->pos.z) * 0.1f + o->pos.z;
+    NuVecSub(&o->mom, &o->pos, &o->oldpos);
+    o->dyrot = 0;
+    (c->obj).pos.y = o->top * o->SCALE + o->pos.y - (c->obj).min.y * (c->obj).SCALE;
+    ObjectCylinderCollision(&c->obj, o, 1.0f - gempath_time / gempath_duration, 1);
+    (c->obj).pos.y = o->top * o->SCALE + o->pos.y - (c->obj).min.y * (c->obj).SCALE;
     if (finished != 0) return;
     (c->obj).transporting = 1;
   } else {

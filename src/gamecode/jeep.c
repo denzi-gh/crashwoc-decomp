@@ -8,9 +8,13 @@ struct CharacterModel;
 struct BUGSAVE;
 
 struct MYDRAW {
-  char _pad0[0x1c];
+  struct anim_s Anim;
   struct CharacterModel *Model;
-  char _pad1[0xc0];
+  s32 Character;
+  s32 NumJoints;
+  struct NUJOINTANIM_s *JointList;
+  struct nuvec_s *Position;
+  struct Nearest_Light_s Nearest_Light;
 };
 
 struct SIMWHEEL {
@@ -141,7 +145,7 @@ struct enemyjeep_s {
   struct MYDRAW Draw;
   f32 PlayBackTime;
   s32 PlayBackMax;
-  char Joints[0x1a0];
+  struct NUJOINTANIM_s Joints[8];
   struct numtx_s Locators[16];
   s32 LocatorValidFrame;
   struct SIMWHEEL TrailWheel[4];
@@ -234,6 +238,7 @@ extern s32 ChrisBigBossDead;
 extern s32 FireBossHoldPlayer;
 extern s32 FireBossHealth;
 extern f32 FireBossWaterSoundTimer;
+extern f32 FIREBOSSSTART;
 extern s32 WATERFIRESOUNDVOL;
 extern f32 FIREWATERSOUNDTIME;
 extern s16 SEEKANGSPEED;
@@ -247,6 +252,7 @@ extern struct SIMWHEEL GenericTrail[1];
 
 struct nuvec_s SetNuVec(f32 x,f32 y,f32 z);
 struct nuvec_s *SetNuVecPntr(f32 x,f32 y,f32 z);
+void PointAlongSpline(struct nugspline_s *spl,float ratio,struct nuvec_s *dst,short *angle,short *tilt);
 struct numtx_s *DrawJeep(struct JEEPSTRUCT *Jeep);
 struct BUGSAVE *LoadBuggyData(struct BUGSAVE *Data,s32 Indx);
 s32 CurrentWesternPosition(void);
@@ -657,6 +663,33 @@ void JeepCamIntro(struct cammtx_s *CamMtx) {
   return;
 }
 
+void InitEnemyJeep(struct enemyjeep_s *Jeep,s32 Character) {
+  s32 Indx;
+  struct NUJOINTANIM_s *Joint;
+  s32 i;
+  
+  Indx = Jeep - EnemyJeep;
+  memset(Jeep,0,sizeof(struct enemyjeep_s));
+  switch (Indx) {
+    case 0:
+      break;
+    case 1:
+      break;
+    case 2:
+      break;
+  }
+  Jeep->TimeLine = 0.0f;
+  Jeep->Active = 1;
+  Joint = Jeep->Joints;
+  MyInitModelNew(&Jeep->Draw,Character,0x1d,4,Joint,&Jeep->Position);
+  for(i = 0; i < Jeep->Draw.NumJoints; i++) {
+    Joint->joint_id = i;
+    Joint->flags = 3;
+    Joint++;
+  }
+  return;
+}
+
 //NGC MATCH
 void AnimateForLightsEnemyJeep(struct enemyjeep_s *Jeep) {
   MyAnimateModelNew(&Jeep->Draw,0.5f);
@@ -835,6 +868,38 @@ void DrawJeepTrails(void) {
     for(i = 0; i < 0x14; i++) {
       if (TrailActive[i] != 0) {
         NuRndrTrail(TrailPntr[i],&JeepTrail[i][0],0x20);
+      }
+    }
+  }
+  return;
+}
+
+void InitFireBoss(struct FIREBOSSSTRUCT *Boss) {
+  struct nuvec_s Start;
+  short StartAngle;
+  
+  memset(Boss,0,sizeof(struct FIREBOSSSTRUCT));
+  if (MyInitModelNew(&Boss->MainDraw,0x9c,0x3a,0,NULL,&Boss->Position) != 0) {
+    if (MyInitModelNew(&Boss->ExplodeDraw,0xbd,0xe,0,NULL,&Boss->Position) != 0) {
+      Boss->Active = 1;
+      Boss->Pass = 4;
+      Boss->HitPoints = 3;
+      FireBossHealth = 3;
+      Boss->MainSpline.Spline = SplTab[27].spl;
+      if (Boss->MainSpline.Spline != NULL) {
+        Boss->MainSpline.Cur = FIREBOSSSTART;
+        Boss->MainSpline.Inc = -0.005f;
+        Boss->MainSpline.Nex = FIREBOSSSTART;
+        Boss->MainSpline.Act = FIREBOSSSTART;
+        PointAlongSpline(Boss->MainSpline.Spline,FIREBOSSSTART,&Start,&StartAngle,NULL);
+        Boss->MainSpline.CurPos = Start;
+        Boss->MainSpline.NexPos = Start;
+        Boss->MainSpline.LookaheadDist = 3.0f;
+        Boss->AngleY = (StartAngle / 182.04445f) + 180.0f;
+        Boss->Position = Start;
+        Boss->LastAction = -1;
+        Boss->Active = 1;
+        Boss->Action = 0;
       }
     }
   }
