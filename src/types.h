@@ -163,7 +163,7 @@ struct nupad_s
 };
 #endif
 
-struct nupad_s* Pad[2];
+extern struct nupad_s* Pad[];
 s32 nuvideo_global_vbcnt;
 
 #include "numath/numathtypes.h"

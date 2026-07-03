@@ -67,6 +67,11 @@ parser.add_argument(
     help="base build directory (default: build)",
 )
 parser.add_argument(
+    "--coop",
+    action="store_true",
+    help="enable isolated Dolphin-first co-op build outputs",
+)
+parser.add_argument(
     "--binutils",
     metavar="BINARY",
     type=Path,
@@ -340,6 +345,11 @@ if args.toolchain == "prodg35":
     config.prodg_stack_end = 0x803D4BD4
 else:
     config.linker_version = "GC/1.3.2"
+
+if args.coop:
+    if args.toolchain != "prodg35":
+        sys.exit("--coop currently requires --toolchain prodg35")
+    config.prodg_ldscript = Path("config") / config.version / "ldscript.coop.ld"
 
 
 # Metrowerks cflags for SDK libraries (used regardless of active toolchain,
@@ -755,23 +765,112 @@ config.libs = [
     },
 ]
 
+if args.coop:
+    coop_object = config.out_path() / "src" / "coop.o"
+    coop_audit_ok = config.out_path() / "coop_section_audit.ok"
+    coop_dol = config.out_path() / "main_coop.dol"
+    coop_patch_report = config.out_path() / "main_coop_patch.json"
+    coop_verify_ok = config.out_path() / "main_coop_verify.ok"
+    protocol_gen = Path("tools") / "coop" / "generate_protocol.py"
+    protocol_schema = Path("tools") / "coop" / "protocol_schema.json"
+    coop_header = Path("src") / "mod" / "coop_protocol_generated.h"
+    bridge_protocol = Path("tools") / "coop_bridge" / "protocol_generated.py"
+    section_audit = Path("tools") / "coop" / "section_audit.py"
+    patch_dol = Path("tools") / "coop" / "patch_dol.py"
+    verify_dol = Path("tools") / "coop" / "verify_dol.py"
+    hooks = Path("tools") / "coop" / "hooks" / f"{config.version}.json"
+    binutils = config.build_dir / "binutils"
+    readelf = binutils / "powerpc-eabi-readelf.exe"
+    nm = binutils / "powerpc-eabi-nm.exe"
+
+    config.libs.append(
+        {
+            "lib": "CrashWOC_Coop",
+            "mw_version": config.linker_version,
+            "cflags": cflags_base,
+            "progress_category": "gameplay",
+            "objects": [
+                Object(Matching, "coop.c", source="mod/coop.c"),
+            ],
+        }
+    )
+    config.reconfig_deps.extend(
+        [
+            config.prodg_ldscript,
+            protocol_gen,
+            protocol_schema,
+            section_audit,
+            patch_dol,
+            verify_dol,
+            hooks,
+        ]
+    )
+    config.custom_build_rules = [
+        {
+            "name": "coop_protocol",
+            "command": f"$python {protocol_gen}",
+            "description": "COOPPROTO",
+            "restat": True,
+        },
+        {
+            "name": "coop_section_audit",
+            "command": f"$python {section_audit} $in --readelf {readelf} -o $out",
+            "description": "COOPSECTIONS $in",
+        },
+        {
+            "name": "coop_patch_dol",
+            "command": f"$python {patch_dol} --dol $in --elf {config.out_path() / 'main.elf'} --hooks {hooks} --out {coop_dol} --report {coop_patch_report} --nm {nm}",
+            "description": "COOPPATCH $out",
+        },
+        {
+            "name": "coop_verify_dol",
+            "command": f"$python {verify_dol} --base {config.out_path() / 'main.dol'} --coop {coop_dol} --elf {config.out_path() / 'main.elf'} --hooks {hooks} --patch-report {coop_patch_report} --readelf {readelf} -o $out",
+            "description": "COOPVERIFY $out",
+        },
+    ]
+    config.custom_build_steps = {
+        "pre-compile": [
+            {
+                "outputs": [coop_header, bridge_protocol],
+                "rule": "coop_protocol",
+                "inputs": [protocol_schema, protocol_gen],
+            },
+        ],
+        "post-compile": [
+            {
+                "outputs": coop_audit_ok,
+                "rule": "coop_section_audit",
+                "inputs": coop_object,
+                "implicit": [section_audit, binutils],
+            },
+        ],
+        "post-build": [
+            {
+                "outputs": coop_dol,
+                "rule": "coop_patch_dol",
+                "inputs": config.out_path() / "main.dol",
+                "implicit": [patch_dol, hooks, binutils, config.out_path() / "main.elf"],
+            },
+            {
+                "outputs": coop_verify_ok,
+                "rule": "coop_verify_dol",
+                "inputs": coop_dol,
+                "implicit": [verify_dol, hooks, binutils, coop_patch_report, config.out_path() / "main.elf"],
+            },
+        ],
+    }
+
 
 # Optional callback to adjust link order. This can be used to add, remove, or reorder objects.
 # This is called once per module, with the module ID and the current link order.
-#
-# For example, this adds "dummy.c" to the end of the DOL link order if configured with --non-matching.
-# "dummy.c" *must* be configured as a Matching (or Equivalent) object in order to be linked.
 def link_order_callback(module_id: int, objects: List[str]) -> List[str]:
-    # Don't modify the link order for matching builds
-    if not config.non_matching:
-        return objects
-    if module_id == 0:  # DOL
-        return objects + ["dummy.c"]
+    if args.coop and module_id == 0:
+        return objects + ["coop.c"]
     return objects
 
 
-# Uncomment to enable the link order callback.
-# config.link_order_callback = link_order_callback
+if args.coop:
+    config.link_order_callback = link_order_callback
 
 
 # Optional extra categories for progress tracking

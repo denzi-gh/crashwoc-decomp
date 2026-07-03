@@ -1,0 +1,39 @@
+{
+  "version": "GCBE7D",
+  "word_patches": [
+    {
+      "name": "preserve_coop_arena_after_debug_stack_reset_hi",
+      "address": "0x800DD07C",
+      "original_opcode": "0x3C60803E",
+      "patched_opcode": "0x3C608040",
+      "evidence": "build/GCBE7D/asm/OS.s: debug/development-hardware path reloads _stack_addr before OSSetArenaLo"
+    },
+    {
+      "name": "preserve_coop_arena_after_debug_stack_reset_lo",
+      "address": "0x800DD080",
+      "original_opcode": "0x38635DA0",
+      "patched_opcode": "0x3863A000",
+      "evidence": "Dolphin OSReport showed Arena : 0x803e5da0 - 0x817ef820, overwriting .coop_text at 0x803e6000"
+    }
+  ],
+  "hooks": [
+    {
+      "name": "update_player_stats_after_frame_simulation",
+      "address": "0x80052740",
+      "original_opcode": "0x4800DB3D",
+      "original_target": "0x8006027C",
+      "original_symbol": "UpdatePlayerStats",
+      "wrapper": "CoopUpdatePlayerStatsWrapper",
+      "evidence": "build/GCBE7D/asm/main.s: bl UpdatePlayerStats after UpdateScreenWumpas and PLAYERCOUNT check"
+    },
+    {
+      "name": "draw_character_zero",
+      "address": "0x80052AB4",
+      "original_opcode": "0x4BFCB3A9",
+      "original_target": "0x8001DE5C",
+      "original_symbol": "DrawCreatures",
+      "wrapper": "CoopDrawCreaturesWrapper",
+      "evidence": "build/GCBE7D/asm/main.s: first DrawCreatures call with r3=Character, r4=1, r5=render, r6=1"
+    }
+  ]
+}

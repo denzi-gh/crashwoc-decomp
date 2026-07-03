@@ -1,0 +1,67 @@
+{
+  "abi_version": 1,
+  "build_id": 1195582535,
+  "magic": 1129270349,
+  "capabilities": {
+    "cutbits": 1
+  },
+  "structs": {
+    "CoopLocation": [
+      ["s32", "level"],
+      ["s32", "game_mode"],
+      ["s32", "hub"],
+      ["s32", "level_part_2"],
+      ["s32", "bonus"],
+      ["s32", "death"],
+      ["s32", "gem_path"],
+      ["s32", "vehicle_class"]
+    ],
+    "CoopAvatar": [
+      ["u32", "flags"],
+      ["u32", "frame"],
+      ["f32", "pos_x"],
+      ["f32", "pos_y"],
+      ["f32", "pos_z"],
+      ["u16", "xrot"],
+      ["u16", "yrot"],
+      ["u16", "zrot"],
+      ["u16", "heading"],
+      ["s32", "character"],
+      ["s32", "action"],
+      ["f32", "anim_time"],
+      ["s32", "vehicle"]
+    ],
+    "CoopProgress": [
+      ["u32", "revision"],
+      ["u16", "level_flags", 35],
+      ["u8", "hub_flags", 6],
+      ["u8", "hub_crystals", 6],
+      ["u8", "powerbits"],
+      ["u8", "gembits"],
+      ["u8", "reserved8", 2],
+      ["u32", "cutbits"]
+    ],
+    "CoopSnapshot": [
+      ["u32", "status_flags"],
+      ["CoopLocation", "location"],
+      ["CoopAvatar", "avatar"],
+      ["CoopProgress", "progress"]
+    ],
+    "CoopMailbox": [
+      ["u32", "magic"],
+      ["u16", "abi_version"],
+      ["u16", "struct_size"],
+      ["u32", "build_id"],
+      ["u32", "capabilities"],
+      ["u32", "game_heartbeat"],
+      ["u32", "bridge_heartbeat"],
+      ["u32", "local_seq"],
+      ["CoopSnapshot", "local_snapshot"],
+      ["u32", "inbound_seq"],
+      ["CoopSnapshot", "inbound_snapshot"],
+      ["u32", "last_applied_progress_revision"],
+      ["u32", "status_flags"],
+      ["u32", "reserved", 8]
+    ]
+  }
+}

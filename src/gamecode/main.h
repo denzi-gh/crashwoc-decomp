@@ -36,7 +36,6 @@ void Text3D2 (char * txt, float x, float y, float z, float scalex, float scaley,
 void Text3D (char * txt, float x, float y, float z, float scalex, float scaley, float scalez, int align, int colour);
 void DrawPanel(void);
 void DrawMenu(struct cursor_s *cursor, s32 paused);
-void PlayCutMovie (int movie);
 void ResetSuperBuffer (void);
 void ResetSuperBuffer2 (void);
 void NuRndrAddShadow(struct nuvec_s *v, float scale, s16 shade, s16 xrot, s16 yrot, s16 zrot);

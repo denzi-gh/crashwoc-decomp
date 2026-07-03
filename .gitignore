@@ -20,6 +20,8 @@ orig/*/*
 
 # Build files
 build/
+build-coop/
+run/
 .ninja_*
 build.ninja
 
