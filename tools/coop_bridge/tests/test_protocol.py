@@ -8,17 +8,52 @@ from tools.coop_bridge.memory import (
     DIFFERENT_LOCATION_SENTINEL,
     FakeMemoryAdapter,
     MAILBOX_ADDRESS,
+    ProgressRevisionMapper,
     apply_progress_to_snapshot,
     ensure_hidden_inbound_snapshot,
     force_different_location,
+    make_active_remote_snapshot,
+    make_connected_no_remote_snapshot,
+    make_disconnected_snapshot,
     mirror_local_snapshot,
     progress_from_snapshot,
     read_inbound_snapshot_consistent,
+    read_local_snapshot_consistent,
     read_debug_state,
     read_snapshot_consistent,
     refresh_bridge_heartbeat,
     write_inbound_snapshot,
 )
+from tools.coop_bridge.messages import (
+    ProtocolError,
+    WIRE_PROTOCOL_VERSION,
+    validate_client_message,
+    validate_hello,
+)
+
+
+def empty_progress(revision: int = 0) -> dict[str, object]:
+    return {
+        "revision": revision,
+        "level_flags": [0] * 35,
+        "hub_flags": [0] * 6,
+        "hub_crystals": [0] * 6,
+        "powerbits": 0,
+        "gembits": 0,
+        "cutbits": 0,
+    }
+
+
+def sample_snapshot(pos_x: float = 0.0, progress: dict[str, object] | None = None) -> bytes:
+    snapshot = bytearray(proto.SNAPSHOT_SIZE)
+    snap = proto.OFFSETS["CoopSnapshot"]
+    avatar = proto.OFFSETS["CoopAvatar"]
+    struct.pack_into(">I", snapshot, snap["status_flags"], proto.STATUS_CONNECTED | proto.STATUS_ACTIVE)
+    struct.pack_into(">I", snapshot, snap["avatar"] + avatar["flags"], 1)
+    struct.pack_into(">f", snapshot, snap["avatar"] + avatar["pos_x"], pos_x)
+    if progress is not None:
+        snapshot = bytearray(apply_progress_to_snapshot(snapshot, progress))
+    return bytes(snapshot)
 
 
 class ProtocolTests(unittest.TestCase):
@@ -43,6 +78,14 @@ class ProtocolTests(unittest.TestCase):
                 mem, mailbox["local_seq"], mailbox["local_snapshot"]
             )
         )
+
+    def test_read_local_snapshot_consistent_accepts_even_sequence(self) -> None:
+        mem = FakeMemoryAdapter()
+        mailbox = proto.OFFSETS["CoopMailbox"]
+        snapshot = sample_snapshot(7.0)
+        mem.write(MAILBOX_ADDRESS + mailbox["local_snapshot"], snapshot)
+        mem.write(MAILBOX_ADDRESS + mailbox["local_seq"], struct.pack(">I", 2))
+        self.assertEqual(read_local_snapshot_consistent(mem), snapshot)
 
     def test_write_inbound_snapshot_uses_even_sequence(self) -> None:
         mem = FakeMemoryAdapter()
@@ -191,6 +234,38 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(bridge_heartbeat, 42)
         self.assertEqual(after, before)
 
+    def test_active_remote_snapshot_sets_connected_active(self) -> None:
+        progress = empty_progress(12)
+        inbound = make_active_remote_snapshot(sample_snapshot(9.0), progress)
+        snap = proto.OFFSETS["CoopSnapshot"]
+        self.assertEqual(
+            struct.unpack_from(">I", inbound, snap["status_flags"])[0],
+            proto.STATUS_CONNECTED | proto.STATUS_ACTIVE,
+        )
+        self.assertEqual(progress_from_snapshot(inbound), progress)
+
+    def test_connected_no_remote_clears_avatar_flags(self) -> None:
+        progress = empty_progress(13)
+        inbound = make_connected_no_remote_snapshot(progress)
+        snap = proto.OFFSETS["CoopSnapshot"]
+        avatar = proto.OFFSETS["CoopAvatar"]
+        self.assertEqual(
+            struct.unpack_from(">I", inbound, snap["status_flags"])[0],
+            proto.STATUS_CONNECTED,
+        )
+        self.assertEqual(struct.unpack_from(">I", inbound, snap["avatar"] + avatar["flags"])[0], 0)
+        self.assertEqual(progress_from_snapshot(inbound), progress)
+
+    def test_disconnected_snapshot_clears_avatar_and_preserves_progress(self) -> None:
+        progress = empty_progress(14)
+        progress["powerbits"] = 3
+        inbound = make_disconnected_snapshot(progress)
+        snap = proto.OFFSETS["CoopSnapshot"]
+        avatar = proto.OFFSETS["CoopAvatar"]
+        self.assertEqual(struct.unpack_from(">I", inbound, snap["status_flags"])[0], 0)
+        self.assertEqual(struct.unpack_from(">I", inbound, snap["avatar"] + avatar["flags"])[0], 0)
+        self.assertEqual(progress_from_snapshot(inbound), progress)
+
     def test_debug_state_reads_reserved_words(self) -> None:
         mem = FakeMemoryAdapter()
         mailbox = proto.OFFSETS["CoopMailbox"]
@@ -210,6 +285,151 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(debug.local_level, 5)
         self.assertEqual(debug.inbound_level, -0x40000000)
         self.assertEqual(debug.same_location, 0)
+
+    def test_validate_hello_accepts_current_versions(self) -> None:
+        hello = validate_hello(
+            {
+                "type": "HELLO",
+                "wire_version": WIRE_PROTOCOL_VERSION,
+                "abi_version": proto.ABI_VERSION,
+                "build_id": proto.BUILD_ID,
+                "token": None,
+            }
+        )
+        self.assertEqual(hello["abi_version"], proto.ABI_VERSION)
+
+    def test_validate_hello_rejects_wrong_wire_version(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "wire"):
+            validate_hello(
+                {
+                    "type": "HELLO",
+                    "wire_version": WIRE_PROTOCOL_VERSION + 1,
+                    "abi_version": proto.ABI_VERSION,
+                    "build_id": proto.BUILD_ID,
+                    "token": None,
+                }
+            )
+
+    def test_validate_hello_rejects_wrong_abi(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "ABI"):
+            validate_hello(
+                {
+                    "type": "HELLO",
+                    "wire_version": WIRE_PROTOCOL_VERSION,
+                    "abi_version": proto.ABI_VERSION + 1,
+                    "build_id": proto.BUILD_ID,
+                    "token": None,
+                }
+            )
+
+    def test_validate_hello_rejects_wrong_build(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "build"):
+            validate_hello(
+                {
+                    "type": "HELLO",
+                    "wire_version": WIRE_PROTOCOL_VERSION,
+                    "abi_version": proto.ABI_VERSION,
+                    "build_id": proto.BUILD_ID + 1,
+                    "token": None,
+                }
+            )
+
+    def test_validate_hello_rejects_bad_token(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "token"):
+            validate_hello(
+                {
+                    "type": "HELLO",
+                    "wire_version": WIRE_PROTOCOL_VERSION,
+                    "abi_version": proto.ABI_VERSION,
+                    "build_id": proto.BUILD_ID,
+                    "token": "wrong",
+                },
+                token="right",
+            )
+
+    def test_validate_client_rejects_unsupported_type(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "unsupported"):
+            validate_client_message({"type": "SESSION_STATE"})
+
+    def test_validate_client_rejects_non_object_json(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "object"):
+            validate_client_message([])
+
+    def test_validate_client_rejects_invalid_raw_hex(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "hexadecimal"):
+            validate_client_message({"type": "LOCAL_SNAPSHOT", "client_seq": 1, "raw": "zz"})
+
+    def test_validate_client_rejects_odd_raw_hex(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "odd"):
+            validate_client_message({"type": "LOCAL_SNAPSHOT", "client_seq": 1, "raw": "0"})
+
+    def test_validate_client_rejects_short_raw_snapshot(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "bytes"):
+            validate_client_message({"type": "LOCAL_SNAPSHOT", "client_seq": 1, "raw": "00"})
+
+    def test_validate_client_rejects_long_raw_snapshot(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "bytes"):
+            validate_client_message(
+                {
+                    "type": "LOCAL_SNAPSHOT",
+                    "client_seq": 1,
+                    "raw": bytes(proto.SNAPSHOT_SIZE + 1).hex(),
+                }
+            )
+
+    def test_validate_client_rejects_boolean_sequence(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "integer"):
+            validate_client_message(
+                {"type": "LOCAL_SNAPSHOT", "client_seq": True, "raw": sample_snapshot().hex()}
+            )
+
+    def test_validate_client_rejects_out_of_range_sequence(self) -> None:
+        with self.assertRaisesRegex(ProtocolError, "range"):
+            validate_client_message(
+                {
+                    "type": "LOCAL_SNAPSHOT",
+                    "client_seq": 0x100000000,
+                    "raw": sample_snapshot().hex(),
+                }
+            )
+
+    def test_progress_revision_mapper_maps_above_mailbox_revision(self) -> None:
+        mapper = ProgressRevisionMapper(50)
+        mapped = mapper.map_progress(empty_progress(0))
+        self.assertEqual(mapped["revision"], 51)
+
+    def test_progress_revision_mapper_reuses_repeated_state(self) -> None:
+        mapper = ProgressRevisionMapper(50)
+        progress = empty_progress(0)
+        self.assertEqual(mapper.map_progress(progress)["revision"], 51)
+        self.assertEqual(mapper.map_progress(progress)["revision"], 51)
+
+    def test_progress_revision_mapper_increments_when_content_changes(self) -> None:
+        mapper = ProgressRevisionMapper(50)
+        first = empty_progress(0)
+        second = empty_progress(1)
+        second["gembits"] = 1
+        self.assertEqual(mapper.map_progress(first)["revision"], 51)
+        self.assertEqual(mapper.map_progress(second)["revision"], 52)
+
+    def test_progress_revision_mapper_handles_reconnect_lower_server_revision(self) -> None:
+        mapper = ProgressRevisionMapper(75)
+        mapped = mapper.map_progress(empty_progress(0))
+        self.assertEqual(mapped["revision"], 76)
+
+    def test_progress_revision_mapper_rejects_same_revision_different_content(self) -> None:
+        mapper = ProgressRevisionMapper(1)
+        first = empty_progress(0)
+        second = empty_progress(0)
+        second["powerbits"] = 1
+        mapper.map_progress(first)
+        with self.assertRaisesRegex(ValueError, "different content"):
+            mapper.map_progress(second)
+
+    def test_progress_revision_mapper_overflow_is_clear(self) -> None:
+        mapper = ProgressRevisionMapper(0xFFFFFFFF)
+        with self.assertRaisesRegex(OverflowError, "overflow"):
+            mapper.map_progress(empty_progress(0))
 
 
 if __name__ == "__main__":

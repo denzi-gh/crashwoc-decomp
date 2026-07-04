@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import struct
 from dataclasses import dataclass
+from typing import Any
 
 from . import protocol_generated as proto
 
@@ -158,6 +159,16 @@ def read_snapshot_consistent(
     return snapshot
 
 
+def read_local_snapshot_consistent(
+    adapter: MemoryAdapter,
+    address: int = MAILBOX_ADDRESS,
+) -> bytes | None:
+    mailbox = proto.OFFSETS["CoopMailbox"]
+    return read_snapshot_consistent(
+        adapter, mailbox["local_seq"], mailbox["local_snapshot"], address
+    )
+
+
 def write_inbound_snapshot(
     adapter: MemoryAdapter,
     snapshot: bytes,
@@ -223,6 +234,118 @@ def apply_progress_to_snapshot(snapshot: bytes, progress: dict[str, object]) -> 
     data[base + prog["gembits"]] = int(progress["gembits"]) & 0xFF
     put_u32(data, base + prog["cutbits"], int(progress.get("cutbits", 0)))
     return bytes(data)
+
+
+def _with_status_and_avatar_flags(
+    snapshot: bytes,
+    status_flags: int,
+    avatar_flags: int | None = None,
+) -> bytes:
+    data = bytearray(snapshot[: proto.SNAPSHOT_SIZE])
+    snap = proto.OFFSETS["CoopSnapshot"]
+    avatar = proto.OFFSETS["CoopAvatar"]
+    struct.pack_into(">I", data, snap["status_flags"], status_flags)
+    if avatar_flags is not None:
+        struct.pack_into(">I", data, snap["avatar"] + avatar["flags"], avatar_flags)
+    return bytes(data)
+
+
+def make_active_remote_snapshot(
+    remote_raw: bytes,
+    progress: dict[str, object],
+) -> bytes:
+    snapshot = apply_progress_to_snapshot(remote_raw, progress)
+    return _with_status_and_avatar_flags(
+        snapshot,
+        proto.STATUS_CONNECTED | proto.STATUS_ACTIVE,
+        None,
+    )
+
+
+def make_connected_no_remote_snapshot(progress: dict[str, object]) -> bytes:
+    snapshot = apply_progress_to_snapshot(bytes(proto.SNAPSHOT_SIZE), progress)
+    return _with_status_and_avatar_flags(snapshot, proto.STATUS_CONNECTED, 0)
+
+
+def make_disconnected_snapshot(progress: dict[str, object] | None = None) -> bytes:
+    if progress is None:
+        progress = {
+            "revision": 0,
+            "level_flags": [0] * 35,
+            "hub_flags": [0] * 6,
+            "hub_crystals": [0] * 6,
+            "powerbits": 0,
+            "gembits": 0,
+            "cutbits": 0,
+        }
+    snapshot = apply_progress_to_snapshot(bytes(proto.SNAPSHOT_SIZE), progress)
+    return _with_status_and_avatar_flags(snapshot, 0, 0)
+
+
+class ProgressRevisionMapper:
+    def __init__(self, last_applied_revision: int) -> None:
+        if last_applied_revision < 0 or last_applied_revision > 0xFFFFFFFF:
+            raise ValueError("last applied progress revision out of range")
+        self._last_mapped = last_applied_revision
+        self._last_content_key: tuple[Any, ...] | None = None
+        self._last_progress: dict[str, object] | None = None
+        self._server_revision_content: dict[int, tuple[Any, ...]] = {}
+        self._pair_to_mapped: dict[tuple[int, tuple[Any, ...]], int] = {}
+
+    @property
+    def last_progress(self) -> dict[str, object] | None:
+        return self._last_progress
+
+    def map_progress(self, progress: dict[str, object]) -> dict[str, object]:
+        server_revision = int(progress["revision"])
+        if server_revision < 0 or server_revision > 0xFFFFFFFF:
+            raise ValueError("server progress revision out of range")
+        content_key = _progress_content_key(progress)
+        previous_content = self._server_revision_content.get(server_revision)
+        if previous_content is not None and previous_content != content_key:
+            raise ValueError("server progress revision reused for different content")
+        self._server_revision_content[server_revision] = content_key
+
+        pair = (server_revision, content_key)
+        mapped = self._pair_to_mapped.get(pair)
+        if mapped is None:
+            if self._last_content_key == content_key and self._last_progress is not None:
+                mapped = self._last_mapped
+            else:
+                if self._last_mapped == 0xFFFFFFFF:
+                    raise OverflowError("local progress delivery revision overflow")
+                mapped = self._last_mapped + 1
+            self._pair_to_mapped[pair] = mapped
+
+        mapped_progress = _clone_progress(progress)
+        mapped_progress["revision"] = mapped
+        self._last_mapped = mapped
+        self._last_content_key = content_key
+        self._last_progress = mapped_progress
+        return mapped_progress
+
+
+def _progress_content_key(progress: dict[str, object]) -> tuple[Any, ...]:
+    return (
+        tuple(int(v) for v in progress["level_flags"]),  # type: ignore[index]
+        tuple(int(v) for v in progress["hub_flags"]),  # type: ignore[index]
+        tuple(int(v) for v in progress["hub_crystals"]),  # type: ignore[index]
+        int(progress["powerbits"]),
+        int(progress["gembits"]),
+        int(progress.get("cutbits", 0)),
+    )
+
+
+def _clone_progress(progress: dict[str, object]) -> dict[str, object]:
+    return {
+        "revision": int(progress["revision"]),
+        "level_flags": [int(v) for v in progress["level_flags"]],  # type: ignore[index]
+        "hub_flags": [int(v) for v in progress["hub_flags"]],  # type: ignore[index]
+        "hub_crystals": [int(v) for v in progress["hub_crystals"]],  # type: ignore[index]
+        "powerbits": int(progress["powerbits"]),
+        "gembits": int(progress["gembits"]),
+        "cutbits": int(progress.get("cutbits", 0)),
+    }
 
 
 def force_different_location(snapshot: bytes) -> bytes:

@@ -98,32 +98,85 @@ python -m tools.coop_bridge debug-log --interval 0.1
 
 In the hidden-location test, `mailbox_inbound_level` should stay at the sentinel value `-1073741824`, and the game debug reason should report `location_mismatch`.
 
-## LAN Host/Join
+## PR2 LAN Host/Join
 
-Two-PC networking is not yet considered verified for PR1.
+PR2 adds a robust LAN/development session server plus one local bridge client per
+Dolphin instance. Two computers can connect to the same host process, publish
+their own local Crash snapshots independently, and receive the other player's
+latest validated snapshot. The transport runs at one fixed 20 Hz session tick;
+it does not interpolate or extrapolate yet, so visible stepping or jitter is
+expected on real networks.
 
-On the host computer:
+The host process is only the session server. To play on the host computer, use
+two terminals.
 
-```sh
-python -m tools.coop_bridge host --bind 0.0.0.0 --port 24827
-```
-
-On each player computer:
-
-```sh
-python -m tools.coop_bridge join <host-ip> --port 24827
-```
-
-Optional shared token:
+Host computer, terminal 1:
 
 ```sh
-python -m tools.coop_bridge host --token secret
-python -m tools.coop_bridge join <host-ip> --token secret
+python -m tools.coop_bridge host --bind 0.0.0.0 --port 24827 --token test-session
 ```
 
-Allow the TCP port through the host firewall.
+Host computer, terminal 2:
 
-Room-code hosting is not part of PR1.
+```sh
+python -m tools.coop_bridge join 127.0.0.1 --port 24827 --token test-session
+```
+
+Second computer:
+
+```sh
+python -m tools.coop_bridge join <host-lan-ip> --port 24827 --token test-session
+```
+
+Allow the TCP port through the host firewall. The shared token is sent over the
+TCP connection as plain JSON; it is not encrypted. This host is for trusted LAN
+and development use only and must not be exposed directly to the public
+internet.
+
+Room-code hosting, public relays, TLS, NAT traversal, accounts, and internet
+matchmaking are deferred to later work.
+
+The bridge applies authoritative shared progress from `WELCOME` immediately,
+even when only one client is connected. The server retains merged progress only
+for the lifetime of the current host process. Disconnects are explicit: the
+remaining client receives `remote_raw: null`, writes an inactive inbound avatar,
+and the remote Crash should disappear promptly. `join` reconnects
+automatically after unexpected network failure; use `--no-reconnect` for
+deterministic manual testing.
+
+## Bridge Wire Protocol
+
+The GameCube mailbox ABI remains version 1. PR2 adds a separate bridge wire
+protocol version:
+
+```text
+WIRE_PROTOCOL_VERSION = 1
+```
+
+Frames are unchanged: a 4-byte unsigned big-endian payload size followed by a
+UTF-8 JSON payload.
+
+Client to server:
+
+```json
+{"type":"HELLO","wire_version":1,"abi_version":1,"build_id":1195582535,"token":null}
+{"type":"LOCAL_SNAPSHOT","client_seq":123,"raw":"<176-byte snapshot as hex>"}
+{"type":"PING"}
+{"type":"DISCONNECT"}
+```
+
+Server to client:
+
+```json
+{"type":"WELCOME","wire_version":1,"player_id":1,"session_id":"<server epoch>","tick_hz":20,"progress":{}}
+{"type":"SESSION_STATE","wire_version":1,"session_id":"<server epoch>","state_seq":456,"recipient_player_id":1,"progress":{},"remote_raw":null}
+{"type":"SESSION_STATE","wire_version":1,"session_id":"<server epoch>","state_seq":457,"recipient_player_id":1,"progress":{},"remote_raw":"<other player's snapshot as hex>"}
+{"type":"PONG","wire_version":1}
+{"type":"ERROR","wire_version":1,"error":"<reason>"}
+```
+
+`remote_raw: null` is the explicit no-remote-player state. The server supports
+two connected players and does not send a dictionary of all players.
 
 ## What Syncs
 
@@ -151,11 +204,41 @@ Progress merging is monotonic and idempotent.
 - player names
 - language/audio/settings
 
+## Automated Fake-Memory Verification
+
+The Python test suite covers deterministic fake-memory networking, including:
+
+- two independent `BridgeClient` instances connected to one `SessionServer`
+- newest-only bounded state delivery
+- immediate no-remote state on disconnect
+- reconnect restoring remote delivery
+- authoritative progress delivery from `WELCOME`
+- local progress delivery revisions mapped above the mailbox's last applied
+  revision
+
+Run:
+
+```sh
+python -m unittest discover tools/coop_bridge/tests
+```
+
+## User-Verified Dolphin Runtime Result
+
+Preserved existing results:
+
+- A second non-colliding Crash was visible and mirrored the local player.
+- The different-location hide test stayed hidden after priming the avatar from
+  the same bridge process.
+
+No real two-PC Dolphin runtime result is claimed yet.
+
 ## Limitations
 
 This is not Dolphin Netplay and does not synchronize full simulation state. Each player can be in a different level. Remote Crash is visual only: no collision, no AI, no pickups, no damage authority, no particles, no sounds, and no camera influence.
 
-Collision and synchronized world objects are not part of PR1.
+Collision, movement interpolation, synchronized world objects, crates, enemies,
+bosses, checkpoints, vehicles, sounds, particles, shared damage, and shared
+camera are not part of PR2.
 
 Runtime verification details still need Dolphin; see `docs/coop-runtime-checklist.md`.
 

@@ -12,22 +12,18 @@ import tempfile
 from typing import Any
 
 from . import protocol_generated as proto
+from .client import BridgeClient
 from .memory import (
     DolphinMemoryAdapter,
     MAILBOX_ADDRESS,
     MemoryAdapter,
-    apply_progress_to_snapshot,
     ensure_hidden_inbound_snapshot,
     mirror_local_snapshot,
-    progress_from_snapshot,
     read_debug_state,
     read_header,
     read_inbound_snapshot_consistent,
     read_mailbox,
-    refresh_bridge_heartbeat,
-    write_inbound_snapshot,
 )
-from .net import read_message, write_message
 from .session import SessionServer
 
 DEBUG_REASONS = {
@@ -203,56 +199,35 @@ def inject_avatar(args: argparse.Namespace) -> int:
 
 async def host_async(args: argparse.Namespace) -> None:
     server = SessionServer(token=args.token, share_cutbits=args.share_cutbits)
-    srv = await asyncio.start_server(server.handle_client, args.bind, args.port)
-    async with srv:
-        await srv.serve_forever()
+    srv = await server.start(args.bind, args.port)
+    sockets = srv.sockets or []
+    if sockets:
+        host, port = sockets[0].getsockname()[:2]
+        print(f"listening on {host}:{port}")
+    print(f"session ID: {server.session_id}")
+    print("warning: LAN/development transport only; token is not encrypted")
+    try:
+        async with srv:
+            await srv.serve_forever()
+    finally:
+        await server.close()
 
 
 async def join_async(args: argparse.Namespace) -> None:
     adapter = make_adapter(args.fake)
-    adapter.hook()
-    reader, writer = await asyncio.open_connection(args.host, args.port)
-    await write_message(
-        writer,
-        {
-            "type": "HELLO",
-            "abi_version": proto.ABI_VERSION,
-            "build_id": proto.BUILD_ID,
-            "token": args.token,
-        },
+    client = BridgeClient(
+        adapter,
+        args.host,
+        args.port,
+        token=args.token,
+        mailbox=args.mailbox,
+        reconnect=not args.no_reconnect,
+        log=print,
     )
-    welcome = await read_message(reader)
-    if welcome.get("type") != "WELCOME":
-        raise RuntimeError(welcome)
-    mailbox = proto.OFFSETS["CoopMailbox"]
-    while True:
-        data = read_mailbox(adapter, args.mailbox)
-        snapshot = data[
-            mailbox["local_snapshot"] : mailbox["local_snapshot"] + proto.SNAPSHOT_SIZE
-        ]
-        await write_message(
-            writer,
-            {
-                "type": "LOCAL_SNAPSHOT",
-                "snapshot": {
-                    "raw": snapshot.hex(),
-                    "progress": progress_from_snapshot(snapshot),
-                },
-            },
-        )
-        message = await read_message(reader)
-        if message.get("type") == "SESSION_SNAPSHOT":
-            snapshots = message.get("snapshots", {})
-            for pid, remote in snapshots.items():
-                if int(pid) == int(message.get("player_id", 0)):
-                    continue
-                raw = remote.get("raw") if isinstance(remote, dict) else None
-                if isinstance(raw, str):
-                    inbound = apply_progress_to_snapshot(bytes.fromhex(raw), message["progress"])
-                    write_inbound_snapshot(adapter, inbound, args.mailbox)
-                    break
-            refresh_bridge_heartbeat(adapter, args.mailbox)
-        await asyncio.sleep(0.05)
+    try:
+        await client.run()
+    finally:
+        client.stop()
 
 
 def join_command(args: argparse.Namespace) -> int:
@@ -296,6 +271,7 @@ def build_parser() -> argparse.ArgumentParser:
     join.add_argument("host")
     join.add_argument("--port", type=int, default=24827)
     join.add_argument("--token")
+    join.add_argument("--no-reconnect", action="store_true")
     join.set_defaults(func=join_command)
     return parser
 
