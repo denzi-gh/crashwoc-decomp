@@ -4,6 +4,7 @@ Static implementation and tooling are present. A one-Dolphin mirror-avatar resul
 
 User-verified result:
 A second non-colliding Crash was visible and mirrored the local player.
+The different-location hide test stayed hidden after priming the avatar from the same bridge process.
 
 Runtime details still to record:
 Dolphin version, host OS, tested level, test duration, and observed animation limitations.
@@ -56,10 +57,20 @@ The build verifies the strict DOL patch set and checks that state publication ru
 Run:
 
 ```sh
-python -m tools.coop_bridge inject-avatar --different-level
+python -m tools.coop_bridge inject-avatar --offset-x 2.0 --different-level --prime-visible 1.0
 ```
 
-Expected: remote Crash is hidden, local snapshot publication continues, and the game heartbeat continues to advance.
+Expected: remote Crash appears briefly, then stays hidden; local snapshot publication continues, and the game heartbeat continues to advance.
+
+Do not run this beside a separate `inject-avatar --offset-x 2.0` process. Only one local bridge writer may own the inbound mailbox; competing writers can make the remote avatar flicker.
+
+Optional diagnostic log:
+
+```sh
+python -m tools.coop_bridge debug-log --interval 0.1
+```
+
+Expected during the hidden phase: `mailbox_inbound_level=-1073741824`, `reason=location_mismatch`, and `same_location=0`.
 
 ## Two-PC Checks To Record Later
 

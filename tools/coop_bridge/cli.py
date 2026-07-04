@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from contextlib import contextmanager
+import os
+from pathlib import Path
 import struct
+import sys
 import time
+import tempfile
 from typing import Any
 
 from . import protocol_generated as proto
@@ -12,14 +17,87 @@ from .memory import (
     MAILBOX_ADDRESS,
     MemoryAdapter,
     apply_progress_to_snapshot,
+    ensure_hidden_inbound_snapshot,
     mirror_local_snapshot,
     progress_from_snapshot,
+    read_debug_state,
     read_header,
+    read_inbound_snapshot_consistent,
     read_mailbox,
+    refresh_bridge_heartbeat,
     write_inbound_snapshot,
 )
 from .net import read_message, write_message
 from .session import SessionServer
+
+DEBUG_REASONS = {
+    1: "stale_bridge",
+    2: "no_inbound",
+    3: "inactive",
+    4: "unused",
+    5: "dead",
+    6: "invisible",
+    7: "local_state",
+    8: "location_mismatch",
+    9: "bad_float",
+    10: "no_model",
+    11: "bad_action",
+    12: "drawn",
+}
+
+
+class BridgeWriterLockError(RuntimeError):
+    pass
+
+
+@contextmanager
+def bridge_writer_lock(mailbox_address: int, command: str) -> Any:
+    lock_path = Path(tempfile.gettempdir()) / f"crashwoc-coop-bridge-{mailbox_address:08X}.lock"
+    lock_file = lock_path.open("a+b")
+    acquired = False
+    try:
+        if lock_file.seek(0, os.SEEK_END) == 0:
+            lock_file.write(b"\0")
+            lock_file.flush()
+        lock_file.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.lockf(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise BridgeWriterLockError(
+                "another co-op bridge writer is already running for "
+                f"mailbox 0x{mailbox_address:08X}; stop other inject-avatar/join "
+                "processes first"
+            ) from exc
+        acquired = True
+        lock_file.seek(0)
+        lock_file.truncate()
+        lock_file.write(f"pid={os.getpid()} command={command}\n".encode("ascii"))
+        lock_file.flush()
+        yield
+    finally:
+        if acquired:
+            lock_file.seek(0)
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.lockf(lock_file.fileno(), fcntl.LOCK_UN)
+        lock_file.close()
+        if acquired:
+            try:
+                lock_path.unlink()
+            except OSError:
+                pass
 
 
 def make_adapter(fake: bool = False) -> MemoryAdapter:
@@ -59,18 +137,68 @@ def diagnose(args: argparse.Namespace) -> int:
         print("Compatibility: bad build")
     else:
         print("Compatibility: ok")
+    print_debug_state(adapter, args.mailbox)
     return 0
 
 
-def inject_avatar(args: argparse.Namespace) -> int:
+def print_debug_state(adapter: MemoryAdapter, mailbox_address: int) -> None:
+    debug = read_debug_state(adapter, mailbox_address)
+    reason = DEBUG_REASONS.get(debug.reason, f"unknown_{debug.reason}")
+    magic = "ok" if debug.magic == 0x43444247 else f"0x{debug.magic:08X}"
+    print(
+        "Co-op debug: "
+        f"magic={magic} calls={debug.calls} reason={reason} "
+        f"draws={debug.draws} hides={debug.hides} "
+        f"local_level={debug.local_level} inbound_level={debug.inbound_level} "
+        f"same_location={debug.same_location}"
+    )
+
+
+def debug_log(args: argparse.Namespace) -> int:
     adapter = make_adapter(args.fake)
     adapter.hook()
     try:
         while True:
-            mirror_local_snapshot(adapter, args.offset_x, args.different_level, args.mailbox)
-            time.sleep(0.05)
+            header = read_header(adapter, args.mailbox)
+            inbound = read_inbound_snapshot_consistent(adapter, args.mailbox)
+            inbound_level = "none"
+            if inbound is not None:
+                snap = proto.OFFSETS["CoopSnapshot"]
+                loc = proto.OFFSETS["CoopLocation"]
+                inbound_level = str(
+                    struct.unpack_from(">i", inbound, snap["location"] + loc["level"])[0]
+                )
+            print(
+                f"heartbeat={header.game_heartbeat} bridge={header.bridge_heartbeat} "
+                f"inbound_seq={header.inbound_seq} "
+                f"mailbox_inbound_level={inbound_level} ",
+                end="",
+                flush=False,
+            )
+            print_debug_state(adapter, args.mailbox)
+            if args.once:
+                return 0
+            time.sleep(args.interval)
     except KeyboardInterrupt:
         return 0
+
+
+def inject_avatar(args: argparse.Namespace) -> int:
+    with bridge_writer_lock(args.mailbox, "inject-avatar"):
+        adapter = make_adapter(args.fake)
+        adapter.hook()
+        prime_until = 0.0
+        if args.different_level and args.prime_visible > 0.0:
+            prime_until = time.monotonic() + args.prime_visible
+        try:
+            while True:
+                if args.different_level and time.monotonic() >= prime_until:
+                    ensure_hidden_inbound_snapshot(adapter, args.offset_x, args.mailbox)
+                else:
+                    mirror_local_snapshot(adapter, args.offset_x, False, args.mailbox)
+                time.sleep(0.05)
+        except KeyboardInterrupt:
+            return 0
 
 
 async def host_async(args: argparse.Namespace) -> None:
@@ -123,9 +251,14 @@ async def join_async(args: argparse.Namespace) -> None:
                     inbound = apply_progress_to_snapshot(bytes.fromhex(raw), message["progress"])
                     write_inbound_snapshot(adapter, inbound, args.mailbox)
                     break
-            hb = read_header(adapter, args.mailbox).game_heartbeat
-            adapter.write(args.mailbox + mailbox["bridge_heartbeat"], struct.pack(">I", hb))
+            refresh_bridge_heartbeat(adapter, args.mailbox)
         await asyncio.sleep(0.05)
+
+
+def join_command(args: argparse.Namespace) -> int:
+    with bridge_writer_lock(args.mailbox, "join"):
+        asyncio.run(join_async(args))
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -136,9 +269,20 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("diagnose").set_defaults(func=diagnose)
 
+    debug = sub.add_parser("debug-log")
+    debug.add_argument("--interval", type=float, default=0.5)
+    debug.add_argument("--once", action="store_true")
+    debug.set_defaults(func=debug_log)
+
     inject = sub.add_parser("inject-avatar")
     inject.add_argument("--offset-x", type=float, default=2.0)
     inject.add_argument("--different-level", action="store_true")
+    inject.add_argument(
+        "--prime-visible",
+        type=float,
+        default=0.0,
+        help="with --different-level, first mirror a visible avatar for this many seconds",
+    )
     inject.set_defaults(func=inject_avatar)
 
     host = sub.add_parser("host")
@@ -152,11 +296,15 @@ def build_parser() -> argparse.ArgumentParser:
     join.add_argument("host")
     join.add_argument("--port", type=int, default=24827)
     join.add_argument("--token")
-    join.set_defaults(func=lambda args: asyncio.run(join_async(args)) or 0)
+    join.set_defaults(func=join_command)
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    return int(args.func(args))
+    try:
+        return int(args.func(args))
+    except BridgeWriterLockError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2

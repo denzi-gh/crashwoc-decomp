@@ -264,6 +264,20 @@ static f32 COOP_DATA sCoopZero = 0.0f;
 static f32 COOP_DATA sCoopOne = 1.0f;
 static f32 COOP_DATA sCoopFloatLimit = 1000000.0f;
 
+#define COOP_DEBUG_MAGIC 0x43444247u
+#define COOP_DEBUG_DRAWN 12u
+#define COOP_DEBUG_STALE 1u
+#define COOP_DEBUG_NO_INBOUND 2u
+#define COOP_DEBUG_INACTIVE 3u
+#define COOP_DEBUG_UNUSED 4u
+#define COOP_DEBUG_DEAD 5u
+#define COOP_DEBUG_INVISIBLE 6u
+#define COOP_DEBUG_LOCAL_STATE 7u
+#define COOP_DEBUG_LOCATION 8u
+#define COOP_DEBUG_BAD_FLOAT 9u
+#define COOP_DEBUG_NO_MODEL 10u
+#define COOP_DEBUG_BAD_ACTION 11u
+
 static void COOP_TEXT CoopCopyProgress(struct CoopProgress *dst)
 {
     s32 i;
@@ -460,6 +474,7 @@ void COOP_TEXT CoopFrameUpdate(struct creature_s *plr)
 {
     struct CoopSnapshot inbound;
 
+    gCoopMailbox.reserved[0] = COOP_DEBUG_MAGIC;
     if (gCoopMailbox.magic != COOP_PROTOCOL_MAGIC) {
         gCoopMailbox.magic = COOP_PROTOCOL_MAGIC;
         gCoopMailbox.abi_version = COOP_PROTOCOL_ABI_VERSION;
@@ -516,51 +531,115 @@ static struct CharacterModel * COOP_TEXT CoopResolveModel(struct CoopAvatar *ava
     return 0;
 }
 
+static void COOP_TEXT CoopDebugRemote(u32 reason, struct CoopSnapshot *inbound, u32 same_location)
+{
+    gCoopMailbox.reserved[0] = COOP_DEBUG_MAGIC;
+    gCoopMailbox.reserved[1]++;
+    gCoopMailbox.reserved[2] = reason;
+    if (reason == COOP_DEBUG_DRAWN) {
+        gCoopMailbox.reserved[3]++;
+    } else {
+        gCoopMailbox.reserved[4]++;
+    }
+    gCoopMailbox.reserved[5] = (u32)Level;
+    gCoopMailbox.reserved[6] = (inbound != 0) ? (u32)inbound->location.level : 0xFFFFFFFFu;
+    gCoopMailbox.reserved[7] = same_location;
+}
+
+static void COOP_TEXT CoopHideRemotePlayer(void)
+{
+    if ((player == 0) || (player->used == 0) || (player->obj.model == 0)) {
+        sRemoteCreature.used = 0;
+        sRemoteCreature.on = 0;
+        sRemoteCreature.obj.flags = 0;
+        sRemoteCreature.obj.model = 0;
+        return;
+    }
+
+    sRemoteCreature = *player;
+    sRemoteCreature.obj.model = player->obj.model;
+    sRemoteCreature.obj.invisible = 1;
+    sRemoteCreature.obj.SCALE = sCoopZero;
+    sRemoteCreature.obj.scale = sCoopZero;
+    sRemoteCreature.obj.RADIUS = sCoopZero;
+    sRemoteCreature.obj.radius = sCoopZero;
+    sRemoteCreature.obj.anim.action = -1;
+    sRemoteCreature.obj.anim.oldaction = -1;
+    sRemoteCreature.obj.anim.newaction = -1;
+    sRemoteCreature.obj.anim.blend = 0;
+    sRemoteCreature.obj.anim.anim_time = sCoopOne;
+    DrawCreatures(&sRemoteCreature, 1, 1, 0);
+}
+
 void COOP_TEXT CoopDrawRemotePlayer(void)
 {
     struct CoopSnapshot inbound;
     struct CharacterModel *model;
     s32 action;
+    s32 same_location;
 
     if ((gCoopMailbox.bridge_heartbeat == 0) ||
         ((gCoopMailbox.game_heartbeat - gCoopMailbox.bridge_heartbeat) > 180u)) {
+        CoopDebugRemote(COOP_DEBUG_STALE, 0, 0);
+        CoopHideRemotePlayer();
         return;
     }
     if (CoopReadInboundSnapshot(&inbound) == 0) {
+        CoopDebugRemote(COOP_DEBUG_NO_INBOUND, 0, 0);
+        CoopHideRemotePlayer();
         return;
     }
     if ((inbound.status_flags & (COOP_STATUS_CONNECTED | COOP_STATUS_ACTIVE)) !=
         (COOP_STATUS_CONNECTED | COOP_STATUS_ACTIVE)) {
+        CoopDebugRemote(COOP_DEBUG_INACTIVE, &inbound, 0);
+        CoopHideRemotePlayer();
         return;
     }
     if ((inbound.avatar.flags & COOP_AVATAR_USED) == 0) {
+        CoopDebugRemote(COOP_DEBUG_UNUSED, &inbound, 0);
+        CoopHideRemotePlayer();
         return;
     }
     if ((inbound.avatar.flags & COOP_AVATAR_DEAD) != 0) {
+        CoopDebugRemote(COOP_DEBUG_DEAD, &inbound, 0);
+        CoopHideRemotePlayer();
         return;
     }
     if ((inbound.avatar.flags & COOP_AVATAR_INVISIBLE) != 0) {
+        CoopDebugRemote(COOP_DEBUG_INVISIBLE, &inbound, 0);
+        CoopHideRemotePlayer();
         return;
     }
     if ((player == 0) || (player->used == 0) || (cut_on != 0) || (VEHICLECONTROL != 0)) {
+        CoopDebugRemote(COOP_DEBUG_LOCAL_STATE, &inbound, 0);
+        CoopHideRemotePlayer();
         return;
     }
-    if ((inbound.avatar.vehicle != -1) || (CoopSameLocation(&inbound.location, player) == 0)) {
+    same_location = CoopSameLocation(&inbound.location, player);
+    if ((inbound.avatar.vehicle != -1) || (same_location == 0)) {
+        CoopDebugRemote(COOP_DEBUG_LOCATION, &inbound, (u32)same_location);
+        CoopHideRemotePlayer();
         return;
     }
     if ((CoopFloatValid(inbound.avatar.pos_x) == 0) ||
         (CoopFloatValid(inbound.avatar.pos_y) == 0) ||
         (CoopFloatValid(inbound.avatar.pos_z) == 0) ||
         (CoopFloatValid(inbound.avatar.anim_time) == 0)) {
+        CoopDebugRemote(COOP_DEBUG_BAD_FLOAT, &inbound, 1);
+        CoopHideRemotePlayer();
         return;
     }
 
     model = CoopResolveModel(&inbound.avatar);
     if (model == 0) {
+        CoopDebugRemote(COOP_DEBUG_NO_MODEL, &inbound, 1);
+        CoopHideRemotePlayer();
         return;
     }
     action = inbound.avatar.action;
     if ((action < -1) || (action >= 118)) {
+        CoopDebugRemote(COOP_DEBUG_BAD_ACTION, &inbound, 1);
+        CoopHideRemotePlayer();
         return;
     }
     if ((action >= 0) && (model->anmdata[action] == 0)) {
@@ -590,6 +669,7 @@ void COOP_TEXT CoopDrawRemotePlayer(void)
     sRemoteCreature.obj.anim.newaction = action;
     sRemoteCreature.obj.anim.blend = 0;
     sRemoteCreature.obj.anim.anim_time = inbound.avatar.anim_time;
+    CoopDebugRemote(COOP_DEBUG_DRAWN, &inbound, 1);
     DrawCreatures(&sRemoteCreature, 1, 1, 0);
 }
 

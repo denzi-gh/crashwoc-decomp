@@ -7,6 +7,7 @@ from . import protocol_generated as proto
 
 
 MAILBOX_ADDRESS = 0x803F6000
+DIFFERENT_LOCATION_SENTINEL = -0x40000000
 
 
 class MemoryAdapter:
@@ -82,6 +83,18 @@ class MailboxHeader:
     status_flags: int
 
 
+@dataclass
+class CoopDebugState:
+    magic: int
+    calls: int
+    reason: int
+    draws: int
+    hides: int
+    local_level: int
+    inbound_level: int
+    same_location: int
+
+
 def u32(data: bytes, offset: int) -> int:
     return struct.unpack_from(">I", data, offset)[0]
 
@@ -109,6 +122,23 @@ def read_header(adapter: MemoryAdapter, address: int = MAILBOX_ADDRESS) -> Mailb
         inbound_seq=u32(data, mailbox["inbound_seq"]),
         last_applied_progress_revision=u32(data, mailbox["last_applied_progress_revision"]),
         status_flags=u32(data, mailbox["status_flags"]),
+    )
+
+
+def read_debug_state(adapter: MemoryAdapter, address: int = MAILBOX_ADDRESS) -> CoopDebugState:
+    mailbox = proto.OFFSETS["CoopMailbox"]
+    reserved = mailbox["reserved"]
+    data = adapter.read(address + reserved, 32)
+    values = struct.unpack(">8I", data)
+    return CoopDebugState(
+        magic=values[0],
+        calls=values[1],
+        reason=values[2],
+        draws=values[3],
+        hides=values[4],
+        local_level=struct.unpack(">i", struct.pack(">I", values[5]))[0],
+        inbound_level=struct.unpack(">i", struct.pack(">I", values[6]))[0],
+        same_location=values[7],
     )
 
 
@@ -142,6 +172,19 @@ def write_inbound_snapshot(
     adapter.write(address + seq_offset, struct.pack(">I", current + 1))
     adapter.write(address + snap_offset, snapshot[: proto.SNAPSHOT_SIZE])
     adapter.write(address + seq_offset, struct.pack(">I", current + 2))
+
+
+def refresh_bridge_heartbeat(
+    adapter: MemoryAdapter,
+    address: int = MAILBOX_ADDRESS,
+) -> int:
+    mailbox = proto.OFFSETS["CoopMailbox"]
+    heartbeat = read_header(adapter, address).game_heartbeat
+    adapter.write(
+        address + mailbox["bridge_heartbeat"],
+        struct.pack(">I", heartbeat),
+    )
+    return heartbeat
 
 
 def progress_from_snapshot(snapshot: bytes) -> dict[str, object]:
@@ -182,6 +225,44 @@ def apply_progress_to_snapshot(snapshot: bytes, progress: dict[str, object]) -> 
     return bytes(data)
 
 
+def force_different_location(snapshot: bytes) -> bytes:
+    data = bytearray(snapshot[: proto.SNAPSHOT_SIZE])
+    snap = proto.OFFSETS["CoopSnapshot"]
+    loc = proto.OFFSETS["CoopLocation"]
+    base = snap["location"]
+    for offset in loc.values():
+        struct.pack_into(">i", data, base + offset, DIFFERENT_LOCATION_SENTINEL)
+    return bytes(data)
+
+
+def snapshot_has_different_location(snapshot: bytes) -> bool:
+    snap = proto.OFFSETS["CoopSnapshot"]
+    loc = proto.OFFSETS["CoopLocation"]
+    base = snap["location"]
+    for offset in loc.values():
+        if struct.unpack_from(">i", snapshot, base + offset)[0] != DIFFERENT_LOCATION_SENTINEL:
+            return False
+    return True
+
+
+def read_inbound_snapshot_consistent(
+    adapter: MemoryAdapter,
+    address: int = MAILBOX_ADDRESS,
+) -> bytes | None:
+    mailbox = proto.OFFSETS["CoopMailbox"]
+    return read_snapshot_consistent(
+        adapter, mailbox["inbound_seq"], mailbox["inbound_snapshot"], address
+    )
+
+
+def ensure_hidden_inbound_snapshot(
+    adapter: MemoryAdapter,
+    offset_x: float = 0.0,
+    address: int = MAILBOX_ADDRESS,
+) -> bool:
+    return mirror_local_snapshot(adapter, offset_x, True, address)
+
+
 def mirror_local_snapshot(
     adapter: MemoryAdapter,
     offset_x: float = 0.0,
@@ -196,18 +277,12 @@ def mirror_local_snapshot(
         return False
     snapshot = bytearray(local)
     snap = proto.OFFSETS["CoopSnapshot"]
-    loc = proto.OFFSETS["CoopLocation"]
     avatar = proto.OFFSETS["CoopAvatar"]
     struct.pack_into(">I", snapshot, snap["status_flags"], proto.STATUS_CONNECTED | proto.STATUS_ACTIVE)
-    if different_level:
-        level_offset = snap["location"] + loc["level"]
-        struct.pack_into(">i", snapshot, level_offset, struct.unpack_from(">i", snapshot, level_offset)[0] + 1)
     pos_x_offset = snap["avatar"] + avatar["pos_x"]
     struct.pack_into(">f", snapshot, pos_x_offset, struct.unpack_from(">f", snapshot, pos_x_offset)[0] + offset_x)
+    if different_level:
+        snapshot = bytearray(force_different_location(snapshot))
     write_inbound_snapshot(adapter, bytes(snapshot), address)
-    header = read_header(adapter, address)
-    adapter.write(
-        address + mailbox["bridge_heartbeat"],
-        struct.pack(">I", header.game_heartbeat),
-    )
+    refresh_bridge_heartbeat(adapter, address)
     return True

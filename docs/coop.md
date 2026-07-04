@@ -85,8 +85,18 @@ Dolphin version, host OS, tested level, test duration, and observed animation li
 To test location hiding:
 
 ```sh
-python -m tools.coop_bridge inject-avatar --different-level
+python -m tools.coop_bridge inject-avatar --offset-x 2.0 --different-level --prime-visible 1.0
 ```
+
+This uses one bridge writer: it mirrors a visible remote Crash briefly, then switches the same process to the different-location hidden snapshot. Do not run a normal `inject-avatar` process and a `--different-level` process at the same time; the bridge rejects that because competing writers can make the inbound avatar flicker.
+
+For runtime diagnostics:
+
+```sh
+python -m tools.coop_bridge debug-log --interval 0.1
+```
+
+In the hidden-location test, `mailbox_inbound_level` should stay at the sentinel value `-1073741824`, and the game debug reason should report `location_mismatch`.
 
 ## LAN Host/Join
 
