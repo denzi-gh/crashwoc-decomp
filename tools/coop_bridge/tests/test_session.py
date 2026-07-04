@@ -48,6 +48,14 @@ def write_local_snapshot(mem: FakeMemoryAdapter, snapshot: bytes) -> None:
     mem.write(MAILBOX_ADDRESS + mailbox["local_seq"], struct.pack(">I", current + 2))
 
 
+def prime_coop_mailbox(mem: FakeMemoryAdapter) -> None:
+    mailbox = proto.OFFSETS["CoopMailbox"]
+    mem.write(MAILBOX_ADDRESS + mailbox["magic"], struct.pack(">I", proto.MAGIC))
+    mem.write(MAILBOX_ADDRESS + mailbox["abi_version"], struct.pack(">H", proto.ABI_VERSION))
+    mem.write(MAILBOX_ADDRESS + mailbox["struct_size"], struct.pack(">H", proto.MAILBOX_SIZE))
+    mem.write(MAILBOX_ADDRESS + mailbox["build_id"], struct.pack(">I", proto.BUILD_ID))
+
+
 def inbound_pos_x(mem: FakeMemoryAdapter) -> float | None:
     inbound = read_inbound_snapshot_consistent(mem)
     if inbound is None:
@@ -253,6 +261,8 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_two_fake_clients_exchange_independent_snapshots_and_reconnect(self) -> None:
         mem1 = FakeMemoryAdapter()
         mem2 = FakeMemoryAdapter()
+        prime_coop_mailbox(mem1)
+        prime_coop_mailbox(mem2)
         progress = empty_progress()
         write_local_snapshot(mem1, sample_snapshot(1.0, progress))
         write_local_snapshot(mem2, sample_snapshot(5.0, progress))
@@ -276,6 +286,7 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
             await wait_until(lambda: inbound_avatar_flags(mem1) == 0)
 
             mem2b = FakeMemoryAdapter()
+            prime_coop_mailbox(mem2b)
             write_local_snapshot(mem2b, sample_snapshot(11.0, progress))
             client2b, task2b = await self.start_client(mem2b)
             try:
@@ -289,6 +300,7 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.server_state.progress["revision"] = 0
         self.server_state.progress["gembits"] = 4
         mem = FakeMemoryAdapter()
+        prime_coop_mailbox(mem)
         mailbox = proto.OFFSETS["CoopMailbox"]
         mem.write(
             MAILBOX_ADDRESS + mailbox["last_applied_progress_revision"],

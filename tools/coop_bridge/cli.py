@@ -16,6 +16,7 @@ from .client import BridgeClient
 from .memory import (
     DolphinMemoryAdapter,
     MAILBOX_ADDRESS,
+    MailboxReadinessError,
     MemoryAdapter,
     ensure_hidden_inbound_snapshot,
     mirror_local_snapshot,
@@ -107,8 +108,17 @@ def make_adapter(fake: bool = False) -> MemoryAdapter:
 def diagnose(args: argparse.Namespace) -> int:
     adapter = make_adapter(args.fake)
     adapter.hook()
-    header = read_header(adapter, args.mailbox)
-    data = read_mailbox(adapter, args.mailbox)
+    print(f"Dolphin hooked: {adapter.is_hooked()}")
+    try:
+        header = read_header(adapter, args.mailbox)
+        data = read_mailbox(adapter, args.mailbox)
+    except Exception as exc:
+        print(f"Mailbox read failed at 0x{args.mailbox:08X}: {exc}")
+        print(
+            "Compatibility: unreadable mailbox; boot the verified co-op DOL, "
+            "check the hooked Dolphin instance, and re-check macOS memory-read entitlements"
+        )
+        return 1
     local = proto.OFFSETS["CoopMailbox"]["local_snapshot"]
     snap = proto.OFFSETS["CoopSnapshot"]
     loc = proto.OFFSETS["CoopLocation"]
@@ -118,7 +128,6 @@ def diagnose(args: argparse.Namespace) -> int:
     pos_y = struct.unpack_from(">f", data, local + snap["avatar"] + avatar["pos_y"])[0]
     pos_z = struct.unpack_from(">f", data, local + snap["avatar"] + avatar["pos_z"])[0]
 
-    print(f"Dolphin hooked: {adapter.is_hooked()}")
     print(f"Mailbox magic: 0x{header.magic:08X}")
     print(f"ABI version: {header.abi_version}")
     print(f"Build ID: 0x{header.build_id:08X}")
@@ -284,3 +293,6 @@ def main(argv: list[str] | None = None) -> int:
     except BridgeWriterLockError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    except MailboxReadinessError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 3

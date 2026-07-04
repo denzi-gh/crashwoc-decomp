@@ -20,6 +20,7 @@ from tools.coop_bridge.memory import (
     read_inbound_snapshot_consistent,
     read_local_snapshot_consistent,
     read_debug_state,
+    require_ready_mailbox,
     read_snapshot_consistent,
     refresh_bridge_heartbeat,
     write_inbound_snapshot,
@@ -54,6 +55,14 @@ def sample_snapshot(pos_x: float = 0.0, progress: dict[str, object] | None = Non
     if progress is not None:
         snapshot = bytearray(apply_progress_to_snapshot(snapshot, progress))
     return bytes(snapshot)
+
+
+def prime_coop_mailbox(mem: FakeMemoryAdapter) -> None:
+    mailbox = proto.OFFSETS["CoopMailbox"]
+    mem.write(MAILBOX_ADDRESS + mailbox["magic"], struct.pack(">I", proto.MAGIC))
+    mem.write(MAILBOX_ADDRESS + mailbox["abi_version"], struct.pack(">H", proto.ABI_VERSION))
+    mem.write(MAILBOX_ADDRESS + mailbox["struct_size"], struct.pack(">H", proto.MAILBOX_SIZE))
+    mem.write(MAILBOX_ADDRESS + mailbox["build_id"], struct.pack(">I", proto.BUILD_ID))
 
 
 class ProtocolTests(unittest.TestCase):
@@ -285,6 +294,32 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(debug.local_level, 5)
         self.assertEqual(debug.inbound_level, -0x40000000)
         self.assertEqual(debug.same_location, 0)
+
+    def test_require_ready_mailbox_accepts_matching_header(self) -> None:
+        mem = FakeMemoryAdapter()
+        prime_coop_mailbox(mem)
+
+        header = require_ready_mailbox(mem)
+
+        self.assertEqual(header.magic, proto.MAGIC)
+        self.assertEqual(header.abi_version, proto.ABI_VERSION)
+        self.assertEqual(header.struct_size, proto.MAILBOX_SIZE)
+        self.assertEqual(header.build_id, proto.BUILD_ID)
+
+    def test_require_ready_mailbox_rejects_bad_magic(self) -> None:
+        mem = FakeMemoryAdapter()
+
+        with self.assertRaisesRegex(RuntimeError, "magic mismatch"):
+            require_ready_mailbox(mem)
+
+    def test_require_ready_mailbox_rejects_bad_size(self) -> None:
+        mem = FakeMemoryAdapter()
+        prime_coop_mailbox(mem)
+        mailbox = proto.OFFSETS["CoopMailbox"]
+        mem.write(MAILBOX_ADDRESS + mailbox["struct_size"], struct.pack(">H", 1))
+
+        with self.assertRaisesRegex(RuntimeError, "size mismatch"):
+            require_ready_mailbox(mem)
 
     def test_validate_hello_accepts_current_versions(self) -> None:
         hello = validate_hello(

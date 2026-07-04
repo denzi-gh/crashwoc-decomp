@@ -11,6 +11,10 @@ MAILBOX_ADDRESS = 0x803F6000
 DIFFERENT_LOCATION_SENTINEL = -0x40000000
 
 
+class MailboxReadinessError(RuntimeError):
+    pass
+
+
 class MemoryAdapter:
     def hook(self) -> None:
         raise NotImplementedError
@@ -124,6 +128,48 @@ def read_header(adapter: MemoryAdapter, address: int = MAILBOX_ADDRESS) -> Mailb
         last_applied_progress_revision=u32(data, mailbox["last_applied_progress_revision"]),
         status_flags=u32(data, mailbox["status_flags"]),
     )
+
+
+def require_ready_mailbox(
+    adapter: MemoryAdapter,
+    address: int = MAILBOX_ADDRESS,
+) -> MailboxHeader:
+    try:
+        header = read_header(adapter, address)
+    except Exception as exc:
+        raise MailboxReadinessError(
+            "could not read the co-op mailbox at "
+            f"0x{address:08X}: {exc}. "
+            "Boot the verified co-op DOL in Dolphin, make sure this bridge is "
+            "hooked to that Dolphin instance, and on macOS confirm Dolphin has "
+            "the debug/memory-read entitlement after resigning."
+        ) from exc
+    if header.magic != proto.MAGIC:
+        raise MailboxReadinessError(
+            "co-op mailbox magic mismatch at "
+            f"0x{address:08X}: got 0x{header.magic:08X}, expected "
+            f"0x{proto.MAGIC:08X}. Boot the patched co-op DOL, not the "
+            "stock game DOL."
+        )
+    if header.abi_version != proto.ABI_VERSION:
+        raise MailboxReadinessError(
+            "co-op mailbox ABI mismatch: "
+            f"got {header.abi_version}, expected {proto.ABI_VERSION}. "
+            "Rebuild the co-op DOL and bridge from the same checkout."
+        )
+    if header.struct_size != proto.MAILBOX_SIZE:
+        raise MailboxReadinessError(
+            "co-op mailbox size mismatch: "
+            f"got {header.struct_size}, expected {proto.MAILBOX_SIZE}. "
+            "Regenerate the protocol files and rebuild the co-op DOL."
+        )
+    if header.build_id != proto.BUILD_ID:
+        raise MailboxReadinessError(
+            "co-op mailbox build mismatch: "
+            f"got 0x{header.build_id:08X}, expected 0x{proto.BUILD_ID:08X}. "
+            "Rebuild the co-op DOL and bridge from the same checkout."
+        )
+    return header
 
 
 def read_debug_state(adapter: MemoryAdapter, address: int = MAILBOX_ADDRESS) -> CoopDebugState:

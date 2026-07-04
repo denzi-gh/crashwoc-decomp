@@ -14,6 +14,7 @@ from .memory import (
     make_disconnected_snapshot,
     read_header,
     read_local_snapshot_consistent,
+    require_ready_mailbox,
     refresh_bridge_heartbeat,
     write_inbound_snapshot,
 )
@@ -63,6 +64,9 @@ class BridgeClient:
     async def run(self) -> None:
         self.adapter.hook()
         self.log("Dolphin hooked")
+        header = require_ready_mailbox(self.adapter, self.mailbox)
+        self._mapper = ProgressRevisionMapper(header.last_applied_progress_revision)
+        self.log(f"co-op mailbox ready at 0x{self.mailbox:08X}")
         backoff = 0.5
         while not self._stopping:
             self._last_connection_succeeded = False
@@ -99,9 +103,6 @@ class BridgeClient:
             self._last_connection_succeeded = True
             self._session_id = welcome["session_id"]
             self._last_state_seq = -1
-            self._mapper = ProgressRevisionMapper(
-                read_header(self.adapter, self.mailbox).last_applied_progress_revision
-            )
             self.log(
                 f"connected player ID {welcome['player_id']} session {self._session_id}"
             )
