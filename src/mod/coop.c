@@ -596,17 +596,11 @@ void COOP_TEXT CoopDrawRemotePlayer(void)
 void COOP_TEXT CoopUpdatePlayerStatsWrapper(struct creature_s *plr)
 {
     UpdatePlayerStats(plr);
+    CoopFrameUpdate(plr);
 }
 
 void COOP_TEXT CoopDrawCreaturesWrapper(struct creature_s *c, int count, int render, int shadow)
 {
-    volatile u32 stack_guard;
-
-    stack_guard = 0;
     DrawCreatures(c, count, render, shadow);
-    CoopFrameUpdate(c);
     CoopDrawRemotePlayer();
-    if (stack_guard != 0) {
-        gCoopMailbox.status_flags |= COOP_STATUS_ERROR;
-    }
 }

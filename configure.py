@@ -778,10 +778,12 @@ if args.coop:
     section_audit = Path("tools") / "coop" / "section_audit.py"
     patch_dol = Path("tools") / "coop" / "patch_dol.py"
     verify_dol = Path("tools") / "coop" / "verify_dol.py"
+    verify_wrappers = Path("tools") / "coop" / "verify_wrappers.py"
     hooks = Path("tools") / "coop" / "hooks" / f"{config.version}.json"
     binutils = config.build_dir / "binutils"
     readelf = binutils / "powerpc-eabi-readelf.exe"
     nm = binutils / "powerpc-eabi-nm.exe"
+    coop_wrappers_verify_ok = config.out_path() / "coop_wrappers_verify.ok"
 
     config.libs.append(
         {
@@ -802,6 +804,7 @@ if args.coop:
             section_audit,
             patch_dol,
             verify_dol,
+            verify_wrappers,
             hooks,
         ]
     )
@@ -827,6 +830,11 @@ if args.coop:
             "command": f"$python {verify_dol} --base {config.out_path() / 'main.dol'} --coop {coop_dol} --elf {config.out_path() / 'main.elf'} --hooks {hooks} --patch-report {coop_patch_report} --readelf {readelf} -o $out",
             "description": "COOPVERIFY $out",
         },
+        {
+            "name": "coop_verify_wrappers",
+            "command": f"$python {verify_wrappers} --elf $in --readelf {readelf} -o $out",
+            "description": "COOPWRAPPERS $in",
+        },
     ]
     config.custom_build_steps = {
         "pre-compile": [
@@ -846,6 +854,12 @@ if args.coop:
         ],
         "post-build": [
             {
+                "outputs": coop_wrappers_verify_ok,
+                "rule": "coop_verify_wrappers",
+                "inputs": config.out_path() / "main.elf",
+                "implicit": [verify_wrappers, binutils],
+            },
+            {
                 "outputs": coop_dol,
                 "rule": "coop_patch_dol",
                 "inputs": config.out_path() / "main.dol",
@@ -855,7 +869,7 @@ if args.coop:
                 "outputs": coop_verify_ok,
                 "rule": "coop_verify_dol",
                 "inputs": coop_dol,
-                "implicit": [verify_dol, hooks, binutils, coop_patch_report, config.out_path() / "main.elf"],
+                "implicit": [verify_dol, hooks, binutils, coop_patch_report, config.out_path() / "main.elf", coop_wrappers_verify_ok],
             },
         ],
     }

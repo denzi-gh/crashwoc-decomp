@@ -1,49 +1,67 @@
 # Co-op Runtime Checklist
 
-Static implementation and tooling are present, but Dolphin runtime verification still needs to be performed on a machine running Dolphin with the co-op DOL.
+Static implementation and tooling are present. A one-Dolphin mirror-avatar result has been observed by the project owner, but the exact Dolphin version, host OS, tested level, and test duration are not recorded in repository notes.
 
-## One-Dolphin Checks
+User-verified result:
+A second non-colliding Crash was visible and mirrored the local player.
 
-1. Build the co-op DOL:
+Runtime details still to record:
+Dolphin version, host OS, tested level, test duration, and observed animation limitations.
 
-   ```sh
-   python configure.py --version GCBE7D --toolchain prodg35 --build-dir build-coop --coop
-   ninja build-coop/GCBE7D/main_coop_verify.ok
-   ```
+Two-PC networking is not yet considered verified. Room-code hosting, collision, synchronized crates, enemies, bosses, vehicles, and other world-object synchronization are not part of PR1.
 
-2. Install `build-coop/GCBE7D/main_coop.dol` into a legal extracted `GCBE7D` dump.
+## Static Preflight
 
-3. Boot it in Dolphin.
+Build the co-op DOL:
 
-4. Run:
+```sh
+python configure.py --version GCBE7D --toolchain prodg35 --build-dir build-coop --coop
+ninja build-coop/GCBE7D/main_coop_verify.ok
+```
+
+The build verifies the strict DOL patch set and checks that state publication runs from the update wrapper, while remote rendering remains in the draw wrapper.
+
+## One-Dolphin Manual Checklist
+
+1. Boot the verified co-op DOL.
+
+2. Run:
 
    ```sh
    python -m tools.coop_bridge diagnose
    ```
 
-   Expected: good magic, ABI `1`, build ID `0x47432447`, and advancing game heartbeat.
+3. Confirm the game heartbeat advances during normal gameplay.
 
-5. Run:
+4. Run:
 
    ```sh
    python -m tools.coop_bridge inject-avatar --offset-x 2.0
    ```
 
-   Expected: a second non-colliding Crash appears in supported on-foot contexts.
+5. Confirm the mirrored Crash is still visible.
 
-6. Run:
+6. Pause, enter a menu, trigger a fade, and return to gameplay.
 
-   ```sh
-   python -m tools.coop_bridge inject-avatar --different-level
-   ```
+7. Confirm the game does not crash.
 
-   Expected: remote Crash is hidden.
+8. Confirm the remote Crash returns correctly.
 
-7. Stop the bridge.
+9. Stop the bridge.
 
-   Expected: game continues without pause, crash, reset, or blocking; remote avatar disappears after about three seconds.
+10. Confirm the remote Crash disappears after the stale timeout and the game continues.
 
-## Two-Dolphin Checks
+## Location-Hiding Check
+
+Run:
+
+```sh
+python -m tools.coop_bridge inject-avatar --different-level
+```
+
+Expected: remote Crash is hidden, local snapshot publication continues, and the game heartbeat continues to advance.
+
+## Two-PC Checks To Record Later
 
 1. Start host bridge:
 
@@ -59,23 +77,8 @@ Static implementation and tooling are present, but Dolphin runtime verification 
 
 3. Put both players in the same supported on-foot level section.
 
-   Expected: each sees the other player as a non-colliding Crash.
+4. Confirm each side sees the other player as a non-colliding Crash.
 
-4. Move one player to a different level.
+5. Move one player to a different level and confirm both games continue independently.
 
-   Expected: both games continue independently; remote avatar is hidden while locations differ.
-
-5. Collect level awards on either side.
-
-   Expected: level flags, crystals, gems, relics, hub unlock progress, powerbits, and gembits propagate monotonically.
-
-6. Confirm excluded fields remain local:
-
-   - lives
-   - Wumpa
-   - mask
-   - checkpoint state
-   - player names
-   - language/audio/settings
-   - time-trial records
-
+6. Confirm level flags, crystals, gems, relics, hub unlock progress, powerbits, and gembits propagate monotonically.

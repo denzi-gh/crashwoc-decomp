@@ -28,7 +28,7 @@ Output:
 build-coop/GCBE7D/main_coop.dol
 ```
 
-The verifier checks that only approved hook words changed, hook targets enter `.coop_text`, the mailbox is inside `.coop_data`, and `__ArenaLo` follows the reservation.
+The verifier checks that only approved hook and arena-preservation words changed, hook targets enter `.coop_text`, the mailbox is inside `.coop_data`, `__ArenaLo` follows the reservation, and the update/draw wrappers keep their intended responsibilities.
 
 ## Install
 
@@ -50,6 +50,12 @@ The bridge also has fake-memory tests that do not require Dolphin:
 python -m unittest discover tools/coop_bridge/tests
 ```
 
+## Runtime Model
+
+The update hook calls the original `UpdatePlayerStats()` first, then runs `CoopFrameUpdate()`. That is where the game heartbeat advances, the local snapshot is published, and inbound progress is applied.
+
+The draw hook calls the original `DrawCreatures()` first, then runs `CoopDrawRemotePlayer()`. Rendering the remote avatar does not publish local state.
+
 ## Diagnose
 
 Boot the co-op DOL in Dolphin, then run:
@@ -70,6 +76,12 @@ python -m tools.coop_bridge inject-avatar --offset-x 2.0
 
 This mirrors the local avatar into the inbound remote snapshot with an X offset. Use `Ctrl+C` to stop.
 
+User-verified result:
+A second non-colliding Crash was visible and mirrored the local player.
+
+Runtime details still to record:
+Dolphin version, host OS, tested level, test duration, and observed animation limitations.
+
 To test location hiding:
 
 ```sh
@@ -77,6 +89,8 @@ python -m tools.coop_bridge inject-avatar --different-level
 ```
 
 ## LAN Host/Join
+
+Two-PC networking is not yet considered verified for PR1.
 
 On the host computer:
 
@@ -99,6 +113,8 @@ python -m tools.coop_bridge join <host-ip> --token secret
 
 Allow the TCP port through the host firewall.
 
+Room-code hosting is not part of PR1.
+
 ## What Syncs
 
 - level award flags
@@ -120,6 +136,7 @@ Progress merging is monotonic and idempotent.
 - enemies
 - bosses
 - vehicles
+- collision
 - time-trial records
 - player names
 - language/audio/settings
@@ -128,7 +145,9 @@ Progress merging is monotonic and idempotent.
 
 This is not Dolphin Netplay and does not synchronize full simulation state. Each player can be in a different level. Remote Crash is visual only: no collision, no AI, no pickups, no damage authority, no particles, no sounds, and no camera influence.
 
-Runtime verification still needs Dolphin; see `docs/coop-runtime-checklist.md`.
+Collision and synchronized world objects are not part of PR1.
+
+Runtime verification details still need Dolphin; see `docs/coop-runtime-checklist.md`.
 
 ## Recovery
 

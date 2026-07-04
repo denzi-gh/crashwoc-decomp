@@ -1153,140 +1153,24 @@ void firstscreens() {
 }
 
 
-struct plritem_s {
-  s16 count;
-  s16 draw;
-  s8 frame;
-  s8 wait;
-  u8 delay;
-  u8 item;
-};
-
-void NuRndrInitEx(s32 streambuffersize);
-struct nupad_s* NuPs2OpenPad(s32 port, s32 slot);
-s32 tbsetCreate(void* p);
-void InitPadPlayRecord(char* name, s32 mode, s32 size, void* buff);
-void DebrisRegisterCutoffCameraVec(struct nuvec_s* cutoff);
-void ResetTempCharacter(s32 character, s32 action);
-void NewCut(s32 i);
-void InitGameMode(s32 mode);
-void ProcessGlass(s32 paused);
-void UpdateBugLight(struct creature_s* c);
-void ProcessVehicleLevel(struct nupad_s* pad);
-void RotateDirectionalLight(struct nuvec_s* v, s32 xrot, s32 yrot);
-void NuRndrWaterRippleUpdate(s32 count);
-void MoveGameCamera(struct cammtx_s* GameCamera, struct obj_s* obj);
-void UpdatePlayerStats(struct creature_s* plr);
-void ProcMenu(struct cursor_s* cursor, struct nupad_s* pad);
-void DrawNextVehicle(s32 render);
-void DrawChases(s32 render);
-void DrawTempCharacter(s32 render);
-void DrawTempCharacter2(s32 render);
-void visiSetSplineKnot(struct visidata_s* vd, s32 spix, s32 knotix);
-void ApplyVisiTable(struct nugscn_s* sc, struct nuvec_s* pos);
-void DrawMask(struct mask_s* mask);
-void NuRndrShadPolys(struct numtl_s* mtl);
-void NuRndrWaterRip(struct numtl_s* mtl);
-void NuRndrFootPrints(struct numtl_s* mtl, float* u, float* v);
-void NuRndrFx(s32 paused, struct nuvec_s* playerpos);
-void DoClouds(s32 paused);
-void GetSpaceCut(s32 last, s32 next);
-void NuLgtSetArcMat(struct numtl_s* mtl, float u0, float v0, float u1, float v1);
-void ResetVehicleControl(s32 iRAIL, s32 iALONG, f32 fALONG);
-void NuGScnUpdate(struct nugscn_s* scn, float dt);
-void edobjUpdateObjects(float frametime);
-void edanimUpdateObjects(float dt);
-s32 DebrisCollisionCheck(struct nuvec_s* centre, float radius);
-void NuMtlAnimate(float timestep);
-void NuWaterSpeed(float speed);
-void NuRndrClear(s32 flags, s32 colour, f32 depth);
-void srand(unsigned int seed);
-
-extern struct _XINPUT_STATE* PadData;
-extern s32 Hub;
-extern s32 MAXVPSIZEX;
-extern s32 MAXVPSIZEY;
-extern s32 MINVPSIZEX;
-extern s32 MINVPSIZEY;
-extern s32 last_level;
-extern s32 pad_play;
-extern s32 pad_record;
-extern s32 ForcePlayRecord;
-extern s32 FixFrameRate;
-extern s32 logos_played;
-extern s32 GameMode;
-extern s32 tempanim_nextaction;
-extern s32 tempanim_waitaudio;
-extern s32 gamesfx_channel;
-extern s32 cortex_gameover_i;
-extern s32 force_menu;
-extern s32 just_continued;
-extern struct GTimer CutTimer;
-extern struct GTimer GlobalTimer;
-extern s32 game_music;
-extern s32 LostLife;
-extern f32 musicvol_mul;
-extern s32 Bonus;
-extern f32 vtog_time;
-extern f32 vtog_duration;
-extern s32 in_finish_range;
-extern s32 frameout_count;
-extern s32 frameout;
-extern s32 new_mode;
-extern s32 new_level;
-extern s32 FRAMES;
-extern float cufps;
-extern s32 mg_wumpatot;
-extern struct plritem_s plr_wumpas;
-extern s32 crate_wumpa;
-extern s32 mask_crates;
-extern struct nuvec_s ldir[3];
-extern s32 NODEBRIS;
-extern s32 GLASSPLAYER;
-extern f32 plr_invisibility_time;
-extern s32 VEHICLECONTROL;
-extern s32 BLUR;
-extern s32 GS_Parallax;
-extern struct cammtx_s* pCam;
-extern f32 AtmosphericPressureHackedZ;
-extern s32 DRAWCREATUREHACK;
-extern s32 cut_on;
-extern struct creature_s OppTubCreature;
-extern s32 screendump;
-extern s32 save_paused;
-extern struct nugspline_s* pVIS;
-extern s32 iVIS;
-extern s32 DRAWWORLDHACK;
-extern s32 advice_wait;
-extern f32 foot_u[32];
-extern f32 foot_v[32];
-extern f32 snowflake_scale;
-extern s32 DRAWDEBRISHACK;
-extern f32 POWERTEXTY;
-extern s32 plr_died;
-extern struct RPos_s* best_cRPos;
-extern s32 last_character;
-extern s32 last_used_character;
-extern s32 last_hub;
-static s32 number_of_times_played;
-static u32 level_clearcolour;
-static u32 level_fogcolour;
-
 //92.85% NGC (86% PS2)
+/*
 int main(s32 argc,char **argv) {
-  s32 cut;
-  s32 bVar2;
+  //s32 bVar1;
+  //s32 bVar2;
   float fVar3;
+  short sVar4;
   s32 uVar5;
   float fVar6;
   s32 iVar8;
   s32 iVar9;
   s32 iVar10;
+  //char **in_r5;
   struct creature_s *plr;
+  //struct cammtx_s *GameCam_;
   struct nuvec_s pos;
   s32 v155;
   s32 local_9c;
-  s32 dead2;
   s32 local_9d;
   
  // __main(argc,argv,in_r5);
@@ -1330,7 +1214,7 @@ int main(s32 argc,char **argv) {
     Level = 0x23;
   }
   last_level = Level;
-  while (1) {
+LAB_80051ba4:
   srand(0);
   qseed = 0x3039;
   NuRandSeed(0);
@@ -1384,34 +1268,35 @@ int main(s32 argc,char **argv) {
     tempanim_waitaudio = 1;
   }
   else {
-    if (((Level == 0x25) && ((Game.cutbits & 1) == 0)) && (force_menu == -1)) {
-      cut = 0;
-      goto LAB_80051e28;
-    }
-    if (just_continued != 0) {
-      if (((Level == 0x25) && ((Game.level[21].flags & 0x800) != 0)) && ((Game.cutbits & 0x40) == 0)
-         ) {
-        cut = 6;
-      }
-      else {
-        if (just_continued == 0) goto LAB_80051e34;
-        if (((Level == 0x25) && ((Game.level[23].flags & 0x800) != 0)) &&
-           ((Game.cutbits & 0x800) == 0)) {
-          cut = 0xb;
-        }
-        else {
-          if ((((just_continued == 0) || (Level != 0x25)) || ((Game.level[22].flags & 0x800) == 0) )
-             || ((Game.cutbits & 0x10000) != 0)) goto LAB_80051e34;
-          cut = 0x10;
-        }
-      }
-LAB_80051e28:
-      NewCut(cut);
-      GameMode = 1;
+    if (((Level == 0x25) && ((Game.cutbits & 1) == 0)) && (force_menu != -1)) {
+      iVar9 = 0;
     }
     else {
-LAB_80051e34:
-      GameMode = 0;
+          if (just_continued != 0) {
+              if (((Level == 0x25) && ((Game.level[21].flags & 0x800) != 0)) && ((Game.cutbits & 0x40) == 0)
+                 ) {
+                iVar9 = 6;
+              }
+              else {
+                if (just_continued == 0) goto LAB_80051e34;
+                if (((Level == 0x25) && ((Game.level[23].flags & 0x800) != 0)) &&
+                   ((Game.cutbits & 0x800) == 0)) {
+                  iVar9 = 0xb;
+                }
+                else {
+                  if ((((just_continued == 0) || (Level != 0x25)) || ((Game.level[22].flags & 0x800) == 0) )
+                     || ((Game.cutbits & 0x10000) != 0)) goto LAB_80051e34;
+                  iVar9 = 0x10;
+                }
+              }   
+            NewCut(iVar9);
+            GameMode = 1;
+              
+          } //else{
+    LAB_80051e34:
+            GameMode = 0;
+            //goto LAB_80051e38;
+         // }
     }
   }
 //LAB_80051e38:
@@ -1422,8 +1307,8 @@ LAB_80051e34:
     ResetTimer(&CutTimer);
   }
   just_continued = 0;
-  if (ForcePlayRecord == 0) {
-    pad_play = (Demo != 0) ? (pad_record == 0) : 0;
+  if ((ForcePlayRecord == 0) && (pad_play = 0, Demo != 0)) {
+    pad_play = (s32)(pad_record == 0);
   }
   if (pad_record != 0) {
    // iVar9 = 1;
@@ -1462,6 +1347,7 @@ LAB_80051e34:
     if (Bonus != 4) {
       ResetBonus();
     }
+    iVar9 = 0;
     ResetDeath();
     ResetTimeTrial();
     ResetCrates();
@@ -1475,7 +1361,7 @@ LAB_80051e34:
     ResetMaskFeathers();
     ResetAI();
     NuSoundUpdate();
-    InitGameMode(0);
+    InitGameMode(iVar9);
     ResetBug();
     ResetLevel();
     ResetVehicleControl((s32)player->obj.RPos.iRAIL,(s32)player->obj.RPos.iALONG,
@@ -1490,7 +1376,7 @@ LAB_80051e34:
       NuPs2PadSetMotors(Pad[0],0,0);
     }
     ResetGameSfx();
-    dead2 = 0;
+    local_9c = 0;
     local_9d = 0;
     vtog_time = 0.0f;
     vtog_duration = 0.0f;
@@ -1500,7 +1386,7 @@ LAB_80051e34:
     NuSoundUpdate();
     fade_rate = -8;
     frameout_count = nuvideo_global_vbcnt;
-    frameout = dead2;
+    frameout = 0;
     NuInitFrameAdvance();
     while (((new_mode == -1 && (new_level == -1)) || ((fadeval < 0xff || (fadehack != 0))))) {
       DBTimerStart(1);
@@ -1517,33 +1403,37 @@ LAB_80051e34:
         level_clearcolour = 0;
         level_fogcolour = 0;
       }
-      if (0x1e < v155++) {
+      //bVar2 = 0x1e < v155;
+      v155 = v155 + 1;
+      if (0x1e < v155) {
         v155 = 0;
         NuSoundSetLevelAmbience();
       }
-      FRAMES = NuGetFrameAdvance();
-      if ((FixFrameRate != 0) || (pad_record != 0) || (pad_play != 0)) {
+      NuGetFrameAdvance();
         FRAMES = 1;
+      if ((FixFrameRate != 0) || (pad_record != 0) || (pad_play != 0)) {
+             FRAMES = 1;
       }
-      fVar6 = (float)(s32)cufps;
       plr = player;
       FRAMES = 1;
-      if (fVar6 < 59.0f) {
+      if ((s32)cufps < 59.0f) {
         FRAMES = 2;
       }
-      if (fVar6 < 29.0f) {
+      if (cufps < 29.0f) {
         FRAMES++;
       }
-      if (fVar6 < 19.0f) {
+      if (cufps < 19.0f) {
         FRAMES++;
       }
-      if (fVar6 < 14.0f) {
+      if (cufps < 14.0f) {
         FRAMES = FRAMES + 1;
       }
       if (FRAMES == 0) {
         FRAMES = 1;
       }
-      bVar2 = local_9d;
+      
+      //bVar2 = local_9d != 0;
+      //if (FRAMES != 0) {
         for (FRAME = 0; FRAME < FRAMES; FRAME++) {
                   if (FRAME == 0) {
                     tbslotBegin(app_tbset,1);
@@ -1714,16 +1604,17 @@ LAB_80051e34:
                         TBDRAWSTART(0,"Chars");
                       }
                     }
-                    uVar5 = FRAME == FRAMES - 1;
-                    dead2 = plr->obj.dead == 2;
-                    if (FRAME == FRAMES - 1) {
+                    //bVar1 = FRAME == FRAMES - 1;
+                   // local_9c[1] = (s32)(plr->obj.dead == 2);
+                   // uVar5 = ((uint)(char)(bVar1 << 1) << 0x1c) >> 0x1d;
+                    if ((FRAME == FRAMES - 1) << 0x1d) {
                       tbslotBegin(app_tbset,0xc);
                     }
                     if ((((LDATA->flags & 1) != 0) && (DRAWCREATUREHACK != 0)) && (cut_on == 0)) {
                       if (FRAME == FRAMES - 1) {
                         TBDRAWSTART(1,"Crash");
                       }
-                      if ((dead2 == 0) &&
+                      if ((plr->obj.contact == 0) &&
                          (((GLASSPLAYER == 0 || !(5.0f > plr_invisibility_time)) || (Level == 0x17)))) {
                         pCam = GameCam;
                         DrawCreatures(Character,1,uVar5,1);
@@ -1731,19 +1622,20 @@ LAB_80051e34:
                       if (FRAME == FRAMES - 1) {
                         TBDRAWEND(1);
                       }
-                      if (level_part_2 == 0) {
-                        DrawCreatures(Character + 1,8,uVar5,1);
-                        if (Level == 0x1c) {
-                          DrawCreatures(&OppTubCreature,1,uVar5,0);
-                        }
+                      if ((level_part_2 == 0) && (DrawCreatures(Character + 1,8,uVar5,1), Level == 0x1c)) {
+                        DrawCreatures(&OppTubCreature,1,uVar5,0);
                       }
                       DrawNextVehicle(uVar5);
                       if (FRAME == FRAMES - 1) {
                         DrawExtraCreatures();
+                        goto LAB_80052b3c;
                       }
                     }
-                    if (FRAME == FRAMES - 1) {
-                      tbslotEnd(app_tbset,0xc);
+                    else {
+        LAB_80052b3c:
+                      if (FRAME == FRAMES - 1) {
+                        tbslotEnd(app_tbset,0xc);
+                      }
                     }
                     if (cut_on == 0) {
                       DrawChases(uVar5);
@@ -1802,7 +1694,7 @@ LAB_80051e34:
           if ((LDATA->flags & 1) != 0) {
             if (((((plr->used != 0) && (plr->obj.mask != NULL)) &&
                  (plr->obj.mask->active != 0)) && ((LDATA->flags & 0xe00) == 0)) &&
-               (((VEHICLECONTROL != 1 || ((LBIT & 0x0000001005042000) == 0)) &&
+               (((VEHICLECONTROL != 1 || ((LBIT & 0x0000000105042000) == 0)) &&
                 ((Cursor.menu != 0x24 && (advice_wait == 0)))))) {
               DrawMask(plr->obj.mask);
             }
@@ -1832,11 +1724,11 @@ LAB_80051e34:
         tbslotEnd(app_tbset,9);
         NuWaterRender();
         NuRndrEndScene();
-        iVar10 = 0;
+        iVar8 = 0;
         if (Cursor.menu != '\f') {
-          iVar10 = iVar9;
+          iVar8 = iVar9;
         }
-        NuRndrFx(iVar10,&Character[0].obj.pos);
+        NuRndrFx(iVar8,&Character[0].obj.pos);
         tbslotBegin(app_tbset,0xe);
         NuRndrBeginScene(1);
         DrawCrateExplosions();
@@ -1846,8 +1738,8 @@ LAB_80051e34:
         tbslotEnd(app_tbset,0xe);
         tbslotBegin(app_tbset,2);
         NuRndrBeginScene(1);
-        if ((((LBIT & 0x200000a1) != 0) && (cut_on == 0)) &&
-           (((Level != 7) || (player->obj.RPos.iALONG <= 0x66)) || (player->obj.RPos.iALONG > 0x91)))
+        if ((((LBIT & 0x200000a1) != 0) && (cut_on != 0)) ||
+           ((Level == 7) && (player->obj.RPos.iALONG > 0x66) && (player->obj.RPos.iALONG < 0x92)))
         {
           if ((Level == 5) && (player->obj.RPos.iALONG > 0x6d) && (player->obj.RPos.iALONG < 0x79))
           {
@@ -1876,7 +1768,8 @@ LAB_80051e34:
       TBDRAWSTART(7,"Panel");
       iVar9 = NuRndrBeginScene(1);
       if (iVar9 != 0) {
-        if ((dead2 != 0) && (PLAYERCOUNT != 0)) {
+       // bVar1 = plr->obj.dead == 2;
+        if ((plr->obj.dead != 2) && (PLAYERCOUNT != 0)) {
           fVar6 = plr->obj.die_time * 3.0f;
           if (fVar6 > plr->obj.die_duration) {
             fVar6 = plr->obj.die_duration;
@@ -1887,19 +1780,19 @@ LAB_80051e34:
         }
         else {
           if (Cursor.menu == 0x22) {
-            iVar9 = (s32)((1.0f - (((POWERTEXTY + 0.7f) + 1.0f) * 0.5f)) * (float)(SHEIGHT << 3));
-            iVar10 = (s32)((1.0f - ((POWERTEXTY - 0.75f) + 1.0f) * 0.5f) *
-                                                (float)(SHEIGHT << 3)) - iVar9;
-            NuRndrRect2di(0,iVar9,SWIDTH << 4,iVar10,0x18777777, fade_mtl);
+            iVar9 = (s32)((1.0f - (((POWERTEXTY + 0.7f) + 1.0f) * 0.5f)) * (SHEIGHT));
+            iVar10 = (s32)((1.0f - ((POWERTEXTY - 0.75f) + 1.0f) * 0.5f) * 
+                                                (SHEIGHT)) - iVar9;
+            NuRndrRect2di(0,iVar9,SWIDTH,iVar10,0x18777777, fade_mtl);
           }
         }
         NuRndrClear(10,0,1.0f);
-        if (dead2 != 0) {
+        if (plr->obj.dead != 2) {
           DrawCreatures(Character,1,1,0);
         }
         if ((((((LDATA->flags & 1) != 0) && (plr->used != 0)) && ((plr->obj.mask != NULL &&
               ((plr->obj.mask->active != 0 && ((LDATA->flags & 0xe00) == 0)))))) &&
-            ((VEHICLECONTROL != 1 || ((LBIT & 0x0000001005042000) == 0)))) &&
+            ((VEHICLECONTROL != 1 || ((LBIT & 0x0000000105042000) == 0)))) &&
            ((Cursor.menu == 0x24 || (advice_wait != 0)))) {
           DrawMask(plr->obj.mask);
         }
@@ -1916,13 +1809,13 @@ LAB_80051e34:
       }
       TBDRAWEND(7);
       tbslotEnd(app_tbset,0);
-      iVar9 = (nuvideo_global_vbcnt - frameout_count) - 1;
+      iVar9 = nuvideo_global_vbcnt - frameout_count;
+      frameout = iVar9 - 1;
       frameout_count = nuvideo_global_vbcnt;
-      if (iVar9 < 0) {
-        iVar9 = 0;
+      if (frameout < 0) {
+        frameout = 0;
       }
-      frameout = iVar9;
-      if (bVar2 != 0) {
+      if (local_9d != 0) {
         frameout = 0;
         local_9d = local_9d - 1;
       }
@@ -1948,8 +1841,8 @@ LAB_80051e34:
         NuRndrEndScene();
       }
       NuRndrSwapScreen(1);
+      iVar8 = new_mode;
     }
-    iVar8 = new_mode;
     if (new_mode == -1) break;
     PauseGameAudio(0);
     NuSoundStopStream(4);
@@ -1991,5 +1884,6 @@ LAB_80051e34:
   GetSpaceCut(last_level,new_level);
   Level = new_level;
   number_of_times_played++;
-  }
+  goto LAB_80051ba4;
 }
+*/

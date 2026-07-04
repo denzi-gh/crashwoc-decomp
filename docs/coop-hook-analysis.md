@@ -5,8 +5,9 @@ Target: Crash Bandicoot: The Wrath of Cortex, GameCube USA Rev 0 (`GCBE7D`).
 Evidence sources:
 
 - `build/GCBE7D/asm/main.s`
-- `build-coop/GCBE7D/main_coop_patch.json`
 - `tools/coop/hooks/GCBE7D.json`
+- `build-coop/GCBE7D/main_coop_patch.json`
+- `tools/coop/verify_wrappers.py`
 
 ## Update Hook
 
@@ -18,7 +19,17 @@ Original target: `UpdatePlayerStats` at `0x8006027C`
 
 Wrapper: `CoopUpdatePlayerStatsWrapper`
 
-Patched target in the current co-op build: `0x803E693C`
+Required wrapper behavior:
+
+```c
+void CoopUpdatePlayerStatsWrapper(struct creature_s *plr)
+{
+    UpdatePlayerStats(plr);
+    CoopFrameUpdate(plr);
+}
+```
+
+State publication, `game_heartbeat` advancement, inbound snapshot reads, and inbound progress application run from this update hook. This gives one normal gameplay `CoopFrameUpdate()` call per hooked player update.
 
 Surrounding original instructions:
 
@@ -32,7 +43,7 @@ Surrounding original instructions:
 80052744: 48 00 E0 D1  bl      UpdatePanelDebris
 ```
 
-Rationale: this call runs after the per-frame simulation/player HUD update path and already has the player pointer in `r3`. The wrapper preserves the original call and then publishes/applies co-op mailbox state.
+Rationale: this call already has the player pointer in `r3` and runs from normal player-update gameplay flow. The wrapper preserves the original call first, then publishes/applies co-op mailbox state.
 
 ## Draw Hook
 
@@ -44,7 +55,21 @@ Original target: `DrawCreatures` at `0x8001DE5C`
 
 Wrapper: `CoopDrawCreaturesWrapper`
 
-Patched target in the current co-op build: `0x803E6960`
+Required wrapper behavior:
+
+```c
+void CoopDrawCreaturesWrapper(
+    struct creature_s *c,
+    int count,
+    int render,
+    int shadow)
+{
+    DrawCreatures(c, count, render, shadow);
+    CoopDrawRemotePlayer();
+}
+```
+
+The draw hook preserves the original local-player draw call and then draws the remote avatar. It must not call `CoopFrameUpdate()` and must not publish local state.
 
 Surrounding original instructions:
 
@@ -65,10 +90,10 @@ Rationale: this is the first `DrawCreatures` call for `Character[0]`. Later call
 
 Current linked sections:
 
-- `.coop_text`: `0x803E6000`, size about `0x9A0`
-- `.coop_data`: `0x803F6000`, size about `0x220`
-- `gCoopMailbox`: `0x803F6000`
-- `__ArenaLo`: `0x803FA000`
+- `.coop_text`: `0x803E6000`
+- `.coop_data`: `0x803F6000`
+- `gCoopMailbox`: inside `.coop_data`
+- `__ArenaLo`: after the co-op reservation
 
 Verifier target:
 
@@ -76,3 +101,12 @@ Verifier target:
 ninja build-coop/GCBE7D/main_coop_verify.ok
 ```
 
+The co-op verifier checks the DOL patch set and the wrapper-call verifier checks that the update wrapper calls `UpdatePlayerStats` then `CoopFrameUpdate`, while the draw wrapper calls `DrawCreatures` then `CoopDrawRemotePlayer` and does not call `CoopFrameUpdate`.
+
+## Runtime Status
+
+User-verified result:
+A second non-colliding Crash was visible and mirrored the local player.
+
+Runtime details still to record:
+Dolphin version, host OS, tested level, test duration, and observed animation limitations.
