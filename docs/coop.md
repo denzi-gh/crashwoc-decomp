@@ -230,7 +230,17 @@ Preserved existing results:
 - The different-location hide test stayed hidden after priming the avatar from
   the same bridge process.
 
-No real two-PC Dolphin runtime result is claimed yet.
+PR2 LAN result reported by the project owner:
+
+- A remote Crash was visible and could be moved through the network session.
+- The remote Crash disappeared when one player entered a level. The transition
+  was not instant, but that polish is deferred.
+- After exiting a level with a collected crystal, the crystal appeared on both
+  accounts through authoritative shared progress.
+
+Runtime metadata still to record:
+Dolphin version, host OS, client OS, tested levels, test duration, observed
+latency, observed animation issues, and exact progress items tested.
 
 ## Limitations
 
