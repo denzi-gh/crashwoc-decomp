@@ -45,16 +45,39 @@ def empty_progress(revision: int = 0) -> dict[str, object]:
     }
 
 
-def sample_snapshot(pos_x: float = 0.0, progress: dict[str, object] | None = None) -> bytes:
+# COOP_MOVE_SPIN from src/mod/coop.h; not part of the generated protocol.
+MOVE_SPIN = 0x00000001
+
+
+def sample_snapshot(
+    pos_x: float = 0.0,
+    progress: dict[str, object] | None = None,
+    move_flags: int = 0,
+    spin_frame: int = 0,
+    spin_frames: int = 0,
+) -> bytes:
     snapshot = bytearray(proto.SNAPSHOT_SIZE)
     snap = proto.OFFSETS["CoopSnapshot"]
     avatar = proto.OFFSETS["CoopAvatar"]
     struct.pack_into(">I", snapshot, snap["status_flags"], proto.STATUS_CONNECTED | proto.STATUS_ACTIVE)
     struct.pack_into(">I", snapshot, snap["avatar"] + avatar["flags"], 1)
     struct.pack_into(">f", snapshot, snap["avatar"] + avatar["pos_x"], pos_x)
+    struct.pack_into(">I", snapshot, snap["avatar"] + avatar["move_flags"], move_flags)
+    struct.pack_into(">H", snapshot, snap["avatar"] + avatar["spin_frame"], spin_frame)
+    struct.pack_into(">H", snapshot, snap["avatar"] + avatar["spin_frames"], spin_frames)
     if progress is not None:
         snapshot = bytearray(apply_progress_to_snapshot(snapshot, progress))
     return bytes(snapshot)
+
+
+def snapshot_spin_state(snapshot: bytes) -> tuple[int, int, int]:
+    snap = proto.OFFSETS["CoopSnapshot"]
+    avatar = proto.OFFSETS["CoopAvatar"]
+    base = snap["avatar"]
+    move_flags = struct.unpack_from(">I", snapshot, base + avatar["move_flags"])[0]
+    spin_frame = struct.unpack_from(">H", snapshot, base + avatar["spin_frame"])[0]
+    spin_frames = struct.unpack_from(">H", snapshot, base + avatar["spin_frames"])[0]
+    return move_flags, spin_frame, spin_frames
 
 
 def prime_coop_mailbox(mem: FakeMemoryAdapter) -> None:
@@ -67,16 +90,51 @@ def prime_coop_mailbox(mem: FakeMemoryAdapter) -> None:
 
 class ProtocolTests(unittest.TestCase):
     def test_offsets_and_sizes(self) -> None:
-        self.assertEqual(proto.MAILBOX_SIZE, 0x1A8)
-        self.assertEqual(proto.SNAPSHOT_SIZE, 0xB0)
+        self.assertEqual(proto.ABI_VERSION, 2)
+        self.assertEqual(proto.MAILBOX_SIZE, 0x1B8)
+        self.assertEqual(proto.SNAPSHOT_SIZE, 0xB8)
+        self.assertEqual(proto.SIZES["CoopAvatar"], 0x34)
         self.assertEqual(proto.OFFSETS["CoopMailbox"]["local_snapshot"], 0x1C)
-        self.assertEqual(proto.OFFSETS["CoopMailbox"]["inbound_snapshot"], 0xD0)
+        self.assertEqual(proto.OFFSETS["CoopMailbox"]["inbound_snapshot"], 0xD8)
         self.assertEqual(proto.OFFSETS["CoopProgress"]["cutbits"], 0x5C)
+        self.assertEqual(proto.OFFSETS["CoopAvatar"]["move_flags"], 0x2C)
+        self.assertEqual(proto.OFFSETS["CoopAvatar"]["spin_frame"], 0x30)
+        self.assertEqual(proto.OFFSETS["CoopAvatar"]["spin_frames"], 0x32)
 
     def test_big_endian_pack(self) -> None:
         packed = proto.pack_values("CoopLocation", 1, 2, 3, 4, 5, 6, 7, 8)
         self.assertEqual(packed[:8], b"\x00\x00\x00\x01\x00\x00\x00\x02")
         self.assertEqual(proto.unpack_values("CoopLocation", packed), (1, 2, 3, 4, 5, 6, 7, 8))
+
+    def test_avatar_spin_fields_round_trip(self) -> None:
+        values = (1, 0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, -1, 1.0, -1, MOVE_SPIN, 42, 128)
+        packed = proto.pack_values("CoopAvatar", *values)
+        self.assertEqual(proto.unpack_values("CoopAvatar", packed), values)
+
+    def test_snapshot_spin_flag_present(self) -> None:
+        snapshot = sample_snapshot(move_flags=MOVE_SPIN, spin_frame=10, spin_frames=30)
+        self.assertEqual(snapshot_spin_state(snapshot), (MOVE_SPIN, 10, 30))
+
+    def test_snapshot_spin_flag_absent(self) -> None:
+        snapshot = sample_snapshot()
+        self.assertEqual(snapshot_spin_state(snapshot), (0, 0, 0))
+
+    def test_snapshot_spin_zero_values_with_flag_set(self) -> None:
+        snapshot = sample_snapshot(move_flags=MOVE_SPIN, spin_frame=0, spin_frames=0)
+        self.assertEqual(snapshot_spin_state(snapshot), (MOVE_SPIN, 0, 0))
+
+    def test_snapshot_spin_maximum_accepted_values(self) -> None:
+        snapshot = sample_snapshot(move_flags=MOVE_SPIN, spin_frame=600, spin_frames=600)
+        self.assertEqual(snapshot_spin_state(snapshot), (MOVE_SPIN, 600, 600))
+
+    def test_snapshot_spin_malformed_values_round_trip_without_error(self) -> None:
+        # The wire/mailbox layer only carries bytes; range validation is the
+        # GameCube side's job (CoopDrawRemotePlayer). Confirm an out-of-range
+        # or inverted spin_frame/spin_frames pair still encodes/decodes
+        # safely instead of raising, so a malformed remote value can reach
+        # the GC side to be rejected there rather than crashing the bridge.
+        snapshot = sample_snapshot(move_flags=MOVE_SPIN, spin_frame=0xFFFF, spin_frames=0)
+        self.assertEqual(snapshot_spin_state(snapshot), (MOVE_SPIN, 0xFFFF, 0))
 
     def test_sequence_lock_rejects_torn_snapshot(self) -> None:
         mem = FakeMemoryAdapter()

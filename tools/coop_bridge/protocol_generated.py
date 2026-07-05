@@ -5,7 +5,7 @@ from __future__ import annotations
 import struct
 
 MAGIC = 0x434F4C4D
-ABI_VERSION = 1
+ABI_VERSION = 2
 BUILD_ID = 0x47432447
 CAP_CUTBITS = 0x00000001
 STATUS_CONNECTED = 0x00000001
@@ -15,10 +15,10 @@ STATUS_ERROR = 0x80000000
 
 SIZES = {
     'CoopLocation': 32,
-    'CoopAvatar': 44,
+    'CoopAvatar': 52,
     'CoopProgress': 96,
-    'CoopSnapshot': 176,
-    'CoopMailbox': 424,
+    'CoopSnapshot': 184,
+    'CoopMailbox': 440,
 }
 
 OFFSETS = {
@@ -46,6 +46,9 @@ OFFSETS = {
         'action': 32,
         'anim_time': 36,
         'vehicle': 40,
+        'move_flags': 44,
+        'spin_frame': 48,
+        'spin_frames': 50,
     },
     'CoopProgress': {
         'revision': 0,
@@ -61,7 +64,7 @@ OFFSETS = {
         'status_flags': 0,
         'location': 4,
         'avatar': 36,
-        'progress': 80,
+        'progress': 88,
     },
     'CoopMailbox': {
         'magic': 0,
@@ -73,20 +76,20 @@ OFFSETS = {
         'bridge_heartbeat': 20,
         'local_seq': 24,
         'local_snapshot': 28,
-        'inbound_seq': 204,
-        'inbound_snapshot': 208,
-        'last_applied_progress_revision': 384,
-        'status_flags': 388,
-        'reserved': 392,
+        'inbound_seq': 212,
+        'inbound_snapshot': 216,
+        'last_applied_progress_revision': 400,
+        'status_flags': 404,
+        'reserved': 408,
     },
 }
 
 FORMATS = {
     'CoopLocation': '>iiiiiiii',
-    'CoopAvatar': '>IIfffHHHHiifi',
+    'CoopAvatar': '>IIfffHHHHiifiIHH',
     'CoopProgress': '>IHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBI',
-    'CoopSnapshot': '>IiiiiiiiiIIfffHHHHiifiIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBI',
-    'CoopMailbox': '>IHHIIIIIIiiiiiiiiIIfffHHHHiifiIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBIIIiiiiiiiiIIfffHHHHiifiIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBIIIIIIIIIII',
+    'CoopSnapshot': '>IiiiiiiiiIIfffHHHHiifiIHHIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBI',
+    'CoopMailbox': '>IHHIIIIIIiiiiiiiiIIfffHHHHiifiIHHIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBIIIiiiiiiiiIIfffHHHHiifiIHHIHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHBBBBBBBBBBBBBBBBIIIIIIIIIII',
 }
 
 MAILBOX_SIZE = SIZES['CoopMailbox']

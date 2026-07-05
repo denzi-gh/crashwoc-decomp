@@ -164,15 +164,97 @@ struct obj_s {
     u8 touch;
 };
 
+struct rumble_s {
+    u8 buzz;
+    u8 power;
+    u8 frame;
+    u8 frames;
+};
+
+/*
+ * Mirrors struct creature_s (src/gamecode/creature.h) field-for-field from
+ * `ai` onward. Fields the co-op mod does not touch are kept as opaque byte
+ * blobs sized to match the real nested types (AI_s, numtx_s, Nearest_Light_s)
+ * so the overall layout matches the retail binary without pulling in their
+ * full type graphs. Offsets were confirmed by compiling an offsetof() probe
+ * against the real creature.h with the project's ProDG 3.5 toolchain.
+ */
 struct creature_s {
     char used;
     char on;
     char off_wait;
     char i_aitab;
     struct obj_s obj;
-    char draw_state[0xB58];
+    char ai_opaque[0x98];
+    void *Buggy;
+    void *cmdtable;
+    void *cmdcurr;
+    void *OnFootMoveInfo;
+    char m_opaque[0x40];
+    char mtxLOCATOR_opaque[0x800];
+    struct nuvec_s momLOCATOR[16][2];
+    char lights_opaque[0xB0];
+    struct rumble_s rumble;
+    f32 idle_time;
+    f32 idle_wait;
+    short idle_action;
+    short old_idle_action;
+    char idle_mode;
+    char idle_repeat;
+    char jump;
+    char jump_type;
+    char jump_subtype;
+    char ok_slam;
+    char slam;
+    char spin;
+    char crawl;
+    char crawl_lock;
+    char tiptoe;
+    char sprint;
+    u8 somersault;
+    u8 land;
+    char pad_type;
+    char jump_hack;
+    u8 jump_hold;
+    u8 allow_jump;
+    short jump_frames;
+    short jump_frame;
+    short slam_wait;
+    short spin_frames;
+    short spin_frame;
+    short spin_wait;
+    short slide;
+    short crouch_pos;
+    u16 slam_frame;
+    short fire_action;
+    u8 fire;
+    u8 tap;
+    char target;
+    char target_wait;
+    char fire_lock;
+    char idle_sigh;
+    u8 hit_type;
+    u8 freeze;
+    char anim_processed;
+    char pad1;
 };
 COOP_STATIC_ASSERT(sizeof(struct creature_s) == 0xCE4u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, rumble) == 0xCA4u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, ok_slam) == 0xCB9u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, slam) == 0xCBAu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, spin) == 0xCBBu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, jump_hold) == 0xCC4u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, slam_wait) == 0xCCAu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, spin_frames) == 0xCCCu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, spin_frame) == 0xCCEu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, spin_wait) == 0xCD0u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, slam_frame) == 0xCD6u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, fire_action) == 0xCD8u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, fire) == 0xCDAu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, target) == 0xCDCu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, target_wait) == 0xCDDu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, hit_type) == 0xCE0u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct creature_s, freeze) == 0xCE1u);
 
 struct hub_s {
     u8 flags;
@@ -278,6 +360,14 @@ static f32 COOP_DATA sCoopFloatLimit = 1000000.0f;
 #define COOP_DEBUG_NO_MODEL 10u
 #define COOP_DEBUG_BAD_ACTION 11u
 
+/*
+ * Generous upper bound on spin_frames: real Crash/Coco spin animations are
+ * derived from ModelAnimDuration() * 60fps (see creature.c) and run well
+ * under a second. 600 frames (10s at 60Hz) rejects corrupted/garbage remote
+ * values while comfortably covering any real spin animation length.
+ */
+#define COOP_SPIN_FRAMES_MAX 600u
+
 static void COOP_TEXT CoopCopyProgress(struct CoopProgress *dst)
 {
     s32 i;
@@ -336,8 +426,10 @@ static void COOP_TEXT CoopPublishLocation(struct CoopLocation *location, struct 
 static void COOP_TEXT CoopPublishAvatar(struct CoopAvatar *avatar, struct creature_s *plr)
 {
     u32 flags;
+    u32 move_flags;
 
     flags = 0;
+    move_flags = 0;
     if ((plr != 0) && (plr->used != 0)) {
         flags |= COOP_AVATAR_USED;
         if (plr->obj.dead != 0) {
@@ -358,6 +450,12 @@ static void COOP_TEXT CoopPublishAvatar(struct CoopAvatar *avatar, struct creatu
         avatar->action = plr->obj.anim.action;
         avatar->anim_time = plr->obj.anim.anim_time;
         avatar->vehicle = plr->obj.vehicle;
+        /* Spin rendering uses the dedicated spin fields, not anim.action. */
+        if (plr->spin != 0) {
+            move_flags |= COOP_MOVE_SPIN;
+        }
+        avatar->spin_frame = (u16)plr->spin_frame;
+        avatar->spin_frames = (u16)plr->spin_frames;
     } else {
         avatar->frame = 0;
         avatar->pos_x = sCoopZero;
@@ -371,8 +469,11 @@ static void COOP_TEXT CoopPublishAvatar(struct CoopAvatar *avatar, struct creatu
         avatar->action = -1;
         avatar->anim_time = sCoopOne;
         avatar->vehicle = -1;
+        avatar->spin_frame = 0;
+        avatar->spin_frames = 0;
     }
     avatar->flags = flags;
+    avatar->move_flags = move_flags;
 }
 
 static void COOP_TEXT CoopWriteLocalSnapshot(struct creature_s *plr)
@@ -426,8 +527,16 @@ static void COOP_TEXT CoopApplyInboundProgress(struct CoopProgress *progress)
     u8 hub_flags;
     u8 crystals;
 
-    if (progress->revision <= gCoopMailbox.last_applied_progress_revision) {
-        return;
+    /*
+     * The merge below always runs, even when this revision was already seen.
+     * Loading a lower-progress save slot leaves the mailbox's last-applied
+     * revision unchanged while the local Game state regresses, so gating the
+     * merge on revision > last_applied would skip restoring session progress
+     * after such a load. The OR/max merge is naturally idempotent, so it is
+     * safe to repeat every frame; only forward revision movement is latched.
+     */
+    if (progress->revision > gCoopMailbox.last_applied_progress_revision) {
+        gCoopMailbox.last_applied_progress_revision = progress->revision;
     }
 
     changed = 0;
@@ -464,7 +573,6 @@ static void COOP_TEXT CoopApplyInboundProgress(struct CoopProgress *progress)
             changed = 1;
         }
     }
-    gCoopMailbox.last_applied_progress_revision = progress->revision;
     if (changed != 0) {
         CalculateGamePercentage(&Game);
     }
@@ -546,6 +654,39 @@ static void COOP_TEXT CoopDebugRemote(u32 reason, struct CoopSnapshot *inbound, 
     gCoopMailbox.reserved[7] = same_location;
 }
 
+/*
+ * Neutralizes local-only transient gameplay/animation state on a remote
+ * creature that was just bulk-copied from the local player. Render context
+ * (model, matrices, OnFootMoveInfo, character) is intentionally left as
+ * copied so DrawCreatures() has a valid creature to render; only fields that
+ * drive local gameplay behavior or one-shot local effects are cleared here.
+ * The caller applies remote-specific state (position, rotation, spin, action)
+ * afterward.
+ */
+static void COOP_TEXT CoopSanitizeRemoteCreature(struct creature_s *remote, struct creature_s *local)
+{
+    (void)local;
+    remote->spin = 0;
+    remote->spin_frame = 0;
+    remote->spin_frames = 0;
+    remote->spin_wait = 0;
+    remote->slam = 0;
+    remote->slam_wait = 0;
+    remote->slam_frame = 0;
+    remote->obj.dangle = 0;
+    remote->freeze = 0;
+    remote->target = 0;
+    remote->target_wait = 0;
+    remote->fire = 0;
+    remote->fire_action = 0;
+    remote->rumble.buzz = 0;
+    remote->rumble.power = 0;
+    remote->rumble.frame = 0;
+    remote->rumble.frames = 0;
+    remote->hit_type = 0;
+    remote->jump_hold = 0;
+}
+
 static void COOP_TEXT CoopHideRemotePlayer(void)
 {
     if ((player == 0) || (player->used == 0) || (player->obj.model == 0)) {
@@ -557,6 +698,7 @@ static void COOP_TEXT CoopHideRemotePlayer(void)
     }
 
     sRemoteCreature = *player;
+    CoopSanitizeRemoteCreature(&sRemoteCreature, player);
     sRemoteCreature.obj.model = player->obj.model;
     sRemoteCreature.obj.invisible = 1;
     sRemoteCreature.obj.SCALE = sCoopZero;
@@ -647,6 +789,7 @@ void COOP_TEXT CoopDrawRemotePlayer(void)
     }
 
     sRemoteCreature = *player;
+    CoopSanitizeRemoteCreature(&sRemoteCreature, player);
     sRemoteCreature.obj.model = model;
     sRemoteCreature.obj.pos.x = inbound.avatar.pos_x;
     sRemoteCreature.obj.pos.y = inbound.avatar.pos_y;
@@ -664,11 +807,29 @@ void COOP_TEXT CoopDrawRemotePlayer(void)
     sRemoteCreature.obj.invisible = 0;
     sRemoteCreature.obj.invincible = 0;
     sRemoteCreature.obj.finished = 0;
+    /*
+     * DrawCreatures() takes a dedicated spin-rendering branch driven by
+     * c->spin/spin_frame/spin_frames rather than anim.action, so the normal
+     * action fields are set unconditionally here (also covering the frame
+     * right after a spin ends, when the remote snapshot's action already
+     * reflects run/idle/jump again) and spin is applied on top only when the
+     * remote snapshot reports it and the values pass validation.
+     */
     sRemoteCreature.obj.anim.action = action;
     sRemoteCreature.obj.anim.oldaction = action;
     sRemoteCreature.obj.anim.newaction = action;
     sRemoteCreature.obj.anim.blend = 0;
     sRemoteCreature.obj.anim.anim_time = inbound.avatar.anim_time;
+    if ((inbound.avatar.move_flags & COOP_MOVE_SPIN) != 0) {
+        u32 spin_frames = inbound.avatar.spin_frames;
+        u32 spin_frame = inbound.avatar.spin_frame;
+        if ((spin_frames > 0) && (spin_frames <= COOP_SPIN_FRAMES_MAX) &&
+            (spin_frame <= spin_frames)) {
+            sRemoteCreature.spin = 1;
+            sRemoteCreature.spin_frame = (short)spin_frame;
+            sRemoteCreature.spin_frames = (short)spin_frames;
+        }
+    }
     CoopDebugRemote(COOP_DEBUG_DRAWN, &inbound, 1);
     DrawCreatures(&sRemoteCreature, 1, 1, 0);
 }

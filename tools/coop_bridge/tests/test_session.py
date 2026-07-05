@@ -23,7 +23,17 @@ from tools.coop_bridge.session import (
 )
 
 
-def sample_snapshot(pos_x: float = 0.0, progress: dict[str, object] | None = None) -> bytes:
+# COOP_MOVE_SPIN from src/mod/coop.h; not part of the generated protocol.
+MOVE_SPIN = 0x00000001
+
+
+def sample_snapshot(
+    pos_x: float = 0.0,
+    progress: dict[str, object] | None = None,
+    move_flags: int = 0,
+    spin_frame: int = 0,
+    spin_frames: int = 0,
+) -> bytes:
     snapshot = bytearray(proto.SNAPSHOT_SIZE)
     snap = proto.OFFSETS["CoopSnapshot"]
     loc = proto.OFFSETS["CoopLocation"]
@@ -33,9 +43,25 @@ def sample_snapshot(pos_x: float = 0.0, progress: dict[str, object] | None = Non
     struct.pack_into(">I", snapshot, snap["avatar"] + avatar["flags"], 1)
     struct.pack_into(">f", snapshot, snap["avatar"] + avatar["pos_x"], pos_x)
     struct.pack_into(">i", snapshot, snap["avatar"] + avatar["action"], 1)
+    struct.pack_into(">I", snapshot, snap["avatar"] + avatar["move_flags"], move_flags)
+    struct.pack_into(">H", snapshot, snap["avatar"] + avatar["spin_frame"], spin_frame)
+    struct.pack_into(">H", snapshot, snap["avatar"] + avatar["spin_frames"], spin_frames)
     if progress is not None:
         snapshot = bytearray(apply_progress_to_snapshot(snapshot, progress))
     return bytes(snapshot)
+
+
+def inbound_spin_state(mem: FakeMemoryAdapter) -> tuple[int, int, int] | None:
+    inbound = read_inbound_snapshot_consistent(mem)
+    if inbound is None:
+        return None
+    snap = proto.OFFSETS["CoopSnapshot"]
+    avatar = proto.OFFSETS["CoopAvatar"]
+    base = snap["avatar"]
+    move_flags = struct.unpack_from(">I", inbound, base + avatar["move_flags"])[0]
+    spin_frame = struct.unpack_from(">H", inbound, base + avatar["spin_frame"])[0]
+    spin_frames = struct.unpack_from(">H", inbound, base + avatar["spin_frames"])[0]
+    return move_flags, spin_frame, spin_frames
 
 
 def write_local_snapshot(mem: FakeMemoryAdapter, snapshot: bytes) -> None:
@@ -317,6 +343,249 @@ class BridgeIntegrationTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(delivered["gembits"], 4)
         finally:
             await self.stop_client(client, task)
+
+
+class SpinTransportTests(unittest.IsolatedAsyncioTestCase):
+    """PR3 Phase 14: each player's dedicated spin state (move_flags,
+    spin_frame, spin_frames) must transit independently through the
+    session server to the other player's inbound snapshot, never to the
+    sender's own inbound snapshot."""
+
+    async def asyncSetUp(self) -> None:
+        self.server_state = SessionServer()
+        self.server = await self.server_state.start("127.0.0.1", 0)
+        self.port = self.server.sockets[0].getsockname()[1]
+
+    async def asyncTearDown(self) -> None:
+        await self.server_state.close()
+
+    async def start_client(self, mem: FakeMemoryAdapter) -> tuple[BridgeClient, asyncio.Task[None]]:
+        client = BridgeClient(mem, "127.0.0.1", self.port, reconnect=False)
+        task = asyncio.create_task(client.run())
+        await asyncio.sleep(0)
+        return client, task
+
+    async def stop_client(self, client: BridgeClient, task: asyncio.Task[None]) -> None:
+        client.stop()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    async def test_only_player_one_spinning_is_seen_only_by_player_two(self) -> None:
+        mem1 = FakeMemoryAdapter()
+        mem2 = FakeMemoryAdapter()
+        prime_coop_mailbox(mem1)
+        prime_coop_mailbox(mem2)
+        progress = empty_progress()
+        write_local_snapshot(mem1, sample_snapshot(1.0, progress, move_flags=MOVE_SPIN, spin_frame=5, spin_frames=20))
+        write_local_snapshot(mem2, sample_snapshot(5.0, progress))
+        client1, task1 = await self.start_client(mem1)
+        client2, task2 = await self.start_client(mem2)
+        try:
+            await wait_until(lambda: (inbound_spin_state(mem2) or (0, 0, 0))[0] == MOVE_SPIN)
+            self.assertEqual(inbound_spin_state(mem2), (MOVE_SPIN, 5, 20))
+            # Client 1's own inbound snapshot (player 2's state) never
+            # carries player 1's own spin back to itself.
+            await wait_until(lambda: inbound_pos_is(mem1, 5.0))
+            self.assertEqual((inbound_spin_state(mem1) or (0, 0, 0))[0], 0)
+        finally:
+            await self.stop_client(client1, task1)
+            await self.stop_client(client2, task2)
+
+    async def test_only_player_two_spinning_is_seen_only_by_player_one(self) -> None:
+        mem1 = FakeMemoryAdapter()
+        mem2 = FakeMemoryAdapter()
+        prime_coop_mailbox(mem1)
+        prime_coop_mailbox(mem2)
+        progress = empty_progress()
+        write_local_snapshot(mem1, sample_snapshot(1.0, progress))
+        write_local_snapshot(mem2, sample_snapshot(5.0, progress, move_flags=MOVE_SPIN, spin_frame=7, spin_frames=25))
+        client1, task1 = await self.start_client(mem1)
+        client2, task2 = await self.start_client(mem2)
+        try:
+            await wait_until(lambda: (inbound_spin_state(mem1) or (0, 0, 0))[0] == MOVE_SPIN)
+            self.assertEqual(inbound_spin_state(mem1), (MOVE_SPIN, 7, 25))
+            await wait_until(lambda: inbound_pos_is(mem2, 1.0))
+            self.assertEqual((inbound_spin_state(mem2) or (0, 0, 0))[0], 0)
+        finally:
+            await self.stop_client(client1, task1)
+            await self.stop_client(client2, task2)
+
+    async def test_both_players_spinning_are_both_delivered(self) -> None:
+        mem1 = FakeMemoryAdapter()
+        mem2 = FakeMemoryAdapter()
+        prime_coop_mailbox(mem1)
+        prime_coop_mailbox(mem2)
+        progress = empty_progress()
+        write_local_snapshot(mem1, sample_snapshot(1.0, progress, move_flags=MOVE_SPIN, spin_frame=3, spin_frames=15))
+        write_local_snapshot(mem2, sample_snapshot(5.0, progress, move_flags=MOVE_SPIN, spin_frame=9, spin_frames=18))
+        client1, task1 = await self.start_client(mem1)
+        client2, task2 = await self.start_client(mem2)
+        try:
+            await wait_until(lambda: (inbound_spin_state(mem1) or (0, 0, 0))[0] == MOVE_SPIN)
+            await wait_until(lambda: (inbound_spin_state(mem2) or (0, 0, 0))[0] == MOVE_SPIN)
+            self.assertEqual(inbound_spin_state(mem1), (MOVE_SPIN, 9, 18))
+            self.assertEqual(inbound_spin_state(mem2), (MOVE_SPIN, 3, 15))
+        finally:
+            await self.stop_client(client1, task1)
+            await self.stop_client(client2, task2)
+
+    async def test_spin_ending_clears_promptly_on_the_remote_side(self) -> None:
+        mem1 = FakeMemoryAdapter()
+        mem2 = FakeMemoryAdapter()
+        prime_coop_mailbox(mem1)
+        prime_coop_mailbox(mem2)
+        progress = empty_progress()
+        write_local_snapshot(mem1, sample_snapshot(1.0, progress, move_flags=MOVE_SPIN, spin_frame=5, spin_frames=20))
+        write_local_snapshot(mem2, sample_snapshot(5.0, progress))
+        client1, task1 = await self.start_client(mem1)
+        client2, task2 = await self.start_client(mem2)
+        try:
+            await wait_until(lambda: (inbound_spin_state(mem2) or (0, 0, 0))[0] == MOVE_SPIN)
+
+            write_local_snapshot(mem1, sample_snapshot(1.0, progress))
+            await wait_until(lambda: (inbound_spin_state(mem2) or (MOVE_SPIN, 0, 0))[0] == 0)
+            self.assertEqual(inbound_spin_state(mem2), (0, 0, 0))
+        finally:
+            await self.stop_client(client1, task1)
+            await self.stop_client(client2, task2)
+
+    async def test_independent_spin_frame_progression_is_not_swapped(self) -> None:
+        mem1 = FakeMemoryAdapter()
+        mem2 = FakeMemoryAdapter()
+        prime_coop_mailbox(mem1)
+        prime_coop_mailbox(mem2)
+        progress = empty_progress()
+        write_local_snapshot(mem1, sample_snapshot(1.0, progress, move_flags=MOVE_SPIN, spin_frame=1, spin_frames=30))
+        write_local_snapshot(mem2, sample_snapshot(5.0, progress, move_flags=MOVE_SPIN, spin_frame=11, spin_frames=30))
+        client1, task1 = await self.start_client(mem1)
+        client2, task2 = await self.start_client(mem2)
+        try:
+            await wait_until(lambda: (inbound_spin_state(mem1) or (0, 0, 0))[1] == 11)
+            await wait_until(lambda: (inbound_spin_state(mem2) or (0, 0, 0))[1] == 1)
+
+            write_local_snapshot(mem1, sample_snapshot(1.0, progress, move_flags=MOVE_SPIN, spin_frame=2, spin_frames=30))
+            write_local_snapshot(mem2, sample_snapshot(5.0, progress, move_flags=MOVE_SPIN, spin_frame=12, spin_frames=30))
+            await wait_until(lambda: (inbound_spin_state(mem1) or (0, 0, 0))[1] == 12)
+            await wait_until(lambda: (inbound_spin_state(mem2) or (0, 0, 0))[1] == 2)
+
+            # Neither recipient ever receives its own spin_frame value back.
+            self.assertNotEqual(inbound_spin_state(mem1)[1], 2)
+            self.assertNotEqual(inbound_spin_state(mem2)[1], 12)
+        finally:
+            await self.stop_client(client1, task1)
+            await self.stop_client(client2, task2)
+
+
+class RevisionMapperResetTests(unittest.IsolatedAsyncioTestCase):
+    """PR3 Phase 8/13: a fresh ProgressRevisionMapper must be created for
+    every successful WELCOME, seeded from the mailbox's current applied
+    revision, so a new (or restarted) server session's revision-zero
+    progress is never rejected as a revision reuse of a previous session."""
+
+    async def start_client(self, mem: FakeMemoryAdapter, port: int) -> tuple[BridgeClient, asyncio.Task[None]]:
+        client = BridgeClient(mem, "127.0.0.1", port, reconnect=False)
+        task = asyncio.create_task(client.run())
+        await asyncio.sleep(0)
+        return client, task
+
+    async def stop_client(self, client: BridgeClient, task: asyncio.Task[None]) -> None:
+        client.stop()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+
+    async def test_reconnect_to_new_server_session_with_lower_revision_zero_is_accepted(self) -> None:
+        mem = FakeMemoryAdapter()
+        prime_coop_mailbox(mem)
+        mailbox = proto.OFFSETS["CoopMailbox"]
+        mem.write(MAILBOX_ADDRESS + mailbox["last_applied_progress_revision"], struct.pack(">I", 50))
+        write_local_snapshot(mem, sample_snapshot(3.0, empty_progress()))
+
+        server_a = SessionServer()
+        server_a_net = await server_a.start("127.0.0.1", 0)
+        port_a = server_a_net.sockets[0].getsockname()[1]
+        try:
+            # Server A advances its own progress revision past 0 before the
+            # client connects, so server B (below) starting fresh at
+            # revision 0 is a genuinely lower server-side revision.
+            server_a.progress["gembits"] = 1
+            server_a.progress["revision"] = 5
+
+            client1, task1 = await self.start_client(mem, port_a)
+            try:
+                await wait_until(lambda: (inbound_progress(mem) or {}).get("gembits") == 1)
+                first_mapper = client1._mapper
+                self.assertIsNotNone(first_mapper)
+                first_delivered = inbound_progress(mem)
+                assert first_delivered is not None
+                self.assertGreater(first_delivered["revision"], 50)
+            finally:
+                await self.stop_client(client1, task1)
+        finally:
+            await server_a.close()
+
+        # In real Dolphin, CoopFrameUpdate() advances the mailbox's
+        # last_applied_progress_revision as it applies each delivery. The
+        # fake memory adapter has no running GC code, so mirror that one
+        # effect here to faithfully model the mailbox state a real reconnect
+        # would see.
+        mailbox = proto.OFFSETS["CoopMailbox"]
+        mem.write(
+            MAILBOX_ADDRESS + mailbox["last_applied_progress_revision"],
+            struct.pack(">I", first_delivered["revision"]),
+        )
+
+        # Server A is gone; a new server (a restarted host) reuses server
+        # revision zero with content that differs from what server A last
+        # delivered.
+        server_b = SessionServer()
+        server_b_net = await server_b.start("127.0.0.1", 0)
+        port_b = server_b_net.sockets[0].getsockname()[1]
+        try:
+            self.assertEqual(server_b.progress["revision"], 0)
+            server_b.progress["gembits"] = 9
+
+            client2, task2 = await self.start_client(mem, port_b)
+            try:
+                await wait_until(lambda: (inbound_progress(mem) or {}).get("gembits") == 9)
+                self.assertIsNot(client2._mapper, None)
+                delivered = inbound_progress(mem)
+                assert delivered is not None
+                # No revision-reuse error occurred, and the mapped revision
+                # never moved backward relative to what was already applied.
+                self.assertGreater(delivered["revision"], first_delivered["revision"])
+            finally:
+                await self.stop_client(client2, task2)
+        finally:
+            await server_b.close()
+
+    async def test_reconnect_to_same_server_session_gets_a_new_mapper_instance(self) -> None:
+        mem = FakeMemoryAdapter()
+        prime_coop_mailbox(mem)
+        write_local_snapshot(mem, sample_snapshot(3.0, empty_progress()))
+
+        server = SessionServer()
+        server_net = await server.start("127.0.0.1", 0)
+        port = server_net.sockets[0].getsockname()[1]
+        try:
+            client1, task1 = await self.start_client(mem, port)
+            try:
+                await wait_until(lambda: inbound_progress(mem) is not None)
+                mapper1 = client1._mapper
+                session1 = client1._session_id
+            finally:
+                await self.stop_client(client1, task1)
+
+            # Reconnect (a new BridgeClient instance, same mailbox) to the
+            # same still-running server session.
+            client2, task2 = await self.start_client(mem, port)
+            try:
+                await wait_until(lambda: client2._session_id is not None)
+                self.assertEqual(client2._session_id, session1)
+                self.assertIsNot(client2._mapper, mapper1)
+            finally:
+                await self.stop_client(client2, task2)
+        finally:
+            await server.close()
 
 
 if __name__ == "__main__":

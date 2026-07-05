@@ -64,8 +64,7 @@ class BridgeClient:
     async def run(self) -> None:
         self.adapter.hook()
         self.log("Dolphin hooked")
-        header = require_ready_mailbox(self.adapter, self.mailbox)
-        self._mapper = ProgressRevisionMapper(header.last_applied_progress_revision)
+        require_ready_mailbox(self.adapter, self.mailbox)
         self.log(f"co-op mailbox ready at 0x{self.mailbox:08X}")
         backoff = 0.5
         while not self._stopping:
@@ -106,6 +105,12 @@ class BridgeClient:
             self.log(
                 f"connected player ID {welcome['player_id']} session {self._session_id}"
             )
+            # A fresh mapper bound to this session, seeded from the mailbox's
+            # current applied revision, ensures a new server session (a
+            # restarted host, or one that starts at server revision zero)
+            # never collides with revisions minted for a previous session.
+            last_applied = read_header(self.adapter, self.mailbox).last_applied_progress_revision
+            self._mapper = ProgressRevisionMapper(last_applied)
             self.apply_authoritative_progress(welcome["progress"], remote_raw=None)
 
             send_task = asyncio.create_task(self.send_loop(writer, int(welcome["tick_hz"])))

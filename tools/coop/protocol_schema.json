@@ -1,5 +1,5 @@
 {
-  "abi_version": 1,
+  "abi_version": 2,
   "build_id": 1195582535,
   "magic": 1129270349,
   "capabilities": {
@@ -29,7 +29,10 @@
       ["s32", "character"],
       ["s32", "action"],
       ["f32", "anim_time"],
-      ["s32", "vehicle"]
+      ["s32", "vehicle"],
+      ["u32", "move_flags"],
+      ["u16", "spin_frame"],
+      ["u16", "spin_frames"]
     ],
     "CoopProgress": [
       ["u32", "revision"],

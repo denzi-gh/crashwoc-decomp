@@ -10,6 +10,8 @@
 #define COOP_AVATAR_DEAD 0x00000002u
 #define COOP_AVATAR_INVISIBLE 0x00000004u
 
+#define COOP_MOVE_SPIN 0x00000001u
+
 struct creature_s;
 
 extern struct CoopMailbox gCoopMailbox;

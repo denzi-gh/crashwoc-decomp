@@ -9,7 +9,7 @@ typedef signed int coop_s32;
 typedef float coop_f32;
 
 #define COOP_PROTOCOL_MAGIC 0x434F4C4Du
-#define COOP_PROTOCOL_ABI_VERSION 1u
+#define COOP_PROTOCOL_ABI_VERSION 2u
 #define COOP_GCBE7D_BUILD_ID 0x47432447u
 #define COOP_CAP_CUTBITS 0x00000001u
 #define COOP_STATUS_CONNECTED 0x00000001u
@@ -42,6 +42,9 @@ struct CoopAvatar {
     coop_s32 action;
     coop_f32 anim_time;
     coop_s32 vehicle;
+    coop_u32 move_flags;
+    coop_u16 spin_frame;
+    coop_u16 spin_frames;
 };
 
 struct CoopProgress {
@@ -95,7 +98,7 @@ COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopLocation, death) == 0x14u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopLocation, gem_path) == 0x18u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopLocation, vehicle_class) == 0x1Cu);
 
-#define COOPAVATAR_SIZE 0x2Cu
+#define COOPAVATAR_SIZE 0x34u
 COOP_STATIC_ASSERT(sizeof(struct CoopAvatar) == COOPAVATAR_SIZE);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, flags) == 0x0u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, frame) == 0x4u);
@@ -110,6 +113,9 @@ COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, character) == 0x1Cu);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, action) == 0x20u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, anim_time) == 0x24u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, vehicle) == 0x28u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, move_flags) == 0x2Cu);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, spin_frame) == 0x30u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopAvatar, spin_frames) == 0x32u);
 
 #define COOPPROGRESS_SIZE 0x60u
 COOP_STATIC_ASSERT(sizeof(struct CoopProgress) == COOPPROGRESS_SIZE);
@@ -122,14 +128,14 @@ COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopProgress, gembits) == 0x57u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopProgress, reserved8) == 0x58u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopProgress, cutbits) == 0x5Cu);
 
-#define COOPSNAPSHOT_SIZE 0xB0u
+#define COOPSNAPSHOT_SIZE 0xB8u
 COOP_STATIC_ASSERT(sizeof(struct CoopSnapshot) == COOPSNAPSHOT_SIZE);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopSnapshot, status_flags) == 0x0u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopSnapshot, location) == 0x4u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopSnapshot, avatar) == 0x24u);
-COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopSnapshot, progress) == 0x50u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopSnapshot, progress) == 0x58u);
 
-#define COOPMAILBOX_SIZE 0x1A8u
+#define COOPMAILBOX_SIZE 0x1B8u
 COOP_STATIC_ASSERT(sizeof(struct CoopMailbox) == COOPMAILBOX_SIZE);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, magic) == 0x0u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, abi_version) == 0x4u);
@@ -140,10 +146,10 @@ COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, game_heartbeat) == 0x10u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, bridge_heartbeat) == 0x14u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, local_seq) == 0x18u);
 COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, local_snapshot) == 0x1Cu);
-COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, inbound_seq) == 0xCCu);
-COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, inbound_snapshot) == 0xD0u);
-COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, last_applied_progress_revision) == 0x180u);
-COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, status_flags) == 0x184u);
-COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, reserved) == 0x188u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, inbound_seq) == 0xD4u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, inbound_snapshot) == 0xD8u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, last_applied_progress_revision) == 0x190u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, status_flags) == 0x194u);
+COOP_STATIC_ASSERT(COOP_OFFSETOF(struct CoopMailbox, reserved) == 0x198u);
 
 #endif
