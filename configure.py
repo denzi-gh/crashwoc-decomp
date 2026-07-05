@@ -23,6 +23,7 @@ from tools.normalize_splits import (
     write_normalized_splits,
 )
 from tools.project import (
+    EXE,
     Object,
     ProgressCategory,
     ProjectConfig,
@@ -781,8 +782,8 @@ if args.coop:
     verify_wrappers = Path("tools") / "coop" / "verify_wrappers.py"
     hooks = Path("tools") / "coop" / "hooks" / f"{config.version}.json"
     binutils = config.build_dir / "binutils"
-    readelf = binutils / "powerpc-eabi-readelf.exe"
-    nm = binutils / "powerpc-eabi-nm.exe"
+    readelf = binutils / f"powerpc-eabi-readelf{EXE}"
+    nm = binutils / f"powerpc-eabi-nm{EXE}"
     coop_wrappers_verify_ok = config.out_path() / "coop_wrappers_verify.ok"
 
     config.libs.append(
