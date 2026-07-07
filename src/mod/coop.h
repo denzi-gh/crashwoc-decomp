@@ -20,5 +20,6 @@ void CoopFrameUpdate(struct creature_s *plr);
 void CoopDrawRemotePlayer(void);
 void CoopUpdatePlayerStatsWrapper(struct creature_s *plr);
 void CoopDrawCreaturesWrapper(struct creature_s *c, int count, int render, int shadow);
+void CoopDrawPanelTextWrapper(int bypass);
 
 #endif

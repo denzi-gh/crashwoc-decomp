@@ -151,10 +151,13 @@ def main() -> int:
     required_symbols = [
         "CoopUpdatePlayerStatsWrapper",
         "CoopDrawCreaturesWrapper",
+        "CoopDrawPanelTextWrapper",
         "UpdatePlayerStats",
         "CoopFrameUpdate",
         "DrawCreatures",
         "CoopDrawRemotePlayer",
+        "Text3D",
+        "NuShaderSetBypassShaders",
     ]
     missing = [name for name in required_symbols if name not in symbols]
     if missing:
@@ -163,6 +166,7 @@ def main() -> int:
     expected_calls = {
         "CoopUpdatePlayerStatsWrapper": ["UpdatePlayerStats", "CoopFrameUpdate"],
         "CoopDrawCreaturesWrapper": ["DrawCreatures", "CoopDrawRemotePlayer"],
+        "CoopDrawPanelTextWrapper": ["NuShaderSetBypassShaders", "Text3D"],
     }
     for wrapper, expected in expected_calls.items():
         symbol = symbols[wrapper]

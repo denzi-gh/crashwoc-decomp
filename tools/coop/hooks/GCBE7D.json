@@ -34,6 +34,15 @@
       "original_symbol": "DrawCreatures",
       "wrapper": "CoopDrawCreaturesWrapper",
       "evidence": "build/GCBE7D/asm/main.s: first DrawCreatures call with r3=Character, r4=1, r5=render, r6=1"
+    },
+    {
+      "name": "draw_panel_custom_text",
+      "address": "0x800601D0",
+      "original_opcode": "0x48071205",
+      "original_target": "0x800D13D4",
+      "original_symbol": "NuShaderSetBypassShaders",
+      "wrapper": "CoopDrawPanelTextWrapper",
+      "evidence": "build/GCBE7D/asm/panel.s: bl NuShaderSetBypassShaders at DrawPanel exit convergence (0x800601D0), just after the Exit: label at 0x800601C8"
     }
   ]
 }

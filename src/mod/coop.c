@@ -307,6 +307,22 @@ struct game_s {
     u8 pad_[3];
 };
 
+/*
+ * Minimal view of nupad_s (full struct is 0xF4 bytes, see
+ * dump_alphaNGCport_DWARF.txt). We only need the digital button word, so the
+ * preceding fields are padded out to keep paddata at its exact offset (0xCC).
+ */
+struct nupad_s {
+    u8 pad_a[0xCC];
+    u32 paddata; /* 0xCC: digital button bitfield */
+};
+
+extern struct nupad_s *Pad[2];
+
+void Text3D(char *txt, f32 x, f32 y, f32 z, f32 scalex, f32 scaley, f32 scalez,
+            s32 align, s32 colour);
+void NuShaderSetBypassShaders(s32 bypass);
+
 extern s32 Level;
 extern s32 GameMode;
 extern s32 Hub;
@@ -345,6 +361,15 @@ static u32 COOP_DATA sLocalProgressRevision = 1;
 static f32 COOP_DATA sCoopZero = 0.0f;
 static f32 COOP_DATA sCoopOne = 1.0f;
 static f32 COOP_DATA sCoopFloatLimit = 1000000.0f;
+
+/*
+ * Kept in .coop_data (not the default .rodata) so the string bytes and the
+ * scale constant do not grow the base .rodata past its fixed VMA ceiling. Inline
+ * literals here would emit into .rodata/.data of the main image and shift every
+ * following section, which is exactly the boot crash this feature originally hit.
+ */
+static f32 COOP_DATA sCoopPanelTextScale = 0.8f;
+static char COOP_DATA sCoopPanelText[] = "#wLECK EIER MARCEL";
 
 #define COOP_DEBUG_MAGIC 0x43444247u
 #define COOP_DEBUG_DRAWN 12u
@@ -844,4 +869,40 @@ void COOP_TEXT CoopDrawCreaturesWrapper(struct creature_s *c, int count, int ren
 {
     DrawCreatures(c, count, render, shadow);
     CoopDrawRemotePlayer();
+}
+
+/*
+ * Hooked over the `bl NuShaderSetBypassShaders` at DrawPanel's exit
+ * (0x800601D0), the point where every DrawPanel path converges. Draws a piece
+ * of custom text while A + L are held on pad 0.
+ *
+ * Button bits come from paddata (see dummyfunc.c pad decode): 0x40 = A,
+ * 0x04 = L trigger. Both are plain digital bits used by the shipped game
+ * (e.g. vehicle.c reads 0x04), so they are reliable across the GC port -
+ * unlike the analogue l2_alg field, which the pad decoder leaves at 0 except
+ * as a stick-derived side effect.
+ *
+ * We run the original NuShaderSetBypassShaders(bypass) FIRST: DrawPanel enables
+ * bypass shaders while drawing (panel.c NuShaderSetBypassShaders(1)) and only
+ * clears them here. Drawing before this reset renders the text with bypass
+ * still on, so it never appears - draw AFTER the reset instead.
+ *
+ * The wrapper lives in .coop_text so it does NOT grow .text past its fixed
+ * .rodata ceiling at 0x80104920 (which is what crashed the earlier in-panel.c
+ * version on boot).
+ */
+#define COOP_TEXT_PAD_A 0x40u  /* paddata: A button */
+#define COOP_TEXT_PAD_L 0x04u  /* paddata: L trigger (digital) */
+#define COOP_TEXT_COMBO (COOP_TEXT_PAD_A | COOP_TEXT_PAD_L)
+
+void COOP_TEXT CoopDrawPanelTextWrapper(s32 bypass)
+{
+    struct nupad_s *pad = Pad[0];
+
+    NuShaderSetBypassShaders(bypass);
+
+    if (pad != 0 && (pad->paddata & COOP_TEXT_COMBO) == COOP_TEXT_COMBO) {
+        Text3D(sCoopPanelText, sCoopZero, sCoopZero, sCoopOne,
+               sCoopPanelTextScale, sCoopPanelTextScale, sCoopPanelTextScale, 1, 0);
+    }
 }
