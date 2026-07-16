@@ -22,7 +22,8 @@ orig/*/*
 build/
 .ninja_*
 build.ninja
-
+build-coop
+run
 # decompctx output
 ctx.*
 *.ctx
